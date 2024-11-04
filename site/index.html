@@ -1,0 +1,19 @@
+---
+layout: default
+---
+
+<div class="landing">
+    <div class="banner">
+        <div class="heading">Kia Ora!</div>
+        <div class="heading">Tākaro i tētahi kēmu / Play a game</div>
+    </div>
+
+    {% for game in site.games %}
+    <div class="game" style="background-color: {{ game.colour }}">
+        <div class="game-text">
+            <div class="heading">{{ game.heading }}</div>
+            <div class="subheading">"{{ game.subheading }}"</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

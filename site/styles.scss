@@ -1,0 +1,56 @@
+---
+---
+
+body {
+  background-color: lightgray;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+// Display the landing page using a grid layout
+.landing {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  column-gap: 3rem;
+  row-gap: 3rem;
+  padding: 3rem;
+}
+
+.heading {
+  font-weight: bolder;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.subheading {
+  font-weight: bold;
+  text-align: center;
+}
+
+// The heading banner on the landing page
+.banner {
+  // Span the whole page, horizontally centered
+  grid-column-start: 1;
+  grid-column-end: 4;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 2rem;
+
+  border: 2px solid black;
+  border-radius: 10px;
+
+  text-align: center;
+
+  background-color: white;
+}
+
+.game {
+  // Coloured box for each game on the landing page
+  margin: 0 auto;
+  height: 15rem;
+  width: 15rem;
+  border-radius: 3rem;
+
+  // Align the child text items
+  display: grid;
+  align-items: center;
+}
