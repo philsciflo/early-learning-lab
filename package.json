@@ -1,0 +1,10 @@
+{
+  "name": "early-learning-lab",
+  "packageManager": "yarn@4.5.1",
+  "workspaces": [
+    "games/*"
+  ],
+  "engines": {
+    "node": "20"
+  }
+}
