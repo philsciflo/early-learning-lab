@@ -6,7 +6,7 @@ The Tākaro i tētahi kēmu (Play a game) is a website designed to host a number
 
 This site is built using [Jekyll](https://jekyllrb.com/) and hosted using [Github Pages](https://docs.github.com/en/pages).
 
-Every commit to the `main` branch will publish the site, to the URL shown in [the settings](/settings/pages)
+Every commit to the `main` branch will publish the site, to the URL shown in [the settings](../../settings/pages)
 
 Local development requires [Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git), and [Ruby](https://www.ruby-lang.org/en/documentation/installation/)
 
