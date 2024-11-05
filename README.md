@@ -10,7 +10,7 @@ Every commit to the `main` branch will publish the site, to the URL shown in [th
 
 Local development requires [Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git), and [Ruby](https://www.ruby-lang.org/en/documentation/installation/)
 
-From the `site` directory;
+From the `docs` directory;
 
 1. Run `bundle install` to install the Ruby dependencies
 2. Run `bundle exec jekyll serve` to run the site locally
