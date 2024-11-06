@@ -1,0 +1,2 @@
+corepack enable
+yarn lint-staged
