@@ -6,11 +6,11 @@ It is adapted from https://github.com/phaserjs/template-vite-ts
 
 ## Available Commands
 
-| Command               | Description |
-|-----------------------|-------------|
-| `yarn install`        | Install project dependencies |
-| `yarn dev`        | Launch a development web server |
-| `yarn build`      | Create a production build in the `dist` folder |
+| Command        | Description                                    |
+|----------------|------------------------------------------------|
+| `yarn install` | Install project dependencies                   |
+| `yarn dev`     | Launch a development web server                |
+| `yarn build`   | Create a production build in the `dist` folder |
 
 ## Writing Code
 
