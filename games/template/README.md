@@ -58,12 +58,6 @@ preload ()
 }
 ```
 
-When you issue the `yarn build` command, all static assets are automatically copied to the `dist/assets` folder.
-
-## Deploying to Production
-
-After you run the `yarn build` command, your code will be built into a single bundle and saved to the `dist` folder, along with any other assets your project imported, or stored in the public assets folder.
-
-In order to deploy your game - TBC
+When you issue the `yarn build` command, all static assets are automatically copied to a game-specific sub-folder in the `docs` folder to be served by Jekyll.
 
 

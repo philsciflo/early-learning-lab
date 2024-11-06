@@ -15,7 +15,7 @@ Local development requires [Git](https://docs.github.com/en/get-started/getting-
 From the `docs` directory;
 
 1. Run `bundle install` to install the Ruby dependencies
-2. Run `bundle exec jekyll serve` to run the site locally
+2. Run `bundle exec jekyll serve` to run the site locally on [localhost](http://127.0.0.1:4000/)
 3. Make changes to the files, commit, push, and confirm the changes on the live site
 
 ## Developing a Game
