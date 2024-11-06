@@ -54,3 +54,17 @@ body {
   display: grid;
   align-items: center;
 }
+
+// Remove link styling
+a.no-link-style:link {
+  text-decoration: inherit;
+  color: inherit;
+  cursor: auto;
+}
+
+a.no-link-style:visited {
+  text-decoration: inherit;
+  color: inherit;
+  cursor: auto;
+}
+

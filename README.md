@@ -32,19 +32,25 @@ Pre-requisite tools;
 
 ### Modifying an existing game
 
-TBC
+In the game directory, e.g. `./games/apple-catcher`
+1. Run the game using `yarn dev`
+2. Make changes to the game code under `src`
+3. Verify the changes work [locally](http://localhost:8080) and as they will be deployed using the [developing the Site instructions](#developing-the-site)
 
 ### Adding a new game
 
-1. Duplicate the `games/template` directory, and give it a new name
-2. Create a new file `<game-name>.md` in the `_games` directory
-3. Include the following content in the file
+1. Duplicate the `games/template` directory, with a new name, and
+   1. Change the `name` in `package.json` to match the directory name.
+   2. Change the final path segment in the `outDir` in `/vite/config.prod.mjs` to match the directory name.
+2. Create a new file `<game-name>.md` in the `_games` directory , with the following content
 ```
 ---
 heading: <the game name or title e.g A>
 subheading: <the game name or title e.g Apple Catcher>
-colour: <a CSS colour name for the game icon, from https://developer.mozilla.org/en-US/docs/Web/CSS/named-color, e.g orange> 
+colour: <a CSS colour name for the game icon, from https://developer.mozilla.org/en-US/docs/Web/CSS/named-color, e.g orange>
+ref: <the folder name for the game e.g apple-catcher> 
 ---
 ```
-4. ???
+3. Develop and test as per [modifying an existing game](#modifying-an-existing-game)
+
 
