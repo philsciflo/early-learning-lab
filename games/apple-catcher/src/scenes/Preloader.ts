@@ -8,7 +8,9 @@ export class Preloader extends Scene
     }
 
     init ()
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     {
+
     }
 
     preload ()
