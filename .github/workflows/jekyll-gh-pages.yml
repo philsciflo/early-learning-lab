@@ -28,6 +28,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+      - name: Run install
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install # will run `yarn install` command
+      - name: Build game dist files
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: workspaces foreach --all run build # will run `yarn build` command in each workspace
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
