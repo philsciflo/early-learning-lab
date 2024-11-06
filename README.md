@@ -8,8 +8,6 @@ MacOS or Linux are recommended for development; consider using [WSL](https://lea
 
 This site is built using [Jekyll](https://jekyllrb.com/) and hosted using [Github Pages](https://docs.github.com/en/pages).
 
-Every commit to the `main` branch will publish the site, to the URL shown in [the settings](../../settings/pages)
-
 Local development requires [Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git), and [Ruby](https://www.ruby-lang.org/en/documentation/installation/)
 
 From the `docs` directory;
@@ -53,4 +51,8 @@ ref: <the folder name for the game e.g apple-catcher>
 ```
 3. Develop and test as per [modifying an existing game](#modifying-an-existing-game)
 
+## Deploying changes
+
+Every commit to the `main` branch will publish the site to the URL shown in [the settings](../../settings/pages),
+using the [Github Actions workflows](./.github/workflows/jekyll-gh-pages.yml).
 
