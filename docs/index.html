@@ -3,19 +3,19 @@ layout: default
 ---
 
 <div class="landing">
-    <div class="banner">
-        <div class="heading">Kia Ora!</div>
-        <div class="heading">Tākaro i tētahi kēmu / Play a game</div>
-    </div>
+  <div class="banner">
+    <div class="heading">Kia Ora!</div>
+    <div class="heading">Tākaro i tētahi kēmu / Play a game</div>
+  </div>
 
-    {% for game in site.games %}
-    <a href="games/{{ game.ref }}" class="no-link-style">
-        <div class="game" style="background-color: {{ game.colour }}">
-            <div class="game-text">
-                <div class="heading">{{ game.heading }}</div>
-                <div class="subheading">"{{ game.subheading }}"</div>
-            </div>
-        </div>
-    </a>
-    {% endfor %}
+  {% for game in site.games %}
+  <a href="games/{{ game.ref }}" class="no-link-style">
+    <div class="game" style="background-color: {{ game.colour }}">
+      <div class="game-text">
+        <div class="heading">{{ game.heading }}</div>
+        <div class="subheading">"{{ game.subheading }}"</div>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
 </div>

@@ -5,7 +5,7 @@
 ## Available Commands
 
 | Command        | Description                                    |
-|----------------|------------------------------------------------|
+| -------------- | ---------------------------------------------- |
 | `yarn install` | Install project dependencies                   |
 | `yarn dev`     | Launch a development web server                |
 | `yarn build`   | Create a production build in the `dist` folder |
@@ -40,22 +40,22 @@ This template provides support for both embedding assets and also loading them f
 you can import it at the top of the JavaScript file you are using it in:
 
 ```js
-import logoImg from './assets/logo.png'
+import logoImg from "./assets/logo.png";
 ```
 
 To load static files such as audio files, videos, etc place them into the `public/assets` folder. Then you can use this
 path in the Loader calls within Phaser:
 
 ```js
-preload()
+preload();
 {
-    //  This is an example of an imported bundled image.
-    //  Remember to import it at the top of this file
-    this.load.image('logo', logoImg);
+  //  This is an example of an imported bundled image.
+  //  Remember to import it at the top of this file
+  this.load.image("logo", logoImg);
 
-    //  This is an example of loading a static image
-    //  from the public/assets folder:
-    this.load.image('background', 'assets/bg.png');
+  //  This is an example of loading a static image
+  //  from the public/assets folder:
+  this.load.image("background", "assets/bg.png");
 }
 ```
 
@@ -64,5 +64,3 @@ When you issue the `yarn build` command, all static assets are automatically cop
 ## Deploying to Production
 
 When you issue the `yarn build` command, all static assets are automatically copied to a game-specific sub-folder in the `docs` folder to be served by Jekyll.
-
-
