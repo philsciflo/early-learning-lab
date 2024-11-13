@@ -126,12 +126,17 @@ export abstract class AbstractCatcherScene extends Scene {
       },
     );
 
+    const triesDataChangeEventKey = `changedata-${this.triesDataKey}`;
     this.registry.events.on(
-      `changedata-${this.triesDataKey}`,
+      triesDataChangeEventKey,
       (_parent: never, newValue: number) => {
         triesText.setText(`Tries: ${newValue}`);
       },
     );
+
+    this.events.once("shutdown", () => {
+      this.registry.events.off(triesDataChangeEventKey);
+    });
 
     const scoreText = this.add.text(
       GAME_AREA_WIDTH - 130,
@@ -144,11 +149,16 @@ export abstract class AbstractCatcherScene extends Scene {
         align: "left",
       },
     );
+    const scoreDataChangeEventKey = `changedata-${this.scoreDataKey}`;
     this.registry.events.on(
-      `changedata-${this.scoreDataKey}`,
-      (_parent: never, newValue: number) =>
-        scoreText.setText(`Score: ${newValue}`),
+      scoreDataChangeEventKey,
+      (_parent: never, newValue: number) => {
+        scoreText.setText(`Score: ${newValue}`);
+      },
     );
+    this.events.once("shutdown", () => {
+      this.registry.events.off(scoreDataChangeEventKey);
+    });
   }
 
   private renderNavigationButtons() {
