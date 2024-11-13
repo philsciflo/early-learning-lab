@@ -14,7 +14,7 @@ export class MainMenu extends Scene {
   }
 
   preload() {
-    this.load.html("name_input", "html_text_input.html");
+    this.load.html("name_input", "assets/html_text_input.html");
   }
 
   create() {
