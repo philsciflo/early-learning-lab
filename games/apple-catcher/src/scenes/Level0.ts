@@ -8,6 +8,8 @@ import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
 export class Level0 extends AbstractCatcherScene {
   private basket: SpriteWithStaticBody;
   private apples: SpriteWithDynamicBody[] = [];
+  // a reference to the Interval controlling the apple dropping
+  private dropInterval: number;
 
   constructor() {
     super(
@@ -28,12 +30,12 @@ export class Level0 extends AbstractCatcherScene {
 
   protected doDrop() {
     // Every half a second enable gravity on an apple that doesn't already have it, until there are no more apples
-    const dropInterval = setInterval(() => {
+    this.dropInterval = setInterval(() => {
       const applesWithoutGravity = this.apples.filter(
         (apple) => !apple.body || !(apple.body as Body).enable,
       );
       if (applesWithoutGravity.length === 0) {
-        clearInterval(dropInterval);
+        clearInterval(this.dropInterval);
       } else {
         this.physics.world.enableBody(applesWithoutGravity[0]);
       }
@@ -79,6 +81,8 @@ export class Level0 extends AbstractCatcherScene {
   }
 
   private resetApples() {
+    // Don't let an existing interval continue to activate gravity after a reset
+    clearInterval(this.dropInterval);
     this.apples.forEach((apple: SpriteWithDynamicBody, index: number) => {
       if (apple.body) {
         // If we've already dropped then apples will have gravity to remove, else they won't
