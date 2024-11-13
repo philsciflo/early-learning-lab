@@ -12,3 +12,7 @@ body {
   justify-content: center;
   align-items: center;
 }
+
+input {
+  font-size: xxx-large;
+}

@@ -10,6 +10,7 @@ export class Preloader extends Scene {
 
   preload() {
     //  Load the assets for the game
+    this.load.image("start", "assets/power-button.png");
   }
 
   create() {

@@ -1,23 +1,36 @@
 import { Boot } from "./scenes/Boot";
-import { Game as MainGame } from "./scenes/Game";
 import { GameOver } from "./scenes/GameOver";
 import { MainMenu } from "./scenes/MainMenu";
 import { Preloader } from "./scenes/Preloader";
 
 import { Game, Types } from "phaser";
-import { WIDTH } from "./constants.ts";
+import { HEIGHT, ORANGE_STRING, WIDTH } from "./constants.ts";
+import { Level0 } from "./scenes/Level0.ts";
 
 const config: Types.Core.GameConfig = {
   type: Phaser.AUTO,
   width: WIDTH,
-  height: 768,
+  height: HEIGHT,
   parent: "game-container",
-  backgroundColor: "#ffa500",
+  backgroundColor: ORANGE_STRING,
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: {
+        x: 0,
+        y: 100,
+      },
+      // debug: true,
+    },
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [Boot, Preloader, MainMenu, MainGame, GameOver],
+  dom: {
+    createContainer: true, // Allow inclusion of HTML
+  },
+  scene: [Boot, Preloader, MainMenu, Level0, GameOver],
 };
 
 export default new Game(config);
