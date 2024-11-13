@@ -1,6 +1,6 @@
 # Phaser Vite TypeScript Template
 
-<game description / purpose>
+Apple Catcher
 
 ## Available Commands
 

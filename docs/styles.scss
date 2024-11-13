@@ -26,19 +26,24 @@ body {
   text-align: center;
 }
 
-// The heading banner on the landing page
-.banner {
+.centered {
   // Span the whole page, horizontally centered
   grid-column-start: 1;
   grid-column-end: 4;
+}
+
+.centered-text {
   width: fit-content;
   margin: 0 auto;
+  text-align: center;
+}
+
+// The heading banner on the landing page
+.banner {
   padding: 2rem;
 
   border: 2px solid black;
   border-radius: 10px;
-
-  text-align: center;
 
   background-color: white;
 }
