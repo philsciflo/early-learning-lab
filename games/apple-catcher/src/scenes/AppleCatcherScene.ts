@@ -82,7 +82,7 @@ export abstract class AbstractCatcherScene extends Scene {
         height: 45,
         backgroundColour: BLUE,
       },
-      { text: this.levelTitle, y: 15 },
+      { text: this.levelTitle, yOffset: 5 },
     );
 
     this.add

@@ -3,7 +3,6 @@ import {
   HALF_HEIGHT,
   HALF_WIDTH,
   PLAYER_ID_DATA_KEY,
-  QUARTER_HEIGHT,
   QUARTER_WIDTH,
 } from "../constants.ts";
 import { renderTextBanner } from "../banners.ts";
@@ -23,8 +22,7 @@ export class MainMenu extends Scene {
       {},
       {
         text: 'Play: \r "Apple Catcher"',
-        x: HALF_WIDTH,
-        y: QUARTER_HEIGHT + 10,
+        yOffset: 10,
       },
     );
 
@@ -33,8 +31,7 @@ export class MainMenu extends Scene {
       { y: HALF_HEIGHT, height: 150 },
       {
         text: "Enter your player ID:",
-        x: HALF_WIDTH,
-        y: HALF_HEIGHT + 10,
+        yOffset: 10,
       },
     );
 

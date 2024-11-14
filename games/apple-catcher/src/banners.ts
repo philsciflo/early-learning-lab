@@ -19,8 +19,8 @@ export interface BannerParams {
 
 export interface TextParams {
   text: string;
-  x?: number;
-  y?: number;
+  // The y offset from the containing banner, so the text doesn't overlap
+  yOffset: number;
 }
 
 export function renderBanner(scene: Scene, bannerParams: BannerParams) {
@@ -47,9 +47,11 @@ export function renderTextBanner(
 ) {
   renderBanner(scene, bannerParams);
 
-  const { text, x: textX = HALF_WIDTH, y: textY = QUARTER_HEIGHT } = textParams;
+  const { x: bannerX = HALF_WIDTH, y: bannerY = QUARTER_HEIGHT } = bannerParams;
+
+  const { text, yOffset } = textParams;
   scene.add
-    .text(textX, textY, text, {
+    .text(bannerX, bannerY + yOffset, text, {
       fontFamily: "Arial",
       fontSize: 30,
       color: BLACK_STRING,
