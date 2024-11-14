@@ -1,8 +1,9 @@
 import { AbstractCatcherScene } from "./AppleCatcherScene.ts";
 import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
-import { BLUE, BASKET_BOTTOM, HALF_WIDTH, APPLE_TOP } from "../constants.ts";
+import { BASKET_BOTTOM, HALF_WIDTH, APPLE_TOP } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+import { renderVerticalPipe } from "../pipes.ts";
 
 export class Level1 extends AbstractCatcherScene {
   private basket: SpriteWithStaticBody;
@@ -20,7 +21,7 @@ export class Level1 extends AbstractCatcherScene {
 
   create() {
     super.create();
-    this.renderVerticalPipe();
+    renderVerticalPipe(this, HALF_WIDTH);
     this.setupBasket();
     this.setupApple();
 
@@ -35,24 +36,6 @@ export class Level1 extends AbstractCatcherScene {
   protected doReset(): void {
     this.resetBasket();
     this.resetApple();
-  }
-
-  private renderVerticalPipe() {
-    const pipeWidth = 80;
-    const pipeHeight = 250;
-    const pipeTop = 280;
-    const pipeBottom = pipeTop + pipeHeight;
-    const pipeLeft = HALF_WIDTH - pipeWidth / 2;
-    const pipeRight = HALF_WIDTH + pipeWidth / 2;
-    const pipe = this.add.graphics();
-    pipe.setDefaultStyles({
-      fillStyle: {
-        color: BLUE,
-      },
-      lineStyle: { color: BLUE, width: 4 },
-    });
-    pipe.lineBetween(pipeLeft, pipeTop, pipeLeft, pipeBottom);
-    pipe.lineBetween(pipeRight, pipeTop, pipeRight, pipeBottom);
   }
 
   private setupBasket() {

@@ -29,8 +29,8 @@ export abstract class AbstractCatcherScene extends Scene {
   private rightTreeLeft = GAME_AREA_WIDTH - 160;
   protected rightEdgeGameBound = this.rightTreeLeft;
 
-  protected triesDataKey: string;
-  protected scoreDataKey: string;
+  public triesDataKey: string;
+  public scoreDataKey: string;
 
   protected constructor(
     private name: string,
