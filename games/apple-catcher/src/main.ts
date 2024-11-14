@@ -8,6 +8,7 @@ import { HEIGHT, ORANGE_STRING, WIDTH } from "./constants.ts";
 import { Level0 } from "./scenes/Level0.ts";
 import { Level1 } from "./scenes/Level1.ts";
 import { Level2 } from "./scenes/Level2.ts";
+import { Level3 } from "./scenes/Level3.ts";
 
 const config: Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -32,7 +33,7 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  scene: [Boot, Preloader, MainMenu, Level0, Level1, Level2, GameOver],
+  scene: [Boot, Preloader, MainMenu, Level0, Level1, Level2, Level3, GameOver],
 };
 
 export default new Game(config);
