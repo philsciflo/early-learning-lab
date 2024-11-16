@@ -77,7 +77,7 @@ export class Level4 extends AbstractCatcherScene {
 
   private setupApple() {
     this.apple = this.physics.add
-      .sprite(this.generateAppleStartingPosition(), APPLE_TOP, "apple")
+      .sprite(HALF_WIDTH, APPLE_TOP, "apple")
       .setDisplaySize(50, 50)
       .setCollideWorldBounds(true, 0, 0, true)
       .disableBody()
@@ -109,16 +109,10 @@ export class Level4 extends AbstractCatcherScene {
       // If we've already dropped then the apple will have gravity to remove, else it won't
       this.physics.world.disableBody(this.apple.body);
     }
-    this.apple.body.reset(this.generateAppleStartingPosition(), APPLE_TOP);
+    this.apple.body.reset(HALF_WIDTH, APPLE_TOP);
     this.apple.setVisible(true);
     this.apple.setActive(true);
     this.apple.setInteractive();
-  }
-
-  private generateAppleStartingPosition() {
-    return Math.random() > 0.5
-      ? this.verticalPipeCenter
-      : this.forkedPipeCenter;
   }
 
   private renderAppleStartingPositions() {
