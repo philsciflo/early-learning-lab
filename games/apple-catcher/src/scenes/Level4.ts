@@ -65,7 +65,10 @@ export class Level4 extends AbstractCatcherScene {
 
   private resetBasket() {
     this.basket.setPosition(
-      Phaser.Math.Between(this.leftEdgeGameBound, this.rightEdgeGameBound),
+      Phaser.Math.RND.pick([
+        this.leftEdgeGameBound - 50,
+        this.rightEdgeGameBound - 50,
+      ]),
       BASKET_BOTTOM,
     );
     this.basket.refreshBody();
