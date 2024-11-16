@@ -3,6 +3,7 @@ import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
 import { BLUE, BASKET_BOTTOM, HALF_WIDTH, APPLE_TOP } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+import Point = Phaser.Geom.Point;
 
 export class Level3 extends AbstractCatcherScene {
   private basket: SpriteWithStaticBody;
@@ -20,9 +21,9 @@ export class Level3 extends AbstractCatcherScene {
 
   create() {
     super.create();
-    this.renderThreeForkedPipe();
     this.setupBasket();
     this.setupApple();
+    this.renderThreeForkedPipe();
 
     this.addCollisionHandling(this.basket, this.apple);
   }
@@ -40,21 +41,25 @@ export class Level3 extends AbstractCatcherScene {
   private renderThreeForkedPipe() {
     const pipeWidth = 80;
     const pipeTop = 280;
-    const pipeForkTop = pipeTop + 100;
-    const pipeForkVerticalHeight = pipeWidth / Math.sin(Math.PI / 4);
-    const pipeForkBottom = pipeForkTop + pipeForkVerticalHeight;
-    const pipeBottom = pipeForkBottom + pipeForkVerticalHeight;
-    const pipeLeft = HALF_WIDTH - pipeWidth / 2;
-    const pipeRight = HALF_WIDTH + pipeWidth / 2;
-    const forkTopLineAdditionalLength = Math.sqrt(
-      Math.pow(pipeForkVerticalHeight, 2) / Math.pow(pipeWidth, 2),
-    );
-    const forkedPipeLeftLeft =
-      pipeLeft - pipeForkVerticalHeight - forkTopLineAdditionalLength;
-    const forkedPipeLeftRight = pipeLeft - pipeForkVerticalHeight;
-    const forkedPipeRightLeft = pipeRight + pipeForkVerticalHeight;
-    const forkedPipeRightRight =
-      pipeRight + pipeForkVerticalHeight + forkTopLineAdditionalLength;
+
+    const A =
+      HALF_WIDTH -
+      100 * Math.tan(Math.PI / 4) -
+      pipeWidth * Math.sin(Math.PI / 4); // top of left fork
+    const B = HALF_WIDTH - 100 * Math.tan(Math.PI / 4); // bottom of left fork
+    const C = HALF_WIDTH - pipeWidth / 2; // LHS of center pipe
+    const D = HALF_WIDTH + pipeWidth / 2; // RHS of center pipe
+    const E = HALF_WIDTH + 100 * Math.tan(Math.PI / 4); // left edge of right fork
+    const F =
+      HALF_WIDTH +
+      100 * Math.tan(Math.PI / 4) +
+      pipeWidth * Math.sin(Math.PI / 4); // right edge of right fork
+
+    const one = pipeTop;
+    const two = one + 100;
+    const three = two + 80 / Math.sin(Math.PI / 4);
+    const four = three + 60;
+    const five = three + 100;
 
     const pipe = this.add.graphics();
     pipe.setDefaultStyles({
@@ -63,30 +68,24 @@ export class Level3 extends AbstractCatcherScene {
       },
       lineStyle: { color: BLUE, width: 4 },
     });
-    // Top cylinder
-    pipe.lineBetween(pipeLeft, pipeTop, pipeLeft, pipeForkTop);
-    pipe.lineBetween(pipeRight, pipeTop, pipeRight, pipeForkTop);
 
-    // Bottom cylinder
-    pipe.lineBetween(pipeLeft, pipeForkBottom, pipeLeft, pipeBottom);
-    pipe.lineBetween(pipeRight, pipeForkBottom, pipeRight, pipeBottom);
-
-    // Left fork
-    pipe.lineBetween(pipeLeft, pipeForkTop, forkedPipeLeftLeft, pipeForkBottom);
-    pipe.lineBetween(pipeLeft, pipeForkBottom, forkedPipeLeftRight, pipeBottom);
-
-    // Right fork
-    pipe.lineBetween(
-      pipeRight,
-      pipeForkTop,
-      forkedPipeRightLeft,
-      pipeForkBottom,
-    );
-    pipe.lineBetween(
-      pipeRight,
-      pipeForkBottom,
-      forkedPipeRightRight,
-      pipeBottom,
+    pipe.fillPoints(
+      [
+        new Point(C, one),
+        new Point(C, two),
+        new Point(A, three),
+        new Point(B, four),
+        new Point(C, three),
+        new Point(C, five),
+        new Point(D, five),
+        new Point(D, three),
+        new Point(E, four),
+        new Point(F, three),
+        new Point(D, two),
+        new Point(D, one),
+      ],
+      true,
+      true,
     );
   }
 

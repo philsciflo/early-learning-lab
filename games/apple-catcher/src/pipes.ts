@@ -2,6 +2,7 @@ import { AbstractCatcherScene } from "./scenes/AppleCatcherScene.ts";
 import { BLUE } from "./constants.ts";
 import GameObjectWithDynamicBody = Phaser.Types.Physics.Arcade.GameObjectWithDynamicBody;
 import Body = Phaser.Physics.Arcade.Body;
+import Point = Phaser.Geom.Point;
 
 export function renderVerticalPipe(
   scene: AbstractCatcherScene,
@@ -10,18 +11,14 @@ export function renderVerticalPipe(
   const pipeWidth = 80;
   const pipeHeight = 250;
   const pipeTop = 280;
-  const pipeBottom = pipeTop + pipeHeight;
   const pipeLeft = centerX - pipeWidth / 2;
-  const pipeRight = centerX + pipeWidth / 2;
   const pipe = scene.add.graphics();
   pipe.setDefaultStyles({
     fillStyle: {
       color: BLUE,
     },
-    lineStyle: { color: BLUE, width: 4 },
   });
-  pipe.lineBetween(pipeLeft, pipeTop, pipeLeft, pipeBottom);
-  pipe.lineBetween(pipeRight, pipeTop, pipeRight, pipeBottom);
+  pipe.fillRect(pipeLeft, pipeTop, pipeWidth, pipeHeight);
 }
 
 export function setupForkedPipe(
@@ -42,18 +39,22 @@ export function setupForkedPipe(
     .map(({ value }) => value);
 
   const pipeWidth = 80;
-  const pipeStraightHeight = 125;
-  const pipeForkHeight = 125;
   const pipeTop = 280;
-  const pipeStraightBottom = pipeTop + pipeStraightHeight;
-  const pipeForkInnerTop = pipeStraightBottom + pipeWidth;
-  const pipeForkBottom = pipeStraightBottom + pipeForkHeight;
-  const straightPipeLeft = centerX - pipeWidth / 2;
-  const forkedPipeLeftLeft = straightPipeLeft - pipeWidth;
-  const forkedPipeLeftRight = straightPipeLeft;
-  const straightPipeRight = centerX + pipeWidth / 2;
-  const forkedPipeRightLeft = straightPipeRight;
-  const forkedPipeRightRight = straightPipeRight + pipeWidth;
+
+  const A =
+    centerX - 100 * Math.tan(Math.PI / 4) - pipeWidth * Math.sin(Math.PI / 4); // top of left fork
+  const B = centerX - 100 * Math.tan(Math.PI / 4); // bottom of left fork
+  const C = centerX - pipeWidth / 2; // LHS of center pipe
+  const D = centerX + pipeWidth / 2; // RHS of center pipe
+  const E = centerX + 100 * Math.tan(Math.PI / 4); // left edge of right fork
+  const F =
+    centerX + 100 * Math.tan(Math.PI / 4) + pipeWidth * Math.sin(Math.PI / 4); // right edge of right fork
+
+  const one = pipeTop;
+  const two = one + 100;
+  const three = two + pipeWidth / Math.sin(Math.PI / 4);
+  const four = three + 60;
+  const center = two + 80;
 
   const pipe = scene.add.graphics();
   pipe.setDefaultStyles({
@@ -63,53 +64,20 @@ export function setupForkedPipe(
     lineStyle: { color: BLUE, width: 4 },
   });
 
-  // Vertical pipe segment
-  // Left vertical line
-  pipe.lineBetween(
-    straightPipeLeft,
-    pipeTop,
-    straightPipeLeft,
-    pipeStraightBottom,
-  );
-  // Right vertical line
-  pipe.lineBetween(
-    straightPipeRight,
-    pipeTop,
-    straightPipeRight,
-    pipeStraightBottom,
-  );
-
-  // Left Fork
-  // Left / outer side of fork
-  pipe.lineBetween(
-    straightPipeLeft,
-    pipeStraightBottom,
-    forkedPipeLeftLeft,
-    pipeForkInnerTop,
-  );
-
-  // Right / inner side of fork
-  pipe.lineBetween(
-    centerX,
-    pipeForkInnerTop,
-    forkedPipeLeftRight,
-    pipeForkBottom,
-  );
-
-  // Right fork
-  // Left / inner side of fork
-  pipe.lineBetween(
-    centerX,
-    pipeForkInnerTop,
-    forkedPipeRightLeft,
-    pipeForkBottom,
-  );
-  // Right / outer side of fork
-  pipe.lineBetween(
-    straightPipeRight,
-    pipeStraightBottom,
-    forkedPipeRightRight,
-    pipeForkInnerTop,
+  pipe.fillPoints(
+    [
+      new Point(C, one),
+      new Point(C, two),
+      new Point(A, three),
+      new Point(B, four),
+      new Point(centerX, center),
+      new Point(E, four),
+      new Point(F, three),
+      new Point(D, two),
+      new Point(D, one),
+    ],
+    true,
+    true,
   );
 
   /*
@@ -123,12 +91,7 @@ export function setupForkedPipe(
    the pipe and reinstate gravity and reduce the horizontal velocity so that
    the apple continues to fall more naturally.
    */
-  const directionTriggerPoint = scene.add.rectangle(
-    centerX,
-    pipeForkInnerTop - 25,
-    1,
-    1,
-  );
+  const directionTriggerPoint = scene.add.rectangle(centerX, 456 - 25, 1, 1);
   scene.physics.add.existing(directionTriggerPoint, true);
 
   scene.physics.add.collider(

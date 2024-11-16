@@ -21,9 +21,10 @@ export class Level1 extends AbstractCatcherScene {
 
   create() {
     super.create();
-    renderVerticalPipe(this, HALF_WIDTH);
     this.setupBasket();
     this.setupApple();
+
+    renderVerticalPipe(this, HALF_WIDTH);
 
     this.addCollisionHandling(this.basket, this.apple);
   }
