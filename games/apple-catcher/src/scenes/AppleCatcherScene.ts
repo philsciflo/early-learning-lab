@@ -5,10 +5,12 @@ import {
   BLACK_STRING,
   BLUE,
   GAME_AREA_WIDTH,
+  GAME_SCORE_DATA_KEY,
   GUTTER_WIDTH,
   HALF_WIDTH,
   HEIGHT,
   ORANGE,
+  PLAYER_ID_DATA_KEY,
   WIDTH,
 } from "../constants.ts";
 import Body = Phaser.Physics.Arcade.Body;
@@ -54,6 +56,12 @@ export abstract class AbstractCatcherScene extends Scene {
    */
   protected abstract doReset(): void;
 
+  /**
+   * Allows scenes to report their scene-specific data; called once per level
+   * and should return one record per try
+   */
+  protected abstract getSceneScoringData(): Record<string, unknown>[];
+
   preload() {
     this.load.image("tree", "assets/tree.png");
     this.load.image("apple", "assets/apple.png");
@@ -65,6 +73,25 @@ export abstract class AbstractCatcherScene extends Scene {
   init() {
     this.registry.set(this.triesDataKey, 0);
     this.registry.set(this.scoreDataKey, 0);
+    this.events.once("shutdown", () => {
+      /*
+       When the scene is shutdown, by navigating to another scene, we record
+       scores for the current scene
+       */
+      const sceneScoringData = this.getSceneScoringData();
+      if (sceneScoringData?.length > 0) {
+        const currentData = JSON.parse(
+          localStorage.getItem(GAME_SCORE_DATA_KEY) ?? "{}",
+        );
+
+        const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
+        currentData[playerId] = currentData[playerId] ?? {};
+        currentData[playerId][this.name] =
+          currentData[playerId][this.name] ?? [];
+        currentData[playerId][this.name].push(sceneScoringData);
+        localStorage.setItem(GAME_SCORE_DATA_KEY, JSON.stringify(currentData));
+      }
+    });
   }
 
   create() {

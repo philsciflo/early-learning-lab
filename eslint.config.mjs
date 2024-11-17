@@ -11,5 +11,8 @@ export default tseslint.config(
   eslintPluginPrettierRecommended,
   {
     ignores: ["**/*.js", "**/*.cjs"],
+    rules: {
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+    },
   },
 );

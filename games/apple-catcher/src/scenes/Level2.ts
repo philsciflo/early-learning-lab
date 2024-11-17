@@ -39,6 +39,10 @@ export class Level2 extends AbstractCatcherScene {
     this.resetApple();
   }
 
+  protected getSceneScoringData() {
+    return [];
+  }
+
   private setupBasket() {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")

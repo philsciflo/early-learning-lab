@@ -1,7 +1,9 @@
 import { Scene } from "phaser";
 import {
+  GAME_SCORE_DATA_KEY,
   HALF_HEIGHT,
   HALF_WIDTH,
+  HEIGHT,
   PLAYER_ID_DATA_KEY,
   QUARTER_WIDTH,
 } from "../constants.ts";
@@ -14,6 +16,8 @@ export class MainMenu extends Scene {
 
   preload() {
     this.load.html("name_input", "assets/html_text_input.html");
+    this.load.image("download-data", "assets/download-data.png");
+    this.load.image("delete-data", "assets/delete-data.png");
   }
 
   create() {
@@ -54,5 +58,29 @@ export class MainMenu extends Scene {
         this.scene.start("Level0");
       }
     });
+
+    this.add
+      .sprite(HALF_WIDTH - 100, HEIGHT - 50, "delete-data")
+      .setDisplaySize(50, 50)
+      .setInteractive()
+      .on("pointerdown", () => {
+        // remove the current data
+        localStorage.setItem(GAME_SCORE_DATA_KEY, "{}");
+      });
+
+    this.add
+      .sprite(HALF_WIDTH + 100, HEIGHT - 50, "download-data")
+      .setDisplaySize(50, 50)
+      .setInteractive()
+      .on("pointerdown", () => {
+        // Trigger download of the current data
+        const blob = new Blob(
+          [localStorage.getItem(GAME_SCORE_DATA_KEY) ?? ""],
+          {
+            type: "application/json",
+          },
+        );
+        window.location.href = URL.createObjectURL(blob);
+      });
   }
 }

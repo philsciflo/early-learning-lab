@@ -38,6 +38,10 @@ export class Level3 extends AbstractCatcherScene {
     this.resetApple();
   }
 
+  protected getSceneScoringData() {
+    return [];
+  }
+
   private renderThreeForkedPipe() {
     const pipeWidth = 80;
     const pipeTop = 280;
