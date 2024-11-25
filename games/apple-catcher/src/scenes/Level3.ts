@@ -4,10 +4,12 @@ import { BLUE, BASKET_BOTTOM, HALF_WIDTH, APPLE_TOP } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import Point = Phaser.Geom.Point;
+import { Level3ScoringData } from "../scoring.ts";
 
 export class Level3 extends AbstractCatcherScene {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
+  private scoringData: Level3ScoringData[];
 
   constructor() {
     super(
@@ -17,6 +19,11 @@ export class Level3 extends AbstractCatcherScene {
       "Level2",
       "Level4",
     );
+  }
+
+  init() {
+    super.init();
+    this.scoringData = [];
   }
 
   create() {
@@ -34,12 +41,28 @@ export class Level3 extends AbstractCatcherScene {
   }
 
   protected doReset(): void {
+    this.recordScoreDataForCurrentTry();
     this.resetBasket();
     this.resetApple();
   }
 
   protected getSceneScoringData() {
-    return [];
+    if (this.registry.get(this.triesDataKey) > this.scoringData.length) {
+      // capture the final score, if there was another try after the last reset,
+      // but not otherwise
+      this.recordScoreDataForCurrentTry();
+    }
+    return this.scoringData;
+  }
+
+  private recordScoreDataForCurrentTry() {
+    this.scoringData.push({
+      basket: {
+        x: this.basket.x,
+        y: this.basket.y,
+      },
+      score: this.apple.active ? 0 : 1,
+    });
   }
 
   private renderThreeForkedPipe() {

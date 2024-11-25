@@ -5,7 +5,6 @@ import {
   BLACK_STRING,
   BLUE,
   GAME_AREA_WIDTH,
-  GAME_SCORE_DATA_KEY,
   GUTTER_WIDTH,
   HALF_WIDTH,
   HEIGHT,
@@ -18,6 +17,7 @@ import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import Tile = Phaser.Tilemaps.Tile;
 import GameObjectWithBody = Phaser.Types.Physics.Arcade.GameObjectWithBody;
+import { PLAYER_SCORING_DATA, storeScoringDataForPlayer } from "../scoring.ts";
 
 const SCORE_DATA_KEY = "score";
 const TRIES_DATA_KEY = "tries";
@@ -35,7 +35,7 @@ export abstract class AbstractCatcherScene extends Scene {
   public scoreDataKey: string;
 
   protected constructor(
-    private name: string,
+    private name: keyof PLAYER_SCORING_DATA,
     protected levelTitle: string,
     protected instructions: string,
     protected prevSceneKey: string,
@@ -60,7 +60,7 @@ export abstract class AbstractCatcherScene extends Scene {
    * Allows scenes to report their scene-specific data; called once per level
    * and should return one record per try
    */
-  protected abstract getSceneScoringData(): Record<string, unknown>[];
+  protected abstract getSceneScoringData(): PLAYER_SCORING_DATA[AbstractCatcherScene["name"]]["tries"];
 
   preload() {
     this.load.image("tree", "assets/tree.png");
@@ -79,18 +79,8 @@ export abstract class AbstractCatcherScene extends Scene {
        scores for the current scene
        */
       const sceneScoringData = this.getSceneScoringData();
-      if (sceneScoringData?.length > 0) {
-        const currentData = JSON.parse(
-          localStorage.getItem(GAME_SCORE_DATA_KEY) ?? "{}",
-        );
-
-        const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
-        currentData[playerId] = currentData[playerId] ?? {};
-        currentData[playerId][this.name] =
-          currentData[playerId][this.name] ?? [];
-        currentData[playerId][this.name].push(sceneScoringData);
-        localStorage.setItem(GAME_SCORE_DATA_KEY, JSON.stringify(currentData));
-      }
+      const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
+      storeScoringDataForPlayer(playerId, this.name, sceneScoringData);
     });
   }
 

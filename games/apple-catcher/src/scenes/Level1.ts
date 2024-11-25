@@ -4,21 +4,12 @@ import { BASKET_BOTTOM, HALF_WIDTH, APPLE_TOP } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import { renderVerticalPipe } from "../pipes.ts";
-
-type ScoringData = {
-  // Where the basket was, relative to (0,0) top-left corner
-  basket: {
-    x: number;
-    y: number;
-  };
-  // 1 if the apple was caught, else 0
-  score: 0 | 1;
-};
+import { Level1ScoringData } from "../scoring.ts";
 
 export class Level1 extends AbstractCatcherScene {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
-  private scoringData: ScoringData[];
+  private scoringData: Level1ScoringData[];
 
   constructor() {
     super(

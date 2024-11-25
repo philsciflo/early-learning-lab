@@ -1,6 +1,5 @@
 import { Scene } from "phaser";
 import {
-  GAME_SCORE_DATA_KEY,
   HALF_HEIGHT,
   HALF_WIDTH,
   HEIGHT,
@@ -8,6 +7,11 @@ import {
   QUARTER_WIDTH,
 } from "../constants.ts";
 import { renderTextBanner } from "../banners.ts";
+import {
+  getScoreDataJSONString,
+  removeScoreData,
+  startNewScore,
+} from "../scoring.ts";
 
 export class MainMenu extends Scene {
   constructor() {
@@ -54,7 +58,7 @@ export class MainMenu extends Scene {
       if (playerId?.length >= 6) {
         // Set data in the global registry that can be accessed by all scenes
         this.registry.set(PLAYER_ID_DATA_KEY, playerId);
-
+        startNewScore(playerId);
         this.scene.start("Level0");
       }
     });
@@ -64,8 +68,7 @@ export class MainMenu extends Scene {
       .setDisplaySize(50, 50)
       .setInteractive()
       .on("pointerdown", () => {
-        // remove the current data
-        localStorage.setItem(GAME_SCORE_DATA_KEY, "{}");
+        removeScoreData();
       });
 
     this.add
@@ -74,12 +77,9 @@ export class MainMenu extends Scene {
       .setInteractive()
       .on("pointerdown", () => {
         // Trigger download of the current data
-        const blob = new Blob(
-          [localStorage.getItem(GAME_SCORE_DATA_KEY) ?? ""],
-          {
-            type: "application/json",
-          },
-        );
+        const blob = new Blob([getScoreDataJSONString()], {
+          type: "application/json",
+        });
         window.location.href = URL.createObjectURL(blob);
       });
   }
