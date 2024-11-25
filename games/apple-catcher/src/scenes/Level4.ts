@@ -7,10 +7,9 @@ import { renderVerticalPipe, setupForkedPipe } from "../pipes.ts";
 import Zone = Phaser.GameObjects.Zone;
 import { Level4ScoringData } from "../scoring.ts";
 
-export class Level4 extends AbstractCatcherScene {
+export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
-  private scoringData: Level4ScoringData[];
 
   constructor() {
     super(
@@ -28,11 +27,6 @@ export class Level4 extends AbstractCatcherScene {
   preload() {
     super.preload();
     this.load.image("apple-background", "assets/apple-background.png");
-  }
-
-  init() {
-    super.init();
-    this.scoringData = [];
   }
 
   create() {
@@ -55,22 +49,12 @@ export class Level4 extends AbstractCatcherScene {
   }
 
   protected doReset(): void {
-    this.recordScoreDataForCurrentTry();
     this.resetBasket();
     this.resetApple();
   }
 
-  protected getSceneScoringData() {
-    if (this.registry.get(this.triesDataKey) > this.scoringData.length) {
-      // capture the final score, if there was another try after the last reset,
-      // but not otherwise
-      this.recordScoreDataForCurrentTry();
-    }
-    return this.scoringData;
-  }
-
-  private recordScoreDataForCurrentTry() {
-    this.scoringData.push({
+  protected recordScoreDataForCurrentTry(): Level4ScoringData {
+    return {
       apple: {
         x: this.apple.x,
         y: APPLE_TOP,
@@ -79,8 +63,8 @@ export class Level4 extends AbstractCatcherScene {
         x: this.basket.x,
         y: this.basket.y,
       },
-      score: this.apple.active ? 0 : 1,
-    });
+      score: this.currentScore > 0 ? 1 : 0,
+    };
   }
 
   private setupBasket() {

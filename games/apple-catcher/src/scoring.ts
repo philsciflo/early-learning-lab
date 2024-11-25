@@ -27,11 +27,21 @@ export type TRIES_SCORING_DATA = {
 };
 
 export type PLAYER_SCORING_DATA = {
-  Level0: { tries: Level1ScoringData[] } & TRIES_SCORING_DATA;
+  Level0: { tries: Level0ScoringData[] } & TRIES_SCORING_DATA;
   Level1: { tries: Level1ScoringData[] } & TRIES_SCORING_DATA;
-  Level2: { tries: Level1ScoringData[] } & TRIES_SCORING_DATA;
-  Level3: { tries: Level1ScoringData[] } & TRIES_SCORING_DATA;
-  Level4: { tries: Level1ScoringData[] } & TRIES_SCORING_DATA;
+  Level2: { tries: Level2ScoringData[] } & TRIES_SCORING_DATA;
+  Level3: { tries: Level3ScoringData[] } & TRIES_SCORING_DATA;
+  Level4: { tries: Level4ScoringData[] } & TRIES_SCORING_DATA;
+};
+
+export type Level0ScoringData = {
+  // Where the basket was, relative to (0,0) top-left corner
+  basket: {
+    x: number;
+    y: number;
+  };
+  // 1 if the apple was caught, else 0
+  score: number;
 };
 
 export type Level1ScoringData = {
@@ -128,8 +138,9 @@ export function storeScoringDataForPlayer(
     const playerData: PLAYER_INSTANCE_SCORING_DATA[] = allData[playerId];
     const latestPlayData: PLAYER_SCORING_DATA =
       playerData[playerData.length - 1].scores;
-    latestPlayData[level].tries =
-      latestPlayData[level].tries.concat(scoringData);
+    latestPlayData[level].tries = latestPlayData[level].tries.concat(
+      scoringData as never, // Blergh; generics hard
+    );
     latestPlayData[level].count += scoringData.length;
 
     setScoringData(allData);

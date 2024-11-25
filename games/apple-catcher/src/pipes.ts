@@ -5,7 +5,7 @@ import Body = Phaser.Physics.Arcade.Body;
 import Point = Phaser.Geom.Point;
 
 export function renderVerticalPipe(
-  scene: AbstractCatcherScene,
+  scene: AbstractCatcherScene<unknown>,
   centerX: number,
 ) {
   const pipeWidth = 80;
@@ -22,7 +22,7 @@ export function renderVerticalPipe(
 }
 
 export function setupForkedPipe(
-  scene: AbstractCatcherScene,
+  scene: AbstractCatcherScene<unknown>,
   centerX: number,
   apple: GameObjectWithDynamicBody,
 ) {

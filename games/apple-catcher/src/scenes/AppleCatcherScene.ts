@@ -25,7 +25,7 @@ const TRIES_DATA_KEY = "tries";
 /**
  * Encapsulates the common setup between scenes of the Apple Catcher game
  */
-export abstract class AbstractCatcherScene extends Scene {
+export abstract class AbstractCatcherScene<T> extends Scene {
   private leftTreeLeft = GUTTER_WIDTH + 10;
   protected leftEdgeGameBound = this.leftTreeLeft + 200;
   private rightTreeLeft = GAME_AREA_WIDTH - 160;
@@ -33,6 +33,19 @@ export abstract class AbstractCatcherScene extends Scene {
 
   public triesDataKey: string;
   public scoreDataKey: string;
+
+  private scoringData: T[];
+
+  /**
+   * Score for the current drop
+   *
+   * &lt; 0 indicates no drop
+   *
+   * 0 dropped with no score
+   *
+   * &gt; 0 indicates a score
+   */
+  protected currentScore = -1;
 
   protected constructor(
     private name: keyof PLAYER_SCORING_DATA,
@@ -57,10 +70,9 @@ export abstract class AbstractCatcherScene extends Scene {
   protected abstract doReset(): void;
 
   /**
-   * Allows scenes to report their scene-specific data; called once per level
-   * and should return one record per try
+   * Allows scenes to report their scene-specific scoring data
    */
-  protected abstract getSceneScoringData(): PLAYER_SCORING_DATA[AbstractCatcherScene["name"]]["tries"];
+  protected abstract recordScoreDataForCurrentTry(): T;
 
   preload() {
     this.load.image("tree", "assets/tree.png");
@@ -71,16 +83,26 @@ export abstract class AbstractCatcherScene extends Scene {
   }
 
   init() {
+    this.scoringData = [];
+    this.currentScore = -1;
+
     this.registry.set(this.triesDataKey, 0);
     this.registry.set(this.scoreDataKey, 0);
+
     this.events.once("shutdown", () => {
       /*
        When the scene is shutdown, by navigating to another scene, we record
        scores for the current scene
        */
-      const sceneScoringData = this.getSceneScoringData();
       const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
-      storeScoringDataForPlayer(playerId, this.name, sceneScoringData);
+      if (this.currentScore >= 0) {
+        this.scoringData.push(this.recordScoreDataForCurrentTry());
+      }
+      storeScoringDataForPlayer(
+        playerId,
+        this.name,
+        this.scoringData as unknown as [], // Blergh; generics hard
+      );
     });
   }
 
@@ -224,6 +246,7 @@ export abstract class AbstractCatcherScene extends Scene {
 
     dropButton.on("pointerdown", () => {
       this.registry.inc(this.triesDataKey, 1);
+      this.currentScore++; // From -1 to 0
       dropButton.disableInteractive();
       this.doDrop();
     });
@@ -271,7 +294,11 @@ export abstract class AbstractCatcherScene extends Scene {
     );
 
     resetButton.on("pointerdown", () => {
+      if (this.currentScore >= 0) {
+        this.scoringData.push(this.recordScoreDataForCurrentTry());
+      }
       this.doReset();
+      this.currentScore = -1;
       dropButton.setInteractive();
     });
   }
@@ -289,6 +316,7 @@ export abstract class AbstractCatcherScene extends Scene {
       ) => {
         (apple as SpriteWithDynamicBody).disableBody(true, true);
         this.registry.inc(this.scoreDataKey, 1);
+        this.currentScore++;
       },
       (
         basket: Body | Tile | GameObjectWithBody,

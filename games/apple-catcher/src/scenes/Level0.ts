@@ -4,8 +4,9 @@ import Pointer = Phaser.Input.Pointer;
 import Body = Phaser.Physics.Arcade.Body;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
+import { Level0ScoringData } from "../scoring.ts";
 
-export class Level0 extends AbstractCatcherScene {
+export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
   private basket: SpriteWithStaticBody;
   private apples: SpriteWithDynamicBody[] = [];
   // a reference to the Interval controlling the apple dropping
@@ -58,8 +59,14 @@ export class Level0 extends AbstractCatcherScene {
     this.resetBasket();
   }
 
-  protected getSceneScoringData() {
-    return [];
+  protected recordScoreDataForCurrentTry(): Level0ScoringData {
+    return {
+      basket: {
+        x: this.basket.x,
+        y: this.basket.y,
+      },
+      score: this.currentScore > 0 ? this.currentScore : 0,
+    };
   }
 
   private setupBasket() {
