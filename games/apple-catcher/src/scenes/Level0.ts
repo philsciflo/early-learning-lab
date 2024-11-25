@@ -21,6 +21,17 @@ export class Level0 extends AbstractCatcherScene {
     );
   }
 
+  init() {
+    super.init();
+    this.events.once("shutdown", () => {
+      /*
+       When the scene is shutdown, by navigating to another scene, prevent more
+       apples dropping
+       */
+      clearInterval(this.dropInterval);
+    });
+  }
+
   create() {
     super.create();
     this.setupApples();
