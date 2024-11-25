@@ -10,6 +10,7 @@ import { Level4ScoringData } from "../scoring.ts";
 export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
+  private appleInValidStartingPosition: boolean;
 
   constructor() {
     super(
@@ -40,6 +41,10 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     setupForkedPipe(this, this.forkedPipeCenter, this.apple);
 
     this.addCollisionHandling(this.basket, this.apple);
+  }
+
+  protected canDrop(): boolean {
+    return this.appleInValidStartingPosition;
   }
 
   protected doDrop(): void {
@@ -115,6 +120,7 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
       .on("drop", (_pointer: never, dropZone: Zone) => {
         this.apple.x = dropZone.x;
         this.apple.y = dropZone.y;
+        this.appleInValidStartingPosition = true;
       });
     this.resetApple();
   }
@@ -128,6 +134,7 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     this.apple.setVisible(true);
     this.apple.setActive(true);
     this.apple.setInteractive();
+    this.appleInValidStartingPosition = false;
   }
 
   private renderAppleStartingPositions() {

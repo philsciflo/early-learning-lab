@@ -65,6 +65,14 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   protected abstract doDrop(): void;
 
   /**
+   * Hook for scenes to conditionally disable the drop button
+   * @protected
+   */
+  protected canDrop(): boolean {
+    return true;
+  }
+
+  /**
    * Callback for scene-specific actions when the Reset button is triggered
    */
   protected abstract doReset(): void;
@@ -245,10 +253,12 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     );
 
     dropButton.on("pointerdown", () => {
-      this.registry.inc(this.triesDataKey, 1);
-      this.currentScore++; // From -1 to 0
-      dropButton.disableInteractive();
-      this.doDrop();
+      if (this.canDrop()) {
+        this.registry.inc(this.triesDataKey, 1);
+        this.currentScore++; // From -1 to 0
+        dropButton.disableInteractive();
+        this.doDrop();
+      }
     });
 
     this.add
