@@ -4,7 +4,7 @@ import Pointer = Phaser.Input.Pointer;
 import Body = Phaser.Physics.Arcade.Body;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
-import { Level0ScoringData } from "../scoring.ts";
+import { CaughtAppleCount, Level0ScoringData } from "../scoring.ts";
 
 export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
   private basket: SpriteWithStaticBody;
@@ -65,7 +65,8 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
         x: this.basket.x,
         y: this.basket.y,
       },
-      score: this.currentScore > 0 ? this.currentScore : 0,
+      score:
+        this.currentScore > 0 ? (this.currentScore as CaughtAppleCount) : 0,
     };
   }
 

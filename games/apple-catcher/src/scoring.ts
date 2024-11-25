@@ -17,76 +17,73 @@ export type PLAYER_INSTANCE_SCORING_DATA = {
    * The scoring data for this play-through i.e. all the attempts on all the levels before returning to the main menu
    */
   scores: PLAYER_SCORING_DATA;
+  /**
+   * The sum of all tries over all levels
+   */
+  totalTries: number;
+  /**
+   * The sum of all scores over all levels
+   */
+  totalScore: number;
 };
 
-export type TRIES_SCORING_DATA = {
+export type COMMON_SCORING_DATA = {
   /**
    * The overall number of tries the player made for this level
    */
-  count: number;
+  tries: number;
+  /**
+   * The sum of all scores for all tries for this level
+   */
+  levelScore: number;
 };
 
 export type PLAYER_SCORING_DATA = {
-  Level0: { tries: Level0ScoringData[] } & TRIES_SCORING_DATA;
-  Level1: { tries: Level1ScoringData[] } & TRIES_SCORING_DATA;
-  Level2: { tries: Level2ScoringData[] } & TRIES_SCORING_DATA;
-  Level3: { tries: Level3ScoringData[] } & TRIES_SCORING_DATA;
-  Level4: { tries: Level4ScoringData[] } & TRIES_SCORING_DATA;
+  Level0: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
+  Level1: { tryData: Level1ScoringData[] } & COMMON_SCORING_DATA;
+  Level2: { tryData: Level2ScoringData[] } & COMMON_SCORING_DATA;
+  Level3: { tryData: Level3ScoringData[] } & COMMON_SCORING_DATA;
+  Level4: { tryData: Level4ScoringData[] } & COMMON_SCORING_DATA;
 };
 
-export type Level0ScoringData = {
-  // Where the basket was, relative to (0,0) top-left corner
-  basket: {
-    x: number;
-    y: number;
-  };
-  // 1 if the apple was caught, else 0
-  score: number;
+/**
+ * How many apples were caught
+ */
+export type CaughtAppleCount = 0 | 1 | 2 | 3 | 4 | 5;
+
+/**
+ * 1 if the apple was caught, else 0
+ */
+type AppleCaught = 0 | 1;
+
+/**
+ * Where the centre of the element was, relative to (0,0) top-left corner
+ */
+type Position = {
+  x: number;
+  y: number;
 };
 
-export type Level1ScoringData = {
-  // Where the basket was, relative to (0,0) top-left corner
-  basket: {
-    x: number;
-    y: number;
-  };
-  // 1 if the apple was caught, else 0
-  score: 0 | 1;
+type BaseScoringData = {
+  basket: Position;
 };
 
-export type Level2ScoringData = {
-  // Where the basket was, relative to (0,0) top-left corner
-  basket: {
-    x: number;
-    y: number;
-  };
-  // 1 if the apple was caught, else 0
-  score: 0 | 1;
+export type Level0ScoringData = BaseScoringData & {
+  score: CaughtAppleCount;
 };
 
-export type Level3ScoringData = {
-  // Where the basket was, relative to (0,0) top-left corner
-  basket: {
-    x: number;
-    y: number;
-  };
-  // 1 if the apple was caught, else 0
-  score: 0 | 1;
+export type BinaryScoringData = BaseScoringData & {
+  score: AppleCaught;
 };
 
-export type Level4ScoringData = {
-  // Where the apple was, relative to (0,0) top-left corner
-  apple: {
-    x: number;
-    y: number;
-  };
-  // Where the basket was, relative to (0,0) top-left corner
-  basket: {
-    x: number;
-    y: number;
-  };
-  // 1 if the apple was caught, else 0
-  score: 0 | 1;
+export type Level1ScoringData = BinaryScoringData;
+
+export type Level2ScoringData = BinaryScoringData;
+
+export type Level3ScoringData = BinaryScoringData;
+
+export type Level4ScoringData = BinaryScoringData & {
+  apple: Position;
 };
 
 export function removeScoreData(): void {
@@ -103,12 +100,14 @@ export function startNewScore(playerId: string): void {
   const newScoreData: PLAYER_INSTANCE_SCORING_DATA = {
     start: new Date(),
     scores: {
-      Level0: { tries: [], count: 0 },
-      Level1: { tries: [], count: 0 },
-      Level2: { tries: [], count: 0 },
-      Level3: { tries: [], count: 0 },
-      Level4: { tries: [], count: 0 },
+      Level0: { tryData: [], tries: 0, levelScore: 0 },
+      Level1: { tryData: [], tries: 0, levelScore: 0 },
+      Level2: { tryData: [], tries: 0, levelScore: 0 },
+      Level3: { tryData: [], tries: 0, levelScore: 0 },
+      Level4: { tryData: [], tries: 0, levelScore: 0 },
     },
+    totalTries: 0,
+    totalScore: 0,
   };
   if (currentData[playerId]) {
     currentData[playerId].push(newScoreData);
@@ -128,20 +127,49 @@ function setScoringData(allData: ALL_SCORING_DATA) {
   localStorage.setItem(GAME_SCORE_DATA_KEY, JSON.stringify(allData));
 }
 
+export function getPlayerOverallScore(playerId: string): number {
+  const latestPlayerData = getLatestPlayerData(getScoreData(), playerId);
+  if (latestPlayerData.totalTries === 0) {
+    return 0;
+  }
+  return latestPlayerData.totalScore / latestPlayerData.totalTries;
+}
+
+function getLatestPlayerData(allData: ALL_SCORING_DATA, playerId: string) {
+  const playerData: PLAYER_INSTANCE_SCORING_DATA[] = allData[playerId];
+  return playerData[playerData.length - 1];
+}
+
 export function storeScoringDataForPlayer(
   playerId: string,
   level: keyof PLAYER_SCORING_DATA,
-  scoringData: PLAYER_SCORING_DATA[typeof level]["tries"],
+  scoringData: PLAYER_SCORING_DATA[typeof level]["tryData"],
 ): void {
   if (scoringData.length > 0) {
     const allData: ALL_SCORING_DATA = getScoreData();
-    const playerData: PLAYER_INSTANCE_SCORING_DATA[] = allData[playerId];
-    const latestPlayData: PLAYER_SCORING_DATA =
-      playerData[playerData.length - 1].scores;
-    latestPlayData[level].tries = latestPlayData[level].tries.concat(
-      scoringData as never, // Blergh; generics hard
+    const playerInstanceData = getLatestPlayerData(allData, playerId);
+
+    const latestPlayerScoringData: PLAYER_SCORING_DATA =
+      playerInstanceData.scores;
+    const levelScoringData = latestPlayerScoringData[level];
+
+    // Add data for this level
+    levelScoringData.tryData.push(scoringData as never);
+    levelScoringData.tries += scoringData.length;
+    levelScoringData.levelScore += scoringData.reduce(
+      (previousValue, currentValue) => previousValue + currentValue.score,
+      0,
     );
-    latestPlayData[level].count += scoringData.length;
+
+    // Recalculate the overall aggregate data
+    playerInstanceData.totalScore = 0;
+    playerInstanceData.totalTries = 0;
+    Object.keys(latestPlayerScoringData).forEach((key) => {
+      const levelData =
+        latestPlayerScoringData[key as keyof PLAYER_SCORING_DATA];
+      playerInstanceData.totalScore += levelData.levelScore;
+      playerInstanceData.totalTries += levelData.tries;
+    });
 
     setScoringData(allData);
   }

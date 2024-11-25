@@ -6,6 +6,7 @@ import {
   PLAYER_ID_DATA_KEY,
   QUARTER_WIDTH,
 } from "../constants.ts";
+import { getPlayerOverallScore } from "../scoring.ts";
 
 export class GameOver extends Scene {
   constructor() {
@@ -19,11 +20,13 @@ export class GameOver extends Scene {
   create() {
     renderTextBanner(this, {}, { text: "Ngā mihi!", yOffset: 30 });
 
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
+    const playerScore = getPlayerOverallScore(playerId);
     renderTextBanner(
       this,
       { y: HALF_HEIGHT, height: 100 },
       {
-        text: `Your Player ID: ${this.registry.get(PLAYER_ID_DATA_KEY)}\nYour score: ${"TBC"}`,
+        text: `Your Player ID: ${playerId}\nYour score: ${playerScore.toFixed(1)}`,
         yOffset: 15,
       },
     );
