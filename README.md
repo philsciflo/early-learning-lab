@@ -45,6 +45,7 @@ In the game directory, e.g. `./games/apple-catcher`
 1. Duplicate the `games/template` directory, with a new name, and
    1. Change the `name` in `package.json` to match the directory name.
    2. Change the final path segment in the `outDir` in `/vite/config.prod.mjs` to match the directory name.
+   3. Change the `title` in `index.html` to the game name.
 2. Create a new file `<game-name>.md` in the `_games` directory , with the following content
 
 ```

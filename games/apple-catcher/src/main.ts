@@ -1,7 +1,5 @@
-import { Boot } from "./scenes/Boot";
 import { GameOver } from "./scenes/GameOver";
 import { MainMenu } from "./scenes/MainMenu";
-import { Preloader } from "./scenes/Preloader";
 
 import { Game, Types } from "phaser";
 import { HEIGHT, ORANGE_STRING, WIDTH } from "./constants.ts";
@@ -34,17 +32,7 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  scene: [
-    Boot,
-    Preloader,
-    MainMenu,
-    Level0,
-    Level1,
-    Level2,
-    Level3,
-    Level4,
-    GameOver,
-  ],
+  scene: [MainMenu, Level0, Level1, Level2, Level3, Level4, GameOver],
 };
 
 export default new Game(config);

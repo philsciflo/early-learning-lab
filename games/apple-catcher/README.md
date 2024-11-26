@@ -1,6 +1,4 @@
-# Phaser Vite TypeScript Template
-
-Apple Catcher
+# Apple Catcher
 
 ## Available Commands
 
