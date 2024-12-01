@@ -61,10 +61,6 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
 
   protected recordScoreDataForCurrentTry(): Level0ScoringData {
     return {
-      basket: {
-        x: this.basket.x,
-        y: this.basket.y,
-      },
       score:
         this.currentScore > 0 ? (this.currentScore as CaughtAppleCount) : 0,
     };

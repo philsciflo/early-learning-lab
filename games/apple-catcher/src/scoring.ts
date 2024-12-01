@@ -68,7 +68,7 @@ type BaseScoringData = {
   basket: Position;
 };
 
-export type Level0ScoringData = BaseScoringData & {
+export type Level0ScoringData = {
   score: CaughtAppleCount;
 };
 
