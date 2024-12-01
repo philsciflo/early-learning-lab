@@ -84,6 +84,7 @@ export type Level3ScoringData = BinaryScoringData;
 
 export type Level4ScoringData = BinaryScoringData & {
   apple: Position;
+  pipeLayout: 0 | 1;
 };
 
 export function removeScoreData(): void {

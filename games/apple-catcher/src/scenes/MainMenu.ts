@@ -23,6 +23,7 @@ export class MainMenu extends Scene {
     this.load.image("download-data", "assets/download-data.png");
     this.load.image("delete-data", "assets/delete-data.png");
     this.load.image("start", "assets/power-button.png");
+    this.load.image("move", "assets/move.png");
   }
 
   create() {

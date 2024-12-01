@@ -3,14 +3,28 @@ import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
 import { BASKET_BOTTOM, HALF_WIDTH, APPLE_TOP } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-import { renderVerticalPipe, setupForkedPipe } from "../pipes.ts";
+import { ForkedPipe, renderVerticalPipe, setupForkedPipe } from "../pipes.ts";
 import Zone = Phaser.GameObjects.Zone;
 import { Level4ScoringData } from "../scoring.ts";
 
+type PipeLayoutOption = 0 | 1;
+
 export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
+  private readonly verticalPipeLocations = [HALF_WIDTH - 190, HALF_WIDTH + 135];
+  private readonly forkedPipeLocations = [HALF_WIDTH + 200, HALF_WIDTH - 50];
+  /**
+   * Index into the possible pipe locations
+   */
+  private pipeLayout: PipeLayoutOption = 0;
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
   private appleInValidStartingPosition: boolean;
+  private firstAppleImage: Phaser.GameObjects.Image;
+  private firstAppleZone: Phaser.GameObjects.Zone;
+  private secondAppleImage: Phaser.GameObjects.Image;
+  private secondAppleZone: Phaser.GameObjects.Zone;
+  private verticalPipe: Phaser.GameObjects.Image;
+  private forkedPipe: ForkedPipe;
 
   constructor() {
     super(
@@ -22,9 +36,6 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     );
   }
 
-  private readonly verticalPipeCenter = HALF_WIDTH - 190;
-  private readonly forkedPipeCenter = HALF_WIDTH + 135;
-
   preload() {
     super.preload();
     this.load.image("apple-background", "assets/apple-background.png");
@@ -33,14 +44,17 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
   create() {
     super.create();
 
-    this.renderAppleStartingPositions();
+    this.pickPipeLayoutOption();
+    this.setupAppleStartingPositions();
     this.setupBasket();
     this.setupApple();
-
-    renderVerticalPipe(this, this.verticalPipeCenter);
-    setupForkedPipe(this, this.forkedPipeCenter, this.apple);
+    this.setupPipes();
 
     this.addCollisionHandling(this.basket, this.apple);
+  }
+
+  private pickPipeLayoutOption() {
+    this.pipeLayout = Phaser.Math.RND.integerInRange(0, 1) as PipeLayoutOption;
   }
 
   protected canDrop(): boolean {
@@ -54,8 +68,31 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
   }
 
   protected doReset(): void {
+    this.pickPipeLayoutOption();
     this.resetBasket();
     this.resetApple();
+    this.resetAppleStartingPositions();
+    this.resetPipes();
+  }
+
+  private setupPipes() {
+    this.verticalPipe = renderVerticalPipe(
+      this,
+      this.verticalPipeLocations[this.pipeLayout],
+      true,
+    );
+    this.forkedPipe = setupForkedPipe(
+      this,
+      this.forkedPipeLocations[this.pipeLayout],
+      this.apple,
+      true,
+    );
+    this.resetPipes();
+  }
+
+  private resetPipes() {
+    this.verticalPipe.setX(this.verticalPipeLocations[this.pipeLayout]);
+    this.forkedPipe.setX(this.forkedPipeLocations[this.pipeLayout]);
   }
 
   protected recordScoreDataForCurrentTry(): Level4ScoringData {
@@ -68,6 +105,7 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
         x: this.basket.x,
         y: this.basket.y,
       },
+      pipeLayout: this.pipeLayout,
       score: this.currentScore > 0 ? 1 : 0,
     };
   }
@@ -137,15 +175,39 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     this.appleInValidStartingPosition = false;
   }
 
-  private renderAppleStartingPositions() {
-    this.add.image(this.verticalPipeCenter, APPLE_TOP, "apple-background");
-    this.add
-      .zone(this.verticalPipeCenter, APPLE_TOP, 50, 50)
+  private setupAppleStartingPositions() {
+    const verticalPipeAppleLocationCenter =
+      this.verticalPipeLocations[this.pipeLayout];
+    this.firstAppleImage = this.add.image(
+      verticalPipeAppleLocationCenter,
+      APPLE_TOP,
+      "apple-background",
+    );
+    this.firstAppleZone = this.add
+      .zone(verticalPipeAppleLocationCenter, APPLE_TOP, 50, 50)
       .setRectangleDropZone(70, 70);
 
-    this.add.image(this.forkedPipeCenter, APPLE_TOP, "apple-background");
-    this.add
-      .zone(this.forkedPipeCenter, APPLE_TOP, 50, 50)
+    const forkedPipeAppleStartingLocation =
+      this.forkedPipeLocations[this.pipeLayout] - 75;
+    this.secondAppleImage = this.add.image(
+      forkedPipeAppleStartingLocation,
+      APPLE_TOP,
+      "apple-background",
+    );
+    this.secondAppleZone = this.add
+      .zone(forkedPipeAppleStartingLocation, APPLE_TOP, 50, 50)
       .setRectangleDropZone(70, 70);
+  }
+
+  private resetAppleStartingPositions() {
+    const verticalPipeAppleLocationCenter =
+      this.verticalPipeLocations[this.pipeLayout];
+    this.firstAppleImage.setX(verticalPipeAppleLocationCenter);
+    this.firstAppleZone.setX(verticalPipeAppleLocationCenter);
+
+    const forkedPipeAppleStartingLocation =
+      this.forkedPipeLocations[this.pipeLayout] - 75;
+    this.secondAppleImage.setX(forkedPipeAppleStartingLocation);
+    this.secondAppleZone.setX(forkedPipeAppleStartingLocation);
   }
 }
