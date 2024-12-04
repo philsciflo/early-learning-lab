@@ -58,13 +58,14 @@ export function renderText(
   x: number,
   y: number,
   text: string,
-) {
-  scene.add
+  origin?: number,
+): Phaser.GameObjects.Text {
+  return scene.add
     .text(x, y, text, {
       fontFamily: "Arial",
       fontSize: 30,
       color: BLACK_STRING,
       align: "center",
     })
-    .setOrigin(0.5, 0);
+    .setOrigin(origin ?? 0.5, 0);
 }

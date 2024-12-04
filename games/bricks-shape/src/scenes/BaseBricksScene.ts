@@ -15,6 +15,8 @@ import {
  * Encapsulates the common setup between scenes of the Bricks Shape game
  */
 export abstract class BaseBricksScene extends Scene {
+  protected startTime: DOMHighResTimeStamp;
+
   protected constructor(
     name: string,
     protected levelTitle: string,
@@ -38,8 +40,22 @@ export abstract class BaseBricksScene extends Scene {
   create() {
     this.renderStaticBackgroundItems();
     this.renderNavigationButtons();
-    renderText(this, WIDTH - GUTTER_WIDTH - 100, 150, "Time: ___");
+    const timeText = renderText(
+      this,
+      WIDTH - GUTTER_WIDTH - 150,
+      150,
+      "Time:",
+      0,
+    );
     renderText(this, TARGET_LEFT + 50, TARGET_TOP - 50, "Target");
+
+    this.startTime = window.performance.now();
+
+    this.events.on("update", (currentTime: number) => {
+      timeText.setText(
+        `Time: ${((currentTime - this.startTime) / 1000).toFixed(0)}s`,
+      );
+    });
   }
 
   private renderStaticBackgroundItems() {
