@@ -832,6 +832,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bricks-shape@workspace:games/bricks-shape":
+  version: 0.0.0-use.local
+  resolution: "bricks-shape@workspace:games/bricks-shape"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
+
 "buffer-from@npm:^1.0.0":
   version: 1.1.2
   resolution: "buffer-from@npm:1.1.2"
