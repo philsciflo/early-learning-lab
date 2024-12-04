@@ -7,6 +7,13 @@ export class MainMenu extends Scene {
     super("MainMenu");
   }
 
+  preload() {
+    this.load.html("name_input", "assets/html_text_input.html");
+    this.load.image("download-data", "assets/download-data.png");
+    this.load.image("delete-data", "assets/delete-data.png");
+    this.load.image("start", "assets/power-button.png");
+  }
+
   create() {
     this.title = this.add
       .text(512, 460, "Hello, World!", {
