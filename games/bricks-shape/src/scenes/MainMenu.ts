@@ -2,10 +2,17 @@ import { Scene, GameObjects } from "phaser";
 import {
   HALF_HEIGHT,
   HALF_WIDTH,
+  HEIGHT,
+  PLAYER_ID_PAIR_DATA_KEY,
   QUARTER_HEIGHT,
   QUARTER_WIDTH,
 } from "../constants.ts";
 import { renderText, renderTextBanner } from "../banners.ts";
+import {
+  getScoreDataJSONString,
+  removeScoreData,
+  startNewScore,
+} from "../scoring.ts";
 
 export class MainMenu extends Scene {
   title: GameObjects.Text;
@@ -16,6 +23,8 @@ export class MainMenu extends Scene {
 
   preload() {
     this.load.html("name_input", "assets/html_text_input.html");
+    this.load.image("download-data", "assets/download-data.png");
+    this.load.image("delete-data", "assets/delete-data.png");
     this.load.image("start", "assets/power-button.png");
   }
 
@@ -55,7 +64,39 @@ export class MainMenu extends Scene {
       .setInteractive();
 
     startButton.on("pointerdown", () => {
-      this.scene.start("Level1");
+      const playerAId = (
+        playerAInput.getChildByName("input") as HTMLInputElement
+      ).value;
+      const playerBId = (
+        playerBInput.getChildByName("input") as HTMLInputElement
+      ).value;
+      if (playerAId?.length >= 6 && playerBId?.length >= 6) {
+        // Set data in the global registry that can be accessed by all scenes
+        const playerIdPair = `${playerAId}-${playerBId}`;
+        this.registry.set(PLAYER_ID_PAIR_DATA_KEY, playerIdPair);
+        startNewScore(playerIdPair);
+        this.scene.start("Level1");
+      }
     });
+
+    this.add
+      .sprite(HALF_WIDTH - 100, HEIGHT - 50, "delete-data")
+      .setDisplaySize(50, 50)
+      .setInteractive()
+      .on("pointerdown", () => {
+        removeScoreData();
+      });
+
+    this.add
+      .sprite(HALF_WIDTH + 100, HEIGHT - 50, "download-data")
+      .setDisplaySize(50, 50)
+      .setInteractive()
+      .on("pointerdown", () => {
+        // Trigger download of the current data
+        const blob = new Blob([getScoreDataJSONString()], {
+          type: "application/json",
+        });
+        window.location.href = URL.createObjectURL(blob);
+      });
   }
 }

@@ -17,5 +17,5 @@ export const BLUE = 0x1e90ff;
 export const ORANGE_STRING = "#ffa500";
 export const ORANGE = parseInt(ORANGE_STRING.substring(1), 16);
 
-export const GAME_SCORE_DATA_KEY = "ele-data";
+export const GAME_SCORE_DATA_KEY = "apple-catcher-data";
 export const PLAYER_ID_DATA_KEY = "playerId";

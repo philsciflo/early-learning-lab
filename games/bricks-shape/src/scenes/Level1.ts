@@ -5,7 +5,6 @@ import {
   BUILD_AREA_LEFT,
   BUILD_AREA_TOP,
   FUSCHIA,
-  HALF_WIDTH,
   LIME,
   ORANGE,
   RED,
@@ -16,7 +15,8 @@ import {
 } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import Zone = Phaser.GameObjects.Zone;
-import { renderText } from "../banners.ts";
+import { LevelScoringData } from "../scoring.ts";
+import GameObject = Phaser.GameObjects.GameObject;
 
 export class Level1 extends BaseBricksScene {
   private readonly rows = 2;
@@ -31,11 +31,15 @@ export class Level1 extends BaseBricksScene {
     6 * TILE_SIZE,
   ];
   private buildTileYOffsets = [10, 20, 30, 40, 50, 60];
+  /**
+   * All the tiles (target shapes, build shapes, build drop zones) created in this scene
+   */
   private allTiles: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super(
       "Level1",
+      "PlayerA",
       '"Bricks Shape" - Level 1',
       "Player A build the target shape!",
       "MainMenu",
@@ -44,6 +48,7 @@ export class Level1 extends BaseBricksScene {
   }
 
   init() {
+    super.init();
     this.resetTileSeedData();
   }
 
@@ -81,25 +86,6 @@ export class Level1 extends BaseBricksScene {
         .fillRect(0, 0, TILE_SIZE, TILE_SIZE)
         .generateTexture("" + colour, TILE_SIZE, TILE_SIZE);
     }
-
-    const resetButton = this.add.graphics();
-    resetButton.lineStyle(2, BLACK);
-    resetButton.fillStyle(ORANGE);
-
-    const resetLeft = HALF_WIDTH - 75;
-    const resetTop = TARGET_TOP - 70;
-    resetButton.fillRoundedRect(resetLeft, resetTop, 100, 50, 5);
-    resetButton.strokeRoundedRect(resetLeft, resetTop, 100, 50, 5);
-    renderText(this, resetLeft + 50, resetTop + 8, "Reset");
-
-    resetButton.setInteractive(
-      new Phaser.Geom.Rectangle(resetLeft, resetTop, 100, 50),
-      Phaser.Geom.Rectangle.Contains,
-    );
-
-    resetButton.on("pointerdown", () => {
-      this.doReset();
-    });
 
     this.resetTiles();
   }
@@ -169,6 +155,8 @@ export class Level1 extends BaseBricksScene {
         .on("dragstart", () => {
           // Make sure the current tile is always visually at the top
           buildTile.setToTop();
+          // Assume a moving tile is no longer in the correct location; it may be set back to true on drop
+          buildTile.setData<boolean>("correct", false);
         })
         .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
           buildTile.setPosition(dragX, dragY);
@@ -177,7 +165,12 @@ export class Level1 extends BaseBricksScene {
           // Snap the tile to the location created for it... doing silly math because of inconsistent origins
           buildTile.x = dropZone.x - dropZone.input?.hitArea.width / 2;
           buildTile.y = dropZone.y - dropZone.input?.hitArea.height / 2;
-          // FIXME disable drop zones when there is a tile snapped to it, and enable them again if it leaves
+          // FIXME disable drop zones when there is a tile snapped to it, and enable them again if it leaves so that
+          // we don't have multiple tiles in the same place?
+          if (dropZone === zone) {
+            // The tile has been dropped in the zone that matches the tile, so it's in the correct spot
+            buildTile.setData<boolean>("correct", true);
+          }
         });
       this.allTiles.push(buildTile);
     }
@@ -185,5 +178,27 @@ export class Level1 extends BaseBricksScene {
 
   private removeExistingTiles() {
     this.allTiles.forEach((item) => item.destroy());
+    this.allTiles = [];
+  }
+
+  protected recordScoreDataForCurrentTry(): LevelScoringData {
+    const endTime = window.performance.now();
+    const elapsedTimeInSeconds = (endTime - this.startTime) / 1000;
+
+    const allTilesInCorrectLocation = this.allTiles.reduce(
+      (allMatch: boolean, tile: GameObject) => {
+        const matchData = tile.getData("correct");
+        if (matchData === undefined) {
+          return allMatch;
+        }
+        return allMatch && matchData;
+      },
+      true,
+    );
+
+    return {
+      complete: allTilesInCorrectLocation,
+      time: elapsedTimeInSeconds,
+    };
   }
 }
