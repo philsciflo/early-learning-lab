@@ -15,10 +15,10 @@ import {
 } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import Zone = Phaser.GameObjects.Zone;
-import { LevelScoringData } from "../scoring.ts";
+import { LevelScoringData, PLAYER_SCORING_DATA } from "../scoring.ts";
 import GameObject = Phaser.GameObjects.GameObject;
 
-export class Level1 extends BaseBricksScene {
+export abstract class IndividualPlayerScene extends BaseBricksScene {
   private readonly rows = 2;
   private readonly cols = 3;
   private colours = [FUSCHIA, AQUA, LIME, YELLOW, RED, ORANGE];
@@ -36,15 +36,15 @@ export class Level1 extends BaseBricksScene {
    */
   private allTiles: Phaser.GameObjects.GameObject[] = [];
 
-  constructor() {
-    super(
-      "Level1",
-      "PlayerA",
-      '"Bricks Shape" - Level 1',
-      "Player A build the target shape!",
-      "MainMenu",
-      "Level2",
-    );
+  protected constructor(
+    name: string,
+    scoreKey: keyof PLAYER_SCORING_DATA,
+    levelTitle: string,
+    instructions: string,
+    prevSceneKey: string,
+    nextSceneKey: string,
+  ) {
+    super(name, scoreKey, levelTitle, instructions, prevSceneKey, nextSceneKey);
   }
 
   init() {

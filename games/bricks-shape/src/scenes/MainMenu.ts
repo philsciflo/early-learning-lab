@@ -75,7 +75,7 @@ export class MainMenu extends Scene {
         const playerIdPair = `${playerAId}-${playerBId}`;
         this.registry.set(PLAYER_ID_PAIR_DATA_KEY, playerIdPair);
         startNewScore(playerIdPair);
-        this.scene.start("Level1");
+        this.scene.start("Level1PlayerA");
       }
     });
 
