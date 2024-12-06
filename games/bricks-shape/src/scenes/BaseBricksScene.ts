@@ -92,10 +92,15 @@ export abstract class BaseBricksScene extends Scene {
 
     this.startTime = window.performance.now();
 
-    this.events.on("update", (currentTime: number) => {
+    const timerUpdateFunction = (currentTime: number) => {
       timeText.setText(
         `Time: ${((currentTime - this.startTime) / 1000).toFixed(0)}s`,
       );
+    };
+    this.events.on("update", timerUpdateFunction);
+
+    this.events.once("shutdown", () => {
+      this.events.removeListener("update", timerUpdateFunction);
     });
   }
 
