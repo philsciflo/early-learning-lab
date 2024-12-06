@@ -16,7 +16,7 @@ import {
 import Pointer = Phaser.Input.Pointer;
 import Zone = Phaser.GameObjects.Zone;
 import { LevelScoringData, PLAYER_SCORING_DATA } from "../scoring.ts";
-import GameObject = Phaser.GameObjects.GameObject;
+import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
 
 export abstract class IndividualPlayerScene extends BaseBricksScene {
   private readonly rows = 2;
@@ -35,6 +35,8 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
    * All the tiles (target shapes, build shapes, build drop zones) created in this scene
    */
   private allTiles: Phaser.GameObjects.GameObject[] = [];
+  private readonly TILE_IN_CORRECT_LOCATION_DATA_KEY = "correct";
+  private correctTileCount = 0;
 
   protected constructor(
     name: string,
@@ -103,6 +105,7 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
   private resetTiles() {
     this.resetTileSeedData();
     this.removeExistingTiles();
+    this.correctTileCount = 0;
     for (let tileIndex = 1; tileIndex <= this.rows * this.cols; tileIndex++) {
       const colour = this.colours[tileIndex - 1];
 
@@ -152,11 +155,32 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
         )
         .setOrigin(0, 0)
         .setInteractive({ draggable: true })
+        .setDataEnabled()
+        .setData<boolean>(this.TILE_IN_CORRECT_LOCATION_DATA_KEY, false)
+        .on(
+          `changedata-${this.TILE_IN_CORRECT_LOCATION_DATA_KEY}`,
+          (
+            _tile: SpriteWithStaticBody,
+            newValue: boolean,
+            currentValue: boolean,
+          ) => {
+            if (newValue !== currentValue) {
+              if (newValue) {
+                this.correctTileCount++;
+              } else {
+                this.correctTileCount--;
+              }
+            }
+          },
+        )
         .on("dragstart", () => {
           // Make sure the current tile is always visually at the top
           buildTile.setToTop();
           // Assume a moving tile is no longer in the correct location; it may be set back to true on drop
-          buildTile.setData<boolean>("correct", false);
+          buildTile.setData<boolean>(
+            this.TILE_IN_CORRECT_LOCATION_DATA_KEY,
+            false,
+          );
         })
         .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
           buildTile.setPosition(dragX, dragY);
@@ -169,7 +193,10 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
           // we don't have multiple tiles in the same place?
           if (dropZone === zone) {
             // The tile has been dropped in the zone that matches the tile, so it's in the correct spot
-            buildTile.setData<boolean>("correct", true);
+            buildTile.setData<boolean>(
+              this.TILE_IN_CORRECT_LOCATION_DATA_KEY,
+              true,
+            );
           }
         });
       this.allTiles.push(buildTile);
@@ -185,19 +212,8 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
     const endTime = window.performance.now();
     const elapsedTimeInSeconds = (endTime - this.startTime) / 1000;
 
-    const allTilesInCorrectLocation = this.allTiles.reduce(
-      (allMatch: boolean, tile: GameObject) => {
-        const matchData = tile.getData("correct");
-        if (matchData === undefined) {
-          return allMatch;
-        }
-        return allMatch && matchData;
-      },
-      true,
-    );
-
     return {
-      complete: allTilesInCorrectLocation,
+      complete: this.correctTileCount === 6,
       time: elapsedTimeInSeconds,
     };
   }
