@@ -7,13 +7,15 @@ export const WIDTH = 1024; //px
 export const GAME_AREA_WIDTH = WIDTH - 2 * GUTTER_WIDTH; //px
 export const HALF_WIDTH = WIDTH / 2; //px
 export const QUARTER_WIDTH = WIDTH / 4; //px
+export const BACKGROUND_BOX_HEIGHT = 110;
 
-export const TILE_SIZE = 110;
+export const BUILD_TILE_SIZE = 200;
+export const TARGET_TILE_SIZE = 50;
 
-export const TARGET_LEFT = 100;
-export const TARGET_TOP = 200;
-export const BUILD_AREA_LEFT = TARGET_LEFT + 4 * TILE_SIZE;
-export const BUILD_AREA_TOP = TARGET_TOP;
+export const BUILD_AREA_LEFT = GUTTER_WIDTH + 50;
+export const BUILD_AREA_TOP = BACKGROUND_BOX_HEIGHT + 50;
+export const TARGET_LEFT = WIDTH - GUTTER_WIDTH - 4 * TARGET_TILE_SIZE;
+export const TARGET_TOP = BUILD_AREA_TOP;
 
 export const WHITE = 0xffffff;
 export const BLACK_STRING = "#000000";

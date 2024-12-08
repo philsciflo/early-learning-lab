@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import { renderBanner, renderText, renderTextBanner } from "../banners.ts";
 import {
+  BACKGROUND_BOX_HEIGHT,
   BLACK,
   GAME_AREA_WIDTH,
   GUTTER_WIDTH,
@@ -61,21 +62,15 @@ export abstract class BaseBricksScene extends Scene {
   create() {
     this.renderStaticBackgroundItems();
     this.renderNavigationButtons();
-    const timeText = renderText(
-      this,
-      WIDTH - GUTTER_WIDTH - 150,
-      150,
-      "Time:",
-      0,
-    );
-    renderText(this, TARGET_LEFT + 50, TARGET_TOP - 50, "Target");
+
+    renderText(this, TARGET_LEFT + 50, TARGET_TOP - 40, "Target");
 
     const resetButton = this.add.graphics();
     resetButton.lineStyle(2, BLACK);
     resetButton.fillStyle(ORANGE);
 
-    const resetLeft = HALF_WIDTH - 75;
-    const resetTop = TARGET_TOP - 70;
+    const resetLeft = TARGET_LEFT;
+    const resetTop = TARGET_TOP + 150;
     resetButton.fillRoundedRect(resetLeft, resetTop, 100, 50, 5);
     resetButton.strokeRoundedRect(resetLeft, resetTop, 100, 50, 5);
     renderText(this, resetLeft + 50, resetTop + 8, "Reset");
@@ -91,6 +86,14 @@ export abstract class BaseBricksScene extends Scene {
     });
 
     this.startTime = window.performance.now();
+
+    const timeText = renderText(
+      this,
+      TARGET_LEFT,
+      TARGET_TOP + 250,
+      "Time: 0s",
+      0,
+    );
 
     const timerUpdateFunction = (currentTime: number) => {
       timeText.setText(
@@ -120,7 +123,7 @@ export abstract class BaseBricksScene extends Scene {
     // White background box
     renderBanner(this, {
       x: GUTTER_WIDTH,
-      y: 110,
+      y: BACKGROUND_BOX_HEIGHT,
       width: GAME_AREA_WIDTH,
       height: HEIGHT - 118,
     });
