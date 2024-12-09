@@ -1,4 +1,5 @@
 import { IndividualPlayerScene } from "./IndividualPlayerScene.ts";
+import { AQUA, FUSCHIA, LIME, ORANGE, RED, YELLOW } from "../constants.ts";
 
 export class Level1PlayerA extends IndividualPlayerScene {
   constructor() {
@@ -9,6 +10,9 @@ export class Level1PlayerA extends IndividualPlayerScene {
       "Player A build the target shape!",
       "MainMenu",
       "Level1PlayerB",
+      2,
+      3,
+      [FUSCHIA, AQUA, LIME, YELLOW, RED, ORANGE],
     );
   }
 }

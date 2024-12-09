@@ -5,6 +5,7 @@ import { MainMenu } from "./scenes/MainMenu";
 import { Game, Types } from "phaser";
 import { HEIGHT, WIDTH } from "./constants.ts";
 import { Level1PlayerB } from "./scenes/Level1PlayerB.ts";
+import { Level2 } from "./scenes/Level2.ts";
 
 const config: Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -19,7 +20,7 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  scene: [MainMenu, Level1PlayerA, Level1PlayerB, GameOver],
+  scene: [MainMenu, Level1PlayerA, Level1PlayerB, Level2, GameOver],
 };
 
 export default new Game(config);

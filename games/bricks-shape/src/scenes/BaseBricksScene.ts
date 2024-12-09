@@ -1,12 +1,12 @@
 import { Scene } from "phaser";
 import { renderBanner, renderText, renderTextBanner } from "../banners.ts";
 import {
-  BACKGROUND_BOX_HEIGHT,
+  GAME_AREA_TOP,
   BLACK,
+  GAME_AREA_HEIGHT,
   GAME_AREA_WIDTH,
   GUTTER_WIDTH,
   HALF_WIDTH,
-  HEIGHT,
   ORANGE,
   PLAYER_ID_PAIR_DATA_KEY,
   TARGET_LEFT,
@@ -123,9 +123,9 @@ export abstract class BaseBricksScene extends Scene {
     // White background box
     renderBanner(this, {
       x: GUTTER_WIDTH,
-      y: BACKGROUND_BOX_HEIGHT,
+      y: GAME_AREA_TOP,
       width: GAME_AREA_WIDTH,
-      height: HEIGHT - 118,
+      height: GAME_AREA_HEIGHT,
     });
   }
 
