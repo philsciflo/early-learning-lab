@@ -10,8 +10,8 @@ export class Level2 extends IndividualPlayerScene {
       "Build the target shape together! A can only move red bricks and B black!",
       "Level1PlayerB",
       "GameOver",
-      4,
-      4,
+      2,
+      3,
       [RED, BLACK],
     );
   }
