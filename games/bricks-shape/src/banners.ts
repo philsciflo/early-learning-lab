@@ -47,10 +47,10 @@ export function renderTextBanner(
 ) {
   renderBanner(scene, bannerParams);
 
-  const { x: bannerX = HALF_WIDTH, y: bannerY = QUARTER_HEIGHT } = bannerParams;
+  const { y: bannerY = QUARTER_HEIGHT } = bannerParams;
 
   const { text, yOffset } = textParams;
-  renderText(scene, bannerX, bannerY + yOffset, text);
+  renderText(scene, HALF_WIDTH, bannerY + yOffset, text);
 }
 
 export function renderText(
