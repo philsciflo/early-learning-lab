@@ -112,7 +112,6 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
           },
         })
         .setVisible(false)
-        .lineStyle(2, 0x000000)
         .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
         .generateTexture(
           textureName,
@@ -192,6 +191,7 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
             colourTexture,
           )
           .setOrigin(0, 0)
+          .lineStyle(2, 0x000000)
           .setDisplaySize(this.buildTileWidth, this.buildTileHeight)
           .setInteractive({ draggable: true })
           .setDataEnabled()
