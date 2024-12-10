@@ -107,30 +107,19 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
       }
       // Create a texture for each colour, so we can use it to create sprites
       this.add
-      .graphics()
-      .lineStyle(2, 0x000000) // Set black border (line width: 2)
-      .fillStyle({ color: colour }) // Set the fill color
-      .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight) // Fill the rectangle
-      .strokeRect(0, 0, this.buildTileWidth, this.buildTileHeight) // Draw the black border (outline of the rectangle)
-      .generateTexture(
-        textureName,
-        this.buildTileWidth,
-        this.buildTileHeight
-      );
-      // this.add
-      //   .graphics({
-      //     .lineStyle(2, 0x000000) // Set black border (line width: 2)
-      //     .fillStyle: {
-      //       color: colour,
-      //     },
-      //   })
-      //   .setVisible(false)
-      //   .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
-      //   .generateTexture(
-      //     textureName,
-      //     this.buildTileWidth,
-      //     this.buildTileHeight,
-      //   );
+        .graphics({
+          fillStyle: {
+            color: colour,
+          },
+        })
+        .lineStyle(2, 0x000000)
+        .setVisible(false)
+        .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
+        .generateTexture(
+          textureName,
+          this.buildTileWidth,
+          this.buildTileHeight,
+        );
     });
 
     this.resetTiles();
