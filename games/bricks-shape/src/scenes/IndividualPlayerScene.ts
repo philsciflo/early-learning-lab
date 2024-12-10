@@ -191,7 +191,6 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
             colourTexture,
           )
           .setOrigin(0, 0)
-          .lineStyle(2, 0x000000)
           .setDisplaySize(this.buildTileWidth, this.buildTileHeight)
           .setInteractive({ draggable: true })
           .setDataEnabled()
