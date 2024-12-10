@@ -26,6 +26,10 @@ export const BLACK = parseInt(BLACK_STRING.substring(1), 16);
 export const ORANGE_STRING = "#ffa500";
 export const ORANGE = parseInt(ORANGE_STRING.substring(1), 16);
 
+// Tile border
+export const TILE_BORDER_COLOR = 0x000000;
+export const TILE_BORDER_WIDTH = 3;
+
 // Tile colours
 export const AQUA = 0x00ffff;
 export const LIME = 0x00ff00;

@@ -60,7 +60,6 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
     this.buildTileWidth = BUILD_AREA_WIDTH / this.cols;
     this.targetTileHeight = TARGET_HEIGHT / this.rows;
     this.targetTileWidth = TARGET_WIDTH / this.cols;
-
     this.buildTileXPositions = this.generatePositions(
       GUTTER_WIDTH + 10, // Game area LHS
       WIDTH - GUTTER_WIDTH - this.buildTileWidth - 10, // Game area RHS
@@ -191,7 +190,6 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
             this.buildTileYPositions[tileIndex],
             colourTexture,
           )
-          .lineStyle(2, 0x000000)
           .setOrigin(0, 0)
           .setDisplaySize(this.buildTileWidth, this.buildTileHeight)
           .setInteractive({ draggable: true })
