@@ -56,7 +56,6 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
     if (this.colours.length > this.tileCount) {
       this.colours.splice(this.tileCount);
     }
-
     this.buildTileHeight = BUILD_AREA_HEIGHT / this.rows;
     this.buildTileWidth = BUILD_AREA_WIDTH / this.cols;
     this.targetTileHeight = TARGET_HEIGHT / this.rows;
@@ -108,18 +107,30 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
       }
       // Create a texture for each colour, so we can use it to create sprites
       this.add
-        .graphics({
-          fillStyle: {
-            color: colour,
-          },
-        })
-        .setVisible(false)
-        .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
-        .generateTexture(
-          textureName,
-          this.buildTileWidth,
-          this.buildTileHeight,
-        );
+      .graphics()
+      .lineStyle(2, 0x000000) // Set black border (line width: 2)
+      .fillStyle({ color: colour }) // Set the fill color
+      .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight) // Fill the rectangle
+      .strokeRect(0, 0, this.buildTileWidth, this.buildTileHeight) // Draw the black border (outline of the rectangle)
+      .generateTexture(
+        textureName,
+        this.buildTileWidth,
+        this.buildTileHeight
+      );
+      // this.add
+      //   .graphics({
+      //     .lineStyle(2, 0x000000) // Set black border (line width: 2)
+      //     .fillStyle: {
+      //       color: colour,
+      //     },
+      //   })
+      //   .setVisible(false)
+      //   .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
+      //   .generateTexture(
+      //     textureName,
+      //     this.buildTileWidth,
+      //     this.buildTileHeight,
+      //   );
     });
 
     this.resetTiles();
