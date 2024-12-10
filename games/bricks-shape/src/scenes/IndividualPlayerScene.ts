@@ -110,10 +110,13 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
           fillStyle: {
             color: colour,
           },
+          lineStyle: {
+            width: BORDER,
+            color: BLACK,
+          },
         })
         .setVisible(false)
         .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
-        .lineStyle(2, BLACK)
         .generateTexture(
           textureName,
           this.buildTileWidth,
