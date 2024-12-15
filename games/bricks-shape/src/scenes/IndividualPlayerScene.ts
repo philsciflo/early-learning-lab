@@ -84,13 +84,13 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
         color: BLACK,
       },
     });
+
     tileBoxes.strokeRect(
       BUILD_AREA_LEFT - BORDER / 2,
       BUILD_AREA_TOP - BORDER / 2,
       BUILD_AREA_WIDTH + BORDER,
       BUILD_AREA_HEIGHT + BORDER,
     );
-
     tileBoxes.strokeRect(
       TARGET_LEFT - BORDER / 2,
       TARGET_TOP - BORDER / 2,
@@ -110,10 +110,15 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
           fillStyle: {
             color: colour,
           },
+          lineStyle: {
+            color: BLACK,
+            width: 4,
+          },
         })
-        .setVisible(false)
-        .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
-        .generateTexture(
+      .strokeRect(0, 0, this.buildTileWidth, this.buildTileHeight)
+      .setVisible(false)
+      .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
+      .generateTexture(
           textureName,
           this.buildTileWidth,
           this.buildTileHeight,
