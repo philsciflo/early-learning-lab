@@ -1,5 +1,5 @@
 import { IndividualPlayerScene } from "./IndividualPlayerScene.ts";
-import { BLACK, RED } from "../constants.ts";
+import { BLUE, PEACH } from "../constants.ts";
 
 export class Level2 extends IndividualPlayerScene {
   constructor() {
@@ -12,7 +12,7 @@ export class Level2 extends IndividualPlayerScene {
       "GameOver",
       2,
       3,
-      [RED, BLACK],
+      [BLUE, PEACH],
     );
   }
 }

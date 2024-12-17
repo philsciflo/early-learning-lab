@@ -115,9 +115,9 @@ export abstract class IndividualPlayerScene extends BaseBricksScene {
             width: 4,
           },
         })
-      .strokeRect(0, 0, this.buildTileWidth, this.buildTileHeight)
       .setVisible(false)
       .fillRect(0, 0, this.buildTileWidth, this.buildTileHeight)
+      .strokeRect(0, 0, this.buildTileWidth, this.buildTileHeight)
       .generateTexture(
           textureName,
           this.buildTileWidth,

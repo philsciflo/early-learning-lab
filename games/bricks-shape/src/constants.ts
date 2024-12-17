@@ -36,6 +36,9 @@ export const LIME = 0x00ff00;
 export const FUSCHIA = 0xff00ff;
 export const YELLOW = 0xffff00;
 export const RED = 0xff0000;
+export const BLUE = 0x0000ff;
+export const GREEN = 0x008000;
+export const PEACH = 0xffa500;
 
 export const GAME_SCORE_DATA_KEY = "bricks-shape-data";
 export const PLAYER_ID_PAIR_DATA_KEY = "playerIds";
