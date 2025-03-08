@@ -22,7 +22,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: true,
-    outDir: "../../docs/games/marble-track",
+    outDir: "../../docs/games/template",
   },
   server: {
     port: 8080,
