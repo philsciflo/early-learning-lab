@@ -1895,6 +1895,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"marble-track@workspace:games/marble-track":
+  version: 0.0.0-use.local
+  resolution: "marble-track@workspace:games/marble-track"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
+
 "merge-stream@npm:^2.0.0":
   version: 2.0.0
   resolution: "merge-stream@npm:2.0.0"
