@@ -5,7 +5,9 @@ The Tākaro i tētahi kēmu (Play a game) is a website designed to host a number
 MacOS or Linux are recommended for development; consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you only have Windows available
 
 Author: Florian Bednarski
+
 Collaborator: Nick from https://www.iontech.nz/ | https://github.com/nick-lironi-irvine
+
 Development: Team of computer science students at the University of Auckland | Waipapa Taumata Rau
 
 ## Pre requisite tools
