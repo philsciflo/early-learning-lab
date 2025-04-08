@@ -50,12 +50,13 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
   }
 
   private renderThreeForkedPipe() {
+
     const pipeWidth = 80;
     const pipeTop = 280;
 
     const A =
       HALF_WIDTH -
-      100 * Math.tan(Math.PI / 4) -
+      85 * Math.tan(Math.PI / 4) -
       pipeWidth * Math.sin(Math.PI / 4); // top of left fork
     const B = HALF_WIDTH - 100 * Math.tan(Math.PI / 4); // bottom of left fork
     const C = HALF_WIDTH - pipeWidth / 2; // LHS of center pipe
@@ -63,14 +64,14 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     const E = HALF_WIDTH + 100 * Math.tan(Math.PI / 4); // left edge of right fork
     const F =
       HALF_WIDTH +
-      100 * Math.tan(Math.PI / 4) +
+      85 * Math.tan(Math.PI / 4) +
       pipeWidth * Math.sin(Math.PI / 4); // right edge of right fork
 
     const one = pipeTop;
     const two = one + 100;
-    const three = two + 80 / Math.sin(Math.PI / 4);
+    const three = two + 70 / Math.sin(Math.PI / 4);
     const four = three + 60;
-    const five = three + 100;
+    const five = three + 75;
 
     const pipe = this.add.graphics();
     pipe.setDefaultStyles({
@@ -127,7 +128,7 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     this.apple = this.physics.add
       .sprite(HALF_WIDTH, APPLE_TOP, "apple")
       .setDisplaySize(50, 50)
-      .setCollideWorldBounds(true)
+      .setCollideWorldBounds(true, 0, 0, true)
       .disableBody();
   }
 

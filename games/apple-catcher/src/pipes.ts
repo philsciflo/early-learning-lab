@@ -97,20 +97,20 @@ export function setupForkedPipe(
 
   const A =
     pipeCenter -
-    100 * Math.tan(Math.PI / 4) -
+    80 * Math.tan(Math.PI / 4) -
     pipeWidth * Math.sin(Math.PI / 4); // top of left fork
-  const B = pipeCenter - 100 * Math.tan(Math.PI / 4); // bottom of left fork
+  const B = pipeCenter - 80 * Math.tan(Math.PI / 4); // bottom of left fork
   const C = pipeCenter - pipeWidth / 2; // LHS of center pipe
   const D = pipeCenter + pipeWidth / 2; // RHS of center pipe
-  const E = pipeCenter + 100 * Math.tan(Math.PI / 4); // left edge of right fork
+  const E = pipeCenter + 80 * Math.tan(Math.PI / 4); // left edge of right fork
   const F =
     pipeCenter +
-    100 * Math.tan(Math.PI / 4) +
+    80 * Math.tan(Math.PI / 4) +
     pipeWidth * Math.sin(Math.PI / 4); // right edge of right fork
 
   const one = pipeTop;
   const two = one + 100;
-  const three = two + pipeWidth / Math.sin(Math.PI / 4);
+  const three = two + 80 / Math.sin(Math.PI / 4);
   const four = three + 60;
   const center = two + 80;
 
