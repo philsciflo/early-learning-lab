@@ -8,20 +8,21 @@ import {
 } from "./constants.ts";
 import { Scene } from "phaser";
 
-export interface BannerParams {
+export type BannerParams = {
   borderColour?: number;
   backgroundColour?: number;
   x?: number;
   y?: number;
   width?: number;
   height?: number;
-}
+  backgroundAlpha?: number;
+};
 
-export interface TextParams {
+export type TextParams = {
   text: string;
   // The y offset from the containing banner, so the text doesn't overlap
   yOffset: number;
-}
+};
 
 export function renderBanner(scene: Scene, bannerParams: BannerParams) {
   const {
@@ -31,10 +32,11 @@ export function renderBanner(scene: Scene, bannerParams: BannerParams) {
     y: bannerY = QUARTER_HEIGHT,
     width = HALF_WIDTH,
     height = 100,
+    backgroundAlpha = 1,
   } = bannerParams;
   const bannerGraphic = scene.add.graphics();
   bannerGraphic.lineStyle(2, borderColour);
-  bannerGraphic.fillStyle(backgroundColour);
+  bannerGraphic.fillStyle(backgroundColour, backgroundAlpha);
 
   bannerGraphic.fillRoundedRect(bannerX, bannerY, width, height, 10);
   bannerGraphic.strokeRoundedRect(bannerX, bannerY, width, height, 10);

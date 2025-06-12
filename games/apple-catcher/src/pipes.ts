@@ -40,7 +40,12 @@ export function renderVerticalPipe(
   if (image) {
     pipe.generateTexture("vertical-pipe", pipeWidth, pipeHeight);
 
-    return scene.add.image(0, HALF_HEIGHT + 25, "vertical-pipe");
+    const pipeImage = scene.add
+      .image(pipeCenter, 225, "pipe4-2")
+      .setOrigin(0.5, 0)
+      .setScale(0.67);
+    scene.physics.add.existing(pipeImage, true);
+    return pipeImage;
   }
   return undefined;
 }
@@ -193,7 +198,12 @@ export function setupForkedPipe(
   if (image) {
     pipe.generateTexture("forked-pipe", 500, 300);
 
-    const pipeImage = scene.add.image(0, HALF_HEIGHT + 50, "forked-pipe");
+    const pipeImage = scene.add
+      .image(centerX+80, 220, "pipe4-1")
+      .setOrigin(0.72, 0)
+      .setScale(0.7);
+    scene.physics.add.existing(pipeImage, true);
+
     return {
       setX(pos: number) {
         pipeImage.setX(pos);
