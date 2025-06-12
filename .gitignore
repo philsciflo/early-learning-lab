@@ -16,3 +16,5 @@ vendor/
 !.yarn/versions
 
 /docs/games/*
+
+node_modules

@@ -40,7 +40,12 @@ export function renderVerticalPipe(
   if (image) {
     pipe.generateTexture("vertical-pipe", pipeWidth, pipeHeight);
 
-    return scene.add.image(0, HALF_HEIGHT + 25, "vertical-pipe");
+    const pipeImage = scene.add
+      .image(pipeCenter, 225, "pipe4-2")
+      .setOrigin(0.5, 0)
+      .setScale(0.67);
+    scene.physics.add.existing(pipeImage, true);
+    return pipeImage;
   }
   return undefined;
 }
@@ -97,20 +102,20 @@ export function setupForkedPipe(
 
   const A =
     pipeCenter -
-    80 * Math.tan(Math.PI / 4) -
+    100 * Math.tan(Math.PI / 4) -
     pipeWidth * Math.sin(Math.PI / 4); // top of left fork
-  const B = pipeCenter - 80 * Math.tan(Math.PI / 4); // bottom of left fork
+  const B = pipeCenter - 100 * Math.tan(Math.PI / 4); // bottom of left fork
   const C = pipeCenter - pipeWidth / 2; // LHS of center pipe
   const D = pipeCenter + pipeWidth / 2; // RHS of center pipe
-  const E = pipeCenter + 80 * Math.tan(Math.PI / 4); // left edge of right fork
+  const E = pipeCenter + 100 * Math.tan(Math.PI / 4); // left edge of right fork
   const F =
     pipeCenter +
-    80 * Math.tan(Math.PI / 4) +
+    100 * Math.tan(Math.PI / 4) +
     pipeWidth * Math.sin(Math.PI / 4); // right edge of right fork
 
   const one = pipeTop;
   const two = one + 100;
-  const three = two + 80 / Math.sin(Math.PI / 4);
+  const three = two + pipeWidth / Math.sin(Math.PI / 4);
   const four = three + 60;
   const center = two + 80;
 
@@ -193,7 +198,12 @@ export function setupForkedPipe(
   if (image) {
     pipe.generateTexture("forked-pipe", 500, 300);
 
-    const pipeImage = scene.add.image(0, HALF_HEIGHT + 50, "forked-pipe");
+    const pipeImage = scene.add
+      .image(centerX+80, 220, "pipe4-1")
+      .setOrigin(0.72, 0)
+      .setScale(0.7);
+    scene.physics.add.existing(pipeImage, true);
+
     return {
       setX(pos: number) {
         pipeImage.setX(pos);

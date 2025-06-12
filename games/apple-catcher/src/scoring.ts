@@ -44,6 +44,11 @@ export type PLAYER_SCORING_DATA = {
   Level2: { tryData: Level2ScoringData[] } & COMMON_SCORING_DATA;
   Level3: { tryData: Level3ScoringData[] } & COMMON_SCORING_DATA;
   Level4: { tryData: Level4ScoringData[] } & COMMON_SCORING_DATA;
+  Level0Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
+  Level1Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
+  Level2Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
+  Level3Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
+  Level4Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
 };
 
 /**
@@ -106,6 +111,11 @@ export function startNewScore(playerId: string): void {
       Level2: { tryData: [], tries: 0, levelScore: 0 },
       Level3: { tryData: [], tries: 0, levelScore: 0 },
       Level4: { tryData: [], tries: 0, levelScore: 0 },
+      Level0Drop: { tryData: [], tries: 0, levelScore: 0 },
+      Level1Drop: { tryData: [], tries: 0, levelScore: 0 },
+      Level2Drop: { tryData: [], tries: 0, levelScore: 0 },
+      Level3Drop: { tryData: [], tries: 0, levelScore: 0 },
+      Level4Drop: { tryData: [], tries: 0, levelScore: 0 },
     },
     totalTries: 0,
     totalScore: 0,

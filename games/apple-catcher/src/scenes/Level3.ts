@@ -5,6 +5,7 @@ import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import Point = Phaser.Geom.Point;
 import { Level3ScoringData } from "../scoring.ts";
+import { renderVerticalPipe, setupForkedPipe } from "../pipes.ts";
 
 export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
   private basket: SpriteWithStaticBody;
@@ -49,62 +50,19 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     };
   }
 
-  private renderThreeForkedPipe() {
-
-    const pipeWidth = 80;
-    const pipeTop = 280;
-
-    const A =
-      HALF_WIDTH -
-      85 * Math.tan(Math.PI / 4) -
-      pipeWidth * Math.sin(Math.PI / 4); // top of left fork
-    const B = HALF_WIDTH - 100 * Math.tan(Math.PI / 4); // bottom of left fork
-    const C = HALF_WIDTH - pipeWidth / 2; // LHS of center pipe
-    const D = HALF_WIDTH + pipeWidth / 2; // RHS of center pipe
-    const E = HALF_WIDTH + 100 * Math.tan(Math.PI / 4); // left edge of right fork
-    const F =
-      HALF_WIDTH +
-      85 * Math.tan(Math.PI / 4) +
-      pipeWidth * Math.sin(Math.PI / 4); // right edge of right fork
-
-    const one = pipeTop;
-    const two = one + 100;
-    const three = two + 70 / Math.sin(Math.PI / 4);
-    const four = three + 60;
-    const five = three + 75;
-
-    const pipe = this.add.graphics();
-    pipe.setDefaultStyles({
-      fillStyle: {
-        color: BLUE,
-      },
-      lineStyle: { color: BLUE, width: 4 },
-    });
-
-    pipe.fillPoints(
-      [
-        new Point(C, one),
-        new Point(C, two),
-        new Point(A, three),
-        new Point(B, four),
-        new Point(C, three),
-        new Point(C, five),
-        new Point(D, five),
-        new Point(D, three),
-        new Point(E, four),
-        new Point(F, three),
-        new Point(D, two),
-        new Point(D, one),
-      ],
-      true,
-      true,
-    );
+ private renderThreeForkedPipe() {
+    const pipeX = HALF_WIDTH;  // center X
+    const pipeY = 220;         // align top Y
+    const pipeImage = this.add.image(pipeX, pipeY, "pipe3");
+    pipeImage.setOrigin(0.5, 0);
+    pipeImage.setScale(0.8);
   }
 
   private setupBasket() {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
       .setInteractive({ draggable: true })
+      .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
         this.basket.refreshBody();
@@ -128,7 +86,7 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     this.apple = this.physics.add
       .sprite(HALF_WIDTH, APPLE_TOP, "apple")
       .setDisplaySize(50, 50)
-      .setCollideWorldBounds(true, 0, 0, true)
+      .setCollideWorldBounds(true)
       .disableBody();
   }
 
