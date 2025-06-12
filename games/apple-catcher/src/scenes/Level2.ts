@@ -24,7 +24,7 @@ export class Level2 extends AbstractCatcherScene<Level2ScoringData> {
     super.create();
     this.setupBasket();
     this.setupApple();
-    setupForkedPipe(this, HALF_WIDTH, this.apple);
+    setupForkedPipe(this, HALF_WIDTH, this.apple, true);
 
     this.addCollisionHandling(this.basket, this.apple);
   }
@@ -54,6 +54,7 @@ export class Level2 extends AbstractCatcherScene<Level2ScoringData> {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
       .setInteractive({ draggable: true })
+      .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
         this.basket.refreshBody();

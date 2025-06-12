@@ -28,13 +28,15 @@ const TRIES_DATA_KEY = "tries";
 export abstract class AbstractCatcherScene<T> extends Scene {
   private leftTreeLeft = GUTTER_WIDTH + 10;
   protected leftEdgeGameBound = this.leftTreeLeft + 200;
-  private rightTreeLeft = GAME_AREA_WIDTH - 160;
+  protected rightTreeLeft = GAME_AREA_WIDTH - 160;
   protected rightEdgeGameBound = this.rightTreeLeft;
 
   public triesDataKey: string;
   public scoreDataKey: string;
 
   private scoringData: T[];
+
+  protected hideDropButton = false; // Controls Drop button visibility
 
   /**
    * Score for the current drop
@@ -83,11 +85,15 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   protected abstract recordScoreDataForCurrentTry(): T;
 
   preload() {
+    this.load.image("background", "assets/background.png");
     this.load.image("tree", "assets/tree.png");
     this.load.image("apple", "assets/apple.png");
     this.load.image("basket", "assets/basket.png");
     this.load.image("forward", "assets/fast-forward-button.png");
     this.load.image("backward", "assets/fast-backward-button.png");
+    this.load.image("pipe3", "assets/pipe3.png");
+    this.load.image("pipe4-1", "assets/pipe4-1.png");
+    this.load.image("pipe4-2", "assets/pipe4-2.png");
   }
 
   init() {
@@ -115,6 +121,12 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   }
 
   create() {
+    this.add
+      .image(0, 0, "background")
+      .setOrigin(0)
+      .setDisplaySize(this.scale.width, this.scale.height)
+      .setDepth(-1);
+
     this.renderStaticBackgroundItems();
     this.renderDynamicNumbers();
     this.renderNavigationButtons();
@@ -147,6 +159,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
       y: 110,
       width: GAME_AREA_WIDTH,
       height: HEIGHT - 118,
+      backgroundAlpha: 0.7,
     });
 
     this.add
@@ -212,7 +225,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     this.add
       .sprite(GUTTER_WIDTH, 10, "backward")
       .setOrigin(0, 0)
-      .setDisplaySize(100, 50)
+      .setDisplaySize(90, 90)
       .setInteractive()
       .on("pointerdown", () => {
         this.scene.start(this.prevSceneKey);
@@ -221,7 +234,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     this.add
       .sprite(WIDTH - GUTTER_WIDTH - 100, 10, "forward")
       .setOrigin(0, 0)
-      .setDisplaySize(100, 50)
+      .setDisplaySize(100, 100)
       .setInteractive()
       .on("pointerdown", () => {
         this.scene.start(this.nextSceneKey);
@@ -233,6 +246,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     const buttonWidth = 100;
     const buttonHeight = 50;
 
+    if (!this.hideDropButton) {
     const dropButton = this.add.graphics();
     dropButton.lineStyle(2, BLACK);
     dropButton.fillStyle(ORANGE);
@@ -255,8 +269,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     dropButton.on("pointerdown", () => {
       if (this.canDrop()) {
         this.registry.inc(this.triesDataKey, 1);
-        this.currentScore++; // From -1 to 0
-        dropButton.disableInteractive();
+        this.currentScore++; 
         this.doDrop();
       }
     });
@@ -270,6 +283,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
       })
       .setOrigin(0.5, 0);
 
+    }
     const resetButton = this.add.graphics();
     resetButton.lineStyle(2, BLACK);
     resetButton.fillStyle(ORANGE);
@@ -302,7 +316,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
       new Phaser.Geom.Rectangle(resetLeft, buttonY, buttonWidth, buttonHeight),
       Phaser.Geom.Rectangle.Contains,
     );
-
+    
     resetButton.on("pointerdown", () => {
       if (this.currentScore >= 0) {
         this.scoringData.push(this.recordScoreDataForCurrentTry());
