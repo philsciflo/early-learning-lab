@@ -18,3 +18,5 @@ vendor/
 /docs/games/*
 
 node_modules
+
+**/.DS_Store

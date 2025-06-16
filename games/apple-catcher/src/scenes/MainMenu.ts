@@ -86,11 +86,21 @@ export class MainMenu extends Scene {
       .setDisplaySize(100, 100)
       .setInteractive()
       .on("pointerdown", () => {
-        // Trigger download of the current data
-        const blob = new Blob([getScoreDataJSONString()], {
-          type: "application/json",
-        });
-        window.location.href = URL.createObjectURL(blob);
+        const jsonStr = JSON.stringify(
+          JSON.parse(getScoreDataJSONString()),
+          null,
+          2,
+        );
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "game_data.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       });
   }
 }

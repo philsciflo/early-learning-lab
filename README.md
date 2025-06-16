@@ -4,11 +4,20 @@ The Tākaro i tētahi kēmu (Play a game) is a website designed to host a number
 
 MacOS or Linux are recommended for development; consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you only have Windows available
 
-Author: Florian Bednarski
+Author: Florian Bednarski | University of Auckland | Waipapa Taumata Rau
 
 Collaborator: Nick from https://www.iontech.nz/ | https://github.com/nick-lironi-irvine
 
-Development: Team of computer science students at the University of Auckland | Waipapa Taumata Rau
+Development: Marble Track, in particular, was developed independently by Team 21 as part of the COMPSCI 399 Capstone Project.    The team worked within the open-source Early Learning Lab monorepo and contributed all new scenes, UI elements, game logic, and data collection systems for Marble Track.
+
+
+    Fei Lan – Project Manager, UI Designer
+    Jervid Cheng – Level Developer (Marble Track L3), Data Collection, Debugging, Game mechanics refinement
+    Sophia Zhang – Level Developer (Marble Track core gameplay logic & L0), Game mechanics refinement, Technical Support,
+    Linh Ha – Level Developer (Apple Catcher L0–2), Data Collection support
+    Yiqing Cheng – Level Developer (Marble Track L1 & Apple Catcher Navigation page), Data Collection Support
+    Shuxuan Huang – Level Developer (Marble Track L2 & Apple Catcher L3–4), Data Collection Support
+
 
 ## Pre requisite tools
 
