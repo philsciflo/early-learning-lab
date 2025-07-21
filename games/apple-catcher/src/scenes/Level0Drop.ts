@@ -9,9 +9,11 @@ import { CaughtAppleCount, Level0ScoringData } from "../scoring.ts";
 export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
   private baskets: SpriteWithStaticBody[] = [];
   private apples: SpriteWithDynamicBody[] = [];
+  private tracks: Phaser.Physics.Arcade.Image[] = [];
   // a reference to the Interval controlling the apple dropping
   private dropInterval: number;
   private isDragging = false;
+  private hasDraggedThisRound = false;
   private appleStartPositions: { x: number, y: number }[] = [];
 
   constructor() {
@@ -36,6 +38,7 @@ export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
     super.create();
     this.setupApples();
     this.setupBaskets();
+    this.setupTracks();
     this.baskets.forEach((basket) => {
     this.addCollisionHandling(basket, this.apples); 
   });
@@ -44,6 +47,7 @@ export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
 
   protected doReset() {
     this.resetApples();
+    this.hasDraggedThisRound = false;
 
   }
 
@@ -59,11 +63,11 @@ export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
   
   // Positions for 5 baskets (evenly spaced)
   const basketPositions = [
-    HALF_WIDTH - 200, // Left-most basket
-    HALF_WIDTH - 100,
+    HALF_WIDTH - 300, // Left-most basket
+    HALF_WIDTH - 150,
     HALF_WIDTH,       // Center basket
-    HALF_WIDTH + 100,
-    HALF_WIDTH + 200  // Right-most basket
+    HALF_WIDTH + 150,
+    HALF_WIDTH + 300  // Right-most basket
   ];
 
   basketPositions.forEach(xPos => {
@@ -99,6 +103,10 @@ private setupApples() {
 
         apple.on('dragstart', () => {
             apple.disableBody(true, false);
+            if (!this.hasDraggedThisRound) {
+              this.registry.values[this.triesDataKey] += 1;
+              this.hasDraggedThisRound = true;
+            }
         });
 
         apple.on('drag', (pointer: Pointer) => {
@@ -139,5 +147,35 @@ private resetApples() {
 }
 protected doDrop() {
   // No drop action in Level0Drop; apples are manually dragged
+}
+private setupTracks(){
+  
+  const track1 = this.createTrack(180,150,640);
+  const track2 = this.createTrack(80,350,640);
+  const track3 = this.createTrack(80,500,640);
+  const track4 = this.createTrack(80,650,640);
+  const track5 = this.createTrack(80,800,640);
+  const track6 = this.createTrack(180,1000,640);
+
+  this.tracks.push(track1,track2,track3,track4,track5,track6);
+
+
+  this.apples.forEach((apple) => {
+    this.tracks.forEach((track) => {
+      this.physics.add.collider(apple, track);
+    });
+  });
+}
+private createTrack(
+  length: number,
+  x: number,
+  y: number
+): Phaser.Physics.Arcade.Image {
+  const height = 20;
+  const track = this.physics.add.staticImage(x, y, "log");
+  track.setDisplaySize(length, height); 
+  track.refreshBody(); 
+
+  return track;
 }
 }

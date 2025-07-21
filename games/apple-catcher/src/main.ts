@@ -29,7 +29,7 @@ const config: Types.Core.GameConfig = {
         x: 0,
         y: 100,
       },
-      // debug: true,
+      debug: false,
     },
   },
   scale: {
@@ -39,6 +39,7 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
+  //scene: [Level0Drop],
   scene: [MainMenu, ModeSelection, Level0, Level1, Level2, Level3, Level4, Level0Drop, Level1Drop, Level2Drop, Level3Drop, Level4Drop, GameOver],
 };
 

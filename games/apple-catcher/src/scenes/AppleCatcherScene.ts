@@ -94,6 +94,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     this.load.image("pipe3", "assets/pipe3.png");
     this.load.image("pipe4-1", "assets/pipe4-1.png");
     this.load.image("pipe4-2", "assets/pipe4-2.png");
+    this.load.image("log", "assets/log.png");
   }
 
   init() {
