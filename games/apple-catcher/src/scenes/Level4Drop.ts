@@ -167,11 +167,15 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
     this.apple = this.physics.add
       .sprite(appleX, appleY, "apple")
       .setDisplaySize(50, 50)
-      .setCollideWorldBounds(true)
+      .setCollideWorldBounds(true, 0, 0, true)
       .disableBody();
 
     this.apple.setInteractive({ draggable: true });
     this.input.setDraggable(this.apple);
+
+    this.apple.on('dragstart', () => {
+      this.registry.values[this.triesDataKey] += 1;
+    });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
       this.apple.setPosition(dragX, dragY);
@@ -187,8 +191,8 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
       this.physics.world.disableBody(this.apple.body);
     }
 
-    const startX = HALF_WIDTH + 300;
-    const startY = APPLE_TOP + 150;
+    const startX = this.rightTreeLeft + 100;
+    const startY = 415;
 
     this.apple.body.reset(startX, startY);
     this.apple.setVisible(true);
@@ -200,22 +204,14 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private setupAppleStartingPositions() {
     const verticalPipeAppleLocationCenter =
       this.verticalPipeLocations[this.pipeLayout];
-    this.firstAppleImage = this.add.image(
-      verticalPipeAppleLocationCenter,
-      APPLE_TOP,
-      "apple-background",
-    );
+    
     this.firstAppleZone = this.add
       .zone(verticalPipeAppleLocationCenter, APPLE_TOP, 50, 50)
       .setRectangleDropZone(70, 70);
 
     const forkedPipeAppleStartingLocation =
       this.forkedPipeLocations[this.pipeLayout] - 75;
-    this.secondAppleImage = this.add.image(
-      forkedPipeAppleStartingLocation,
-      APPLE_TOP,
-      "apple-background",
-    );
+    
     this.secondAppleZone = this.add
       .zone(forkedPipeAppleStartingLocation, APPLE_TOP, 50, 50)
       .setRectangleDropZone(70, 70);
@@ -224,12 +220,13 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private resetAppleStartingPositions() {
     const verticalPipeAppleLocationCenter =
       this.verticalPipeLocations[this.pipeLayout];
-    this.firstAppleImage.setX(verticalPipeAppleLocationCenter);
     this.firstAppleZone.setX(verticalPipeAppleLocationCenter);
 
     const forkedPipeAppleStartingLocation =
       this.forkedPipeLocations[this.pipeLayout] - 75;
-    this.secondAppleImage.setX(forkedPipeAppleStartingLocation);
     this.secondAppleZone.setX(forkedPipeAppleStartingLocation);
+  }
+
+  protected doDrop(): void {
   }
 }

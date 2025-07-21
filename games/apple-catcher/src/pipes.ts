@@ -157,7 +157,7 @@ export function setupForkedPipe(
    */
   const directionTriggerPoint = scene.physics.add.staticSprite(
     centerX,
-    431,
+    440,
     "move",
   );
   // Sprites behave more sensibly than Shapes when being moved around, but we don't want to actually see this image...
@@ -173,8 +173,9 @@ export function setupForkedPipe(
         ];
       const applePhysicsBody = (apple as GameObjectWithDynamicBody).body;
       applePhysicsBody.setAllowGravity(false);
-      applePhysicsBody.setVelocityX(100 * horizontalDirection);
+      applePhysicsBody.setVelocityX(120 * horizontalDirection);
       applePhysicsBody.setVelocityY(100);
+      applePhysicsBody.x = directionTriggerPoint.x -25;//SNAP
       setTimeout(() => {
         applePhysicsBody.setVelocityX(applePhysicsBody.velocity.x || 2 / 2);
         applePhysicsBody.setAllowGravity(true);
@@ -214,3 +215,78 @@ export function setupForkedPipe(
   }
   return undefined;
 }
+
+export function setupTripleForkedPipe(
+  scene: AbstractCatcherScene<unknown>,
+  centerX: number,
+  apple: GameObjectWithDynamicBody,
+  image?: boolean
+): ForkedPipe | undefined {
+  const appleDirections = [-1, 0, 1]
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+
+  const pipe = scene.add.graphics();
+  pipe.setVisible(!image);
+  pipe.setDefaultStyles({
+    fillStyle: { color: BLUE },
+    lineStyle: { color: BLUE, width: 4 },
+  });
+
+  // TODO: draw actual triple-fork pipe path if visible
+
+  const directionTriggerPoint = scene.physics.add.staticSprite(centerX, 460, "move");
+  directionTriggerPoint.setVisible(false);
+
+  scene.physics.add.collider(
+    apple,
+    directionTriggerPoint,
+    (apple) => {
+      const direction = appleDirections[
+        scene.registry.get(scene.triesDataKey) % appleDirections.length
+      ];
+
+      const appleBody = (apple as GameObjectWithDynamicBody).body;
+      appleBody.setAllowGravity(false);
+      appleBody.setVelocityX(100 * direction);
+      appleBody.setVelocityY(100);
+      appleBody.x = directionTriggerPoint.x - 25 + direction * 20; // SNAP with slight offset
+
+      setTimeout(() => {
+        appleBody.setVelocityX(appleBody.velocity.x || 2 / 2);
+        appleBody.setAllowGravity(true);
+      }, 500);
+    },
+    (apple) => {
+      return (apple as GameObjectWithDynamicBody).body.velocity.x === 0;
+    }
+  );
+
+  scene.physics.world.on("worldbounds", (body: Body) => {
+    if (body === apple.body) {
+      body.setVelocityX(0);
+    }
+  });
+
+  if (image) {
+    pipe.generateTexture("forked-pipe", 500, 300);
+
+    const pipeImage = scene.add
+      .image(centerX, 220, "pipe3")
+      .setOrigin(0.5, 0)
+      .setScale(0.8);
+    scene.physics.add.existing(pipeImage, true);
+
+    return {
+      setX(pos: number) {
+        pipeImage.setX(pos);
+        directionTriggerPoint.setX(pos - 75);
+        directionTriggerPoint.refreshBody();
+      },
+    };
+  }
+
+  return undefined;
+}
+
