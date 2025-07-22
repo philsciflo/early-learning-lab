@@ -55,7 +55,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1ScoringData> {
   private setupBasket() {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
@@ -101,7 +101,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1ScoringData> {
 
     this.apple.on('dragend', () => {
         this.physics.world.enableBody(this.apple);
-        this.apple.setGravityY(300); // Fall speed
+        //this.apple.setGravityY(300); // Fall speed
         this.apple.disableInteractive();
     });
 }

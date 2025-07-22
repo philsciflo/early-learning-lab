@@ -6,6 +6,7 @@ import { Level0 } from "./scenes/Level0.ts";
 import { Level1 } from "./scenes/Level1.ts";
 import { Level2 } from "./scenes/Level2.ts";
 import { Level3 } from "./scenes/Level3.ts";
+import { Level4 } from "./scenes/Level4.ts";
 import { GameOver } from "./scenes/GameOver.ts"; //GameOver is for testing, you can switch back to GameOver if you want the original one
 import { MainMenu } from "./scenes/MainMenu.ts"; //MainMenu is for testing, you can switch back to MainMenu0 if you want the original one
 import { HEIGHT, GREEN_STRING, WIDTH } from "./constants.ts";
@@ -36,7 +37,7 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  //scene: [MainMenu, Level0, Level1Intro,Level1,Level2Intro,Level2,Level3Intro,Level3, GameOver],
+  //scene: [Level4],
   scene: [
     MainMenu,
     UIScene,
@@ -48,6 +49,7 @@ const config: Types.Core.GameConfig = {
     Level2,
     Level3Intro,
     Level3,
+    Level4,
     GameOver,
   ],
 };

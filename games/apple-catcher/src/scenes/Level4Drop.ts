@@ -10,8 +10,8 @@ import { Level4ScoringData } from "../scoring.ts";
 type PipeLayoutOption = 0 | 1;
 
 export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
-  private readonly verticalPipeLocations = [HALF_WIDTH - 190, HALF_WIDTH + 135];
-  private readonly forkedPipeLocations = [HALF_WIDTH + 200, HALF_WIDTH - 50];
+  private readonly verticalPipeLocations = [HALF_WIDTH - 190, HALF_WIDTH + 170];
+  private readonly forkedPipeLocations = [HALF_WIDTH + 240, HALF_WIDTH - 70];
   /**
    * Index into the possible pipe locations
    */
@@ -114,8 +114,8 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
 
   private setupBasket() {
     this.basket = this.physics.add
-      .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .staticSprite(this.verticalPipeLocations[this.pipeLayout], BASKET_BOTTOM, "basket")
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
@@ -126,10 +126,11 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
 
   private resetBasket() {
     this.basket.setPosition(
-      Phaser.Math.RND.pick([
+      /*Phaser.Math.RND.pick([
         this.leftEdgeGameBound - 50,
         this.rightEdgeGameBound - 50,
-      ]),
+      ]),*/
+      this.verticalPipeLocations[this.pipeLayout],
       BASKET_BOTTOM,
     );
     this.basket.refreshBody();
@@ -139,7 +140,7 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private setupBasket2() {
     this.basket2 = this.physics.add
       .staticSprite(HALF_WIDTH + 150, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket2.setPosition(dragX, dragY);
@@ -151,8 +152,8 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private resetBasket2() {
     this.basket2.setPosition(
       Phaser.Math.RND.pick([
-        this.leftEdgeGameBound + 50,
-        this.rightEdgeGameBound + 50,
+        this.forkedPipeLocations[this.pipeLayout] + 120,
+        this.forkedPipeLocations[this.pipeLayout] - 270,
       ]),
       BASKET_BOTTOM,
     );

@@ -59,7 +59,7 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
   private setupBasket() {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
