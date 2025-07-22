@@ -98,6 +98,7 @@ export class MarbleTrackScene<T> extends Scene {
     this.load.image("flag", "assets/flag.png");
     this.load.image("log", "assets/log.png");
     this.load.image("bowl", "assets/bowl.png");
+    this.load.image("box", "assets/box.png");
     this.load.image("logBall", "assets/logBall.png");
   }
 
@@ -755,7 +756,7 @@ export class MarbleTrackScene<T> extends Scene {
   }
 
   private shouldRecordPath(): boolean {
-    return ["Level0", "Level1", "Level2"].includes(this.levelKey);
+    return ["Level0", "Level1", "Level2","Level4"].includes(this.levelKey);
   }
 
   private shouldRecordTrackPaths(): boolean {
@@ -775,5 +776,19 @@ export class MarbleTrackScene<T> extends Scene {
     marble.setFrictionAir(0.001);
     marble.setFrictionStatic(0.5);
     marble.setFriction(friction);
+  }
+  protected releaseBox(
+    box?: Phaser.Physics.Matter.Image,
+    weight = 1,
+    friction = 0.1,
+  ) {
+    if (!box) return;
+    box.setStatic(false);
+    box.setMass(weight);
+    box.setAngularVelocity(-0.01);
+    box.setVelocity(0, 0);
+    box.setFrictionAir(0.001);
+    box.setFrictionStatic(0.5);
+    box.setFriction(friction);
   }
 }

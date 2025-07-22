@@ -13,7 +13,7 @@ export class Level3 extends MarbleTrackScene<Level3ScoringData> {
       '"Marbles Track" - Level 3 (Test)',
       "Help the marble reach the goal!",
       "Level3Intro",
-      "GameOver",
+      "Level4",
       true
     );
   }
