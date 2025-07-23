@@ -1,6 +1,6 @@
 import { Level } from "./scenes/Level.ts";
-import { GameOver } from "./scenes/GameOver";
-import { MainMenu } from "./scenes/MainMenu";
+import { GameOver } from "./scenes/GameOver.ts";
+import { MainMenu } from "./scenes/MainMenu.ts";
 
 import { Game, Types } from "phaser";
 

@@ -22,7 +22,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: true,
-    outDir: "../../docs/games/magic_cups",
+    outDir: "../../docs/games/fix-it",
   },
   server: {
     port: 8080,

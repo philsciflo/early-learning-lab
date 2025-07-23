@@ -1465,6 +1465,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fix-it@workspace:games/fix-it":
+  version: 0.0.0-use.local
+  resolution: "fix-it@workspace:games/fix-it"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
+
 "flat-cache@npm:^4.0.0":
   version: 4.0.1
   resolution: "flat-cache@npm:4.0.1"
@@ -1897,9 +1908,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic_cups@workspace:games/magic_cups":
+"magic-cups@workspace:games/magic-cups":
   version: 0.0.0-use.local
-  resolution: "magic_cups@workspace:games/magic_cups"
+  resolution: "magic-cups@workspace:games/magic-cups"
   dependencies:
     phaser: "npm:^3.86.0"
     terser: "npm:^5.31.0"

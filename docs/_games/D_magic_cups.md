@@ -1,8 +1,8 @@
 ---
-heading: Magic Cups
+heading: D
 subheading: Magic Cups
 colour: green
-ref: magic_cups
+ref: magic-cups
 ---
 
 # Magic Cups
