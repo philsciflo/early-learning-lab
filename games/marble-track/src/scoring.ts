@@ -80,6 +80,7 @@ export type Level3ScoringData = LevelScoringData & {
 };
 export type Level4ScoringData = LevelScoringData & {
   path?: {x: number, y: number, time: number}[];
+  DropToDragDuration?: number;
 };
 
 

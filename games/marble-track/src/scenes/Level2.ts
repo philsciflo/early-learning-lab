@@ -148,8 +148,10 @@ export class Level2 extends MarbleTrackScene<Level2ScoringData> {
   protected override onDropPressed() {
     if (this.dropCount === 0) {
       this.releaseMarble(this.dropMarble, 4.7,0.01);
+      this.dropClickTime = Date.now();
     } else if (this.dropCount === 1) {
       if (this.isDragMarbleSnapped) {
+        this.secondDropClickTime = Date.now();
         this.releaseMarble(this.dragMarble, 25,0.05);
       } else {
         this.dropCount -= 1;

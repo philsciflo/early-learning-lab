@@ -321,6 +321,7 @@ private createDraggableTrack(length: number, angle: number, x: number, y: number
   private lidCollider?: MatterJS.BodyType;
 
   protected override onDropPressed() {
+    this.dropClickTime = Date.now();
     this.releaseMarble(this.dropMarble, 25,0.05);
     this.rotateLidWithCollider(this.lidCollider);
     this.allTracks.forEach(track => {
