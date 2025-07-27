@@ -62,10 +62,12 @@ export class MarbleTrackScene<T> extends Scene {
     private musicBtn!: Phaser.GameObjects.Image; // button reference*/
 
   protected dragPositions: { x: number; y: number; time: number }[] = [];
-
   protected trackPaths: TrackMovement[] = [];
   protected levelStartTime = 0;
   protected currentTrackPaths: Record<string, TrackPathPoint[]> = {};
+  protected dropClickTime = 0;
+  protected secondDropClickTime = 0;
+  protected durationFromDropToDrag = 0;
 
   constructor(
     protected levelKey: keyof LEVEL_TRYDATA_MAP, //scoring change
@@ -739,7 +741,10 @@ export class MarbleTrackScene<T> extends Scene {
         tries: this.registry.get(this.triesDataKey), // Current number of tries
         score: this.scoreForThisTry,
         duration: this.duration,
-        ...(this.shouldRecordPath() && { path: this.dragPositions }), // Conditional
+        ...(this.shouldRecordDropTime() && { DropTime: this.dropClickTime - startTime }),
+        ...(this.shouldRecordSecondDropTime() && { SecondDropTime: this.secondDropClickTime - startTime }),
+        ...(this.shouldRecordDropToDragDuration() && { DropToDragDuration: this.durationFromDropToDrag }),
+        ...(this.shouldRecordPath() && { path: this.dragPositions }),// Conditional
         ...(this.shouldRecordTrackPaths() && { trackPaths: this.trackPaths }), // Conditionally Include all track movements
       },
     ];
@@ -755,12 +760,23 @@ export class MarbleTrackScene<T> extends Scene {
     );
   }
 
+  private shouldRecordDropTime(): boolean {
+    return ["Level1Intro", "Level1","Level2Intro", "Level2","Level3Intro","Level3","Level4"].includes(this.levelKey);
+  }
+
+  private shouldRecordSecondDropTime(): boolean {
+    return ["Level1","Level2"].includes(this.levelKey);
+  }
+
   private shouldRecordPath(): boolean {
     return ["Level0", "Level1", "Level2","Level4"].includes(this.levelKey);
   }
 
   private shouldRecordTrackPaths(): boolean {
     return ["Level3"].includes(this.levelKey);
+  }
+  private shouldRecordDropToDragDuration(): boolean {
+    return ["Level4"].includes(this.levelKey);
   }
 
   protected releaseMarble(

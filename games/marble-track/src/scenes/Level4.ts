@@ -10,6 +10,7 @@ export class Level4 extends MarbleTrackScene<Level4ScoringData> {
   private isDragging = false;
   private dragStartTime = 0;
   private dragInterval?: Phaser.Time.TimerEvent;
+  
 
   constructor() {
     super(
@@ -24,7 +25,7 @@ export class Level4 extends MarbleTrackScene<Level4ScoringData> {
 
   // Initialize the scene
   override create(): void {
-    this.matter.world.drawDebug = true;
+    this.matter.world.drawDebug = false;
     super.create();
     this.setupTrack();
     this.setupFlag();
@@ -101,6 +102,7 @@ export class Level4 extends MarbleTrackScene<Level4ScoringData> {
         console.log("Drag started");
         this.isDragging = true;
         this.dragStartTime = Date.now();
+        this.durationFromDropToDrag = this.dragStartTime - this.dropClickTime;
         this.dragPositions = [];
   
         this.dragPositions.push({
@@ -136,7 +138,9 @@ export class Level4 extends MarbleTrackScene<Level4ScoringData> {
   }
   
   private lidCollider?: MatterJS.BodyType;
+
   protected override onDropPressed() {
+    this.dropClickTime = Date.now();
     this.releaseMarble(this.dropMarble, 10,0.05);
     this.releaseBox(this.dragBox, 50,0.05);
     this.rotateLidWithCollider(this.lidCollider);
