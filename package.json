@@ -30,6 +30,6 @@
   },
   "dependencies": {
     "matter-js": "^0.20.0",
-    "phaser": "^3.88.2"
+    "phaser": "^3.90.0"
   }
 }

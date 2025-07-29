@@ -55,7 +55,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1ScoringData> {
   private setupBasket() {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
@@ -65,13 +65,13 @@ export class Level1Drop extends AbstractCatcherScene<Level1ScoringData> {
   }
 
   private resetBasket() {
-    this.basket.setPosition(
+    /*this.basket.setPosition(
       Phaser.Math.RND.pick([
         this.leftEdgeGameBound + 50,
         this.rightEdgeGameBound - 50,
       ]),
       BASKET_BOTTOM,
-    );
+    );*/
     this.basket.refreshBody();
     this.basket.setInteractive();
   }
@@ -87,8 +87,11 @@ export class Level1Drop extends AbstractCatcherScene<Level1ScoringData> {
         .setInteractive({ draggable: true }) // Enable dragging
         .disableBody();
 
-    this.apple.on('dragstart', () => {
+    /*this.apple.on('dragstart', () => {
         this.apple.disableBody(true, false); // Freeze physics during drag
+    });*/
+    this.apple.on('dragstart', () => {
+      this.registry.values[this.triesDataKey] += 1;
     });
 
     this.apple.on('drag', (pointer: Pointer) => {
@@ -97,9 +100,9 @@ export class Level1Drop extends AbstractCatcherScene<Level1ScoringData> {
     });
 
     this.apple.on('dragend', () => {
-        this.apple.enableBody(true, this.apple.x, this.apple.y, true, true);
-        this.apple.setGravityY(300); // Fall speed
-        this.apple.setInteractive({ draggable: false }); // Disable future dragging
+        this.physics.world.enableBody(this.apple);
+        //this.apple.setGravityY(300); // Fall speed
+        this.apple.disableInteractive();
     });
 }
 
@@ -110,7 +113,7 @@ private resetApple() {
     this.apple.body.reset(this.rightTreeLeft + 100, 415); 
     this.apple.setVisible(true);
     this.apple.setActive(true);
-    this.apple.setInteractive({ draggable: true }); // Re-enable dragging
+    this.apple.setInteractive(); // Re-enable dragging
     this.apple.setGravityY(0); // Clear gravity until dropped
 }
 }

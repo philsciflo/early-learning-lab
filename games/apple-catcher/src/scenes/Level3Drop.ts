@@ -4,11 +4,13 @@ import { BLUE, BASKET_BOTTOM, HALF_WIDTH, APPLE_TOP } from "../constants.ts";
 import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import Point = Phaser.Geom.Point;
+import {ForkedPipe,setupTripleForkedPipe} from "../pipes.ts";
 import { Level3ScoringData } from "../scoring.ts";
 
 export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
+  private forkedPipe: ForkedPipe;
 
   constructor() {
     super(
@@ -25,7 +27,8 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     super.create();
     this.setupBasket();
     this.setupApple();
-    this.renderThreeForkedPipe();
+    setupTripleForkedPipe(this, HALF_WIDTH, this.apple, true);
+    //this.renderThreeForkedPipe();
     this.nextSceneKey = "Level4Drop";
 
     this.addCollisionHandling(this.basket, this.apple);
@@ -45,7 +48,6 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
       score: this.currentScore > 0 ? 1 : 0,
     };
   }
-
   private renderThreeForkedPipe() {
     const pipeX = HALF_WIDTH;  // center X
     const pipeY = 220;         // align top Y
@@ -57,7 +59,7 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
   private setupBasket() {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
@@ -80,9 +82,9 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
       HALF_WIDTH + 100 * Math.tan(HALF_PI) + pipeWidth * Math.sin(HALF_PI);
 
     const pipeExitPositions = [
-      B, // left pipe center
-      (C + D) / 2, // center pipe center
-      (E + F) / 2, // right pipe center
+      B - 100, // left pipe center
+      (C + D) / 2 , // center pipe center
+      (E + F) / 2 + 80, // right pipe center
     ];
 
     const chosenX = Phaser.Math.RND.pick(pipeExitPositions);
@@ -98,11 +100,14 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     this.apple = this.physics.add
       .sprite(appleX, appleY, "apple")
       .setDisplaySize(50, 50)
-      .setCollideWorldBounds(true)
+      .setCollideWorldBounds(true, 0, 0, true)
       .disableBody();
 
     this.apple.setInteractive({ draggable: true });
     this.input.setDraggable(this.apple);
+    this.apple.on('dragstart', () => {
+      this.registry.values[this.triesDataKey] += 1;
+    });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
       this.apple.setPosition(dragX, dragY);
@@ -130,35 +135,8 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     this.apple.setInteractive({ draggable: true });
     this.input.setDraggable(this.apple);
   }
-  update() {
-    const pipeEntryXMin = HALF_WIDTH - 60;
-    const pipeEntryXMax = HALF_WIDTH + 60;
-    const pipeEntryY = 420;
-
-    if (
-      this.apple.active &&
-      this.apple.y > pipeEntryY &&
-      this.apple.x >= pipeEntryXMin &&
-      this.apple.x <= pipeEntryXMax &&
-      !this.apple.getData("inPipe")
-    ) {
-      this.apple.setData("inPipe", true);
-
-      this.apple.setVisible(false);
-      this.apple.disableBody(true, true);
-
-      const exits = [
-        { x: HALF_WIDTH - 140, y: 500 },
-        { x: HALF_WIDTH, y: 500 },
-        { x: HALF_WIDTH + 140, y: 500 },
-      ];
-      const chosen = Phaser.Math.RND.pick(exits);
-
-      this.time.delayedCall(500, () => {
-        this.apple.enableBody(true, chosen.x, chosen.y, true, true);
-        this.apple.setVisible(true);
-        this.apple.setVelocity(0, 100);
-      });
-    }
+  
+  protected doDrop(): void {
+    
   }
 }

@@ -13,7 +13,7 @@ export class Level3 extends MarbleTrackScene<Level3ScoringData> {
       '"Marbles Track" - Level 3 (Test)',
       "Help the marble reach the goal!",
       "Level3Intro",
-      "GameOver",
+      "Level4",
       true
     );
   }
@@ -321,6 +321,7 @@ private createDraggableTrack(length: number, angle: number, x: number, y: number
   private lidCollider?: MatterJS.BodyType;
 
   protected override onDropPressed() {
+    this.dropClickTime = Date.now();
     this.releaseMarble(this.dropMarble, 25,0.05);
     this.rotateLidWithCollider(this.lidCollider);
     this.allTracks.forEach(track => {

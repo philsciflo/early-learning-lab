@@ -10,8 +10,8 @@ import { Level4ScoringData } from "../scoring.ts";
 type PipeLayoutOption = 0 | 1;
 
 export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
-  private readonly verticalPipeLocations = [HALF_WIDTH - 190, HALF_WIDTH + 135];
-  private readonly forkedPipeLocations = [HALF_WIDTH + 200, HALF_WIDTH - 50];
+  private readonly verticalPipeLocations = [HALF_WIDTH - 190, HALF_WIDTH + 170];
+  private readonly forkedPipeLocations = [HALF_WIDTH + 240, HALF_WIDTH - 70];
   /**
    * Index into the possible pipe locations
    */
@@ -114,8 +114,8 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
 
   private setupBasket() {
     this.basket = this.physics.add
-      .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .staticSprite(this.verticalPipeLocations[this.pipeLayout], BASKET_BOTTOM, "basket")
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
@@ -126,10 +126,11 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
 
   private resetBasket() {
     this.basket.setPosition(
-      Phaser.Math.RND.pick([
+      /*Phaser.Math.RND.pick([
         this.leftEdgeGameBound - 50,
         this.rightEdgeGameBound - 50,
-      ]),
+      ]),*/
+      this.verticalPipeLocations[this.pipeLayout],
       BASKET_BOTTOM,
     );
     this.basket.refreshBody();
@@ -139,7 +140,7 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private setupBasket2() {
     this.basket2 = this.physics.add
       .staticSprite(HALF_WIDTH + 150, BASKET_BOTTOM, "basket")
-      .setInteractive({ draggable: true })
+      .setInteractive({ draggable: false })
       .setScale(1.3,1)
       .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket2.setPosition(dragX, dragY);
@@ -151,8 +152,8 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private resetBasket2() {
     this.basket2.setPosition(
       Phaser.Math.RND.pick([
-        this.leftEdgeGameBound + 50,
-        this.rightEdgeGameBound + 50,
+        this.forkedPipeLocations[this.pipeLayout] + 120,
+        this.forkedPipeLocations[this.pipeLayout] - 270,
       ]),
       BASKET_BOTTOM,
     );
@@ -167,11 +168,15 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
     this.apple = this.physics.add
       .sprite(appleX, appleY, "apple")
       .setDisplaySize(50, 50)
-      .setCollideWorldBounds(true)
+      .setCollideWorldBounds(true, 0, 0, true)
       .disableBody();
 
     this.apple.setInteractive({ draggable: true });
     this.input.setDraggable(this.apple);
+
+    this.apple.on('dragstart', () => {
+      this.registry.values[this.triesDataKey] += 1;
+    });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
       this.apple.setPosition(dragX, dragY);
@@ -187,8 +192,8 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
       this.physics.world.disableBody(this.apple.body);
     }
 
-    const startX = HALF_WIDTH + 300;
-    const startY = APPLE_TOP + 150;
+    const startX = this.rightTreeLeft + 100;
+    const startY = 415;
 
     this.apple.body.reset(startX, startY);
     this.apple.setVisible(true);
@@ -200,22 +205,14 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private setupAppleStartingPositions() {
     const verticalPipeAppleLocationCenter =
       this.verticalPipeLocations[this.pipeLayout];
-    this.firstAppleImage = this.add.image(
-      verticalPipeAppleLocationCenter,
-      APPLE_TOP,
-      "apple-background",
-    );
+    
     this.firstAppleZone = this.add
       .zone(verticalPipeAppleLocationCenter, APPLE_TOP, 50, 50)
       .setRectangleDropZone(70, 70);
 
     const forkedPipeAppleStartingLocation =
       this.forkedPipeLocations[this.pipeLayout] - 75;
-    this.secondAppleImage = this.add.image(
-      forkedPipeAppleStartingLocation,
-      APPLE_TOP,
-      "apple-background",
-    );
+    
     this.secondAppleZone = this.add
       .zone(forkedPipeAppleStartingLocation, APPLE_TOP, 50, 50)
       .setRectangleDropZone(70, 70);
@@ -224,12 +221,13 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
   private resetAppleStartingPositions() {
     const verticalPipeAppleLocationCenter =
       this.verticalPipeLocations[this.pipeLayout];
-    this.firstAppleImage.setX(verticalPipeAppleLocationCenter);
     this.firstAppleZone.setX(verticalPipeAppleLocationCenter);
 
     const forkedPipeAppleStartingLocation =
       this.forkedPipeLocations[this.pipeLayout] - 75;
-    this.secondAppleImage.setX(forkedPipeAppleStartingLocation);
     this.secondAppleZone.setX(forkedPipeAppleStartingLocation);
+  }
+
+  protected doDrop(): void {
   }
 }

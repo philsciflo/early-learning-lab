@@ -5,7 +5,7 @@ import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import Point = Phaser.Geom.Point;
 import { Level3ScoringData } from "../scoring.ts";
-import { renderVerticalPipe, setupForkedPipe } from "../pipes.ts";
+import { renderVerticalPipe, setupForkedPipe, setupTripleForkedPipe } from "../pipes.ts";
 
 export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
   private basket: SpriteWithStaticBody;
@@ -25,7 +25,8 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     super.create();
     this.setupBasket();
     this.setupApple();
-    this.renderThreeForkedPipe();
+    //this.renderThreeForkedPipe();
+    setupTripleForkedPipe(this, HALF_WIDTH, this.apple, true);
 
     this.addCollisionHandling(this.basket, this.apple);
   }
@@ -86,7 +87,7 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     this.apple = this.physics.add
       .sprite(HALF_WIDTH, APPLE_TOP, "apple")
       .setDisplaySize(50, 50)
-      .setCollideWorldBounds(true)
+      .setCollideWorldBounds(true, 0, 0, true)
       .disableBody();
   }
 

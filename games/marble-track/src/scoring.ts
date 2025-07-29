@@ -78,6 +78,11 @@ export type Level3IntroScoringData = LevelScoringData;
 export type Level3ScoringData = LevelScoringData & {
   trackPaths?: TrackPathPoint[]; // Simple array of all track movements
 };
+export type Level4ScoringData = LevelScoringData & {
+  path?: {x: number, y: number, time: number}[];
+  DropToDragDuration?: number;
+};
+
 
 // Mapping
 export type LEVEL_TRYDATA_MAP = {
@@ -88,6 +93,7 @@ export type LEVEL_TRYDATA_MAP = {
   Level2: Level2ScoringData[];
   Level3Intro: Level3IntroScoringData[];
   Level3: Level3ScoringData[];
+  Level4: Level4ScoringData[];
 };
 
 export function removeScoreData(): void {

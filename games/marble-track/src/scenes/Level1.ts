@@ -206,12 +206,14 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
   private lidCollider?: MatterJS.BodyType;
   protected override onDropPressed() {
   if (this.dropCount === 0) {
+    this.dropClickTime = Date.now();
     this.time.delayedCall(100, () => {
       this.releaseMarble(this.dropMarble, 5, 0.02);
       this.rotateLidWithCollider(this.lidCollider);
     });
   } else if (this.dropCount === 1) {
     if (this.isDragMarbleSnapped) {
+      this.secondDropClickTime = Date.now();
       this.dot.setCollisionCategory(0);
       this.dot.setCollidesWith(0);
       this.time.delayedCall(100, () => {
