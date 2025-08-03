@@ -27,5 +27,9 @@
       "eslint --fix",
       "prettier --write --ignore-unknown"
     ]
+  },
+  "dependencies": {
+    "matter-js": "^0.20.0",
+    "phaser": "^3.90.0"
   }
 }

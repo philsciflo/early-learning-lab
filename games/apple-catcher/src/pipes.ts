@@ -40,7 +40,12 @@ export function renderVerticalPipe(
   if (image) {
     pipe.generateTexture("vertical-pipe", pipeWidth, pipeHeight);
 
-    return scene.add.image(0, HALF_HEIGHT + 25, "vertical-pipe");
+    const pipeImage = scene.add
+      .image(pipeCenter, 225, "pipe4-2")
+      .setOrigin(0.5, 0)
+      .setScale(0.67);
+    scene.physics.add.existing(pipeImage, true);
+    return pipeImage;
   }
   return undefined;
 }
@@ -152,7 +157,7 @@ export function setupForkedPipe(
    */
   const directionTriggerPoint = scene.physics.add.staticSprite(
     centerX,
-    431,
+    440,
     "move",
   );
   // Sprites behave more sensibly than Shapes when being moved around, but we don't want to actually see this image...
@@ -168,8 +173,9 @@ export function setupForkedPipe(
         ];
       const applePhysicsBody = (apple as GameObjectWithDynamicBody).body;
       applePhysicsBody.setAllowGravity(false);
-      applePhysicsBody.setVelocityX(100 * horizontalDirection);
+      applePhysicsBody.setVelocityX(120 * horizontalDirection);
       applePhysicsBody.setVelocityY(100);
+      applePhysicsBody.x = directionTriggerPoint.x -25;//SNAP
       setTimeout(() => {
         applePhysicsBody.setVelocityX(applePhysicsBody.velocity.x || 2 / 2);
         applePhysicsBody.setAllowGravity(true);
@@ -193,7 +199,12 @@ export function setupForkedPipe(
   if (image) {
     pipe.generateTexture("forked-pipe", 500, 300);
 
-    const pipeImage = scene.add.image(0, HALF_HEIGHT + 50, "forked-pipe");
+    const pipeImage = scene.add
+      .image(centerX+80, 220, "pipe4-1")
+      .setOrigin(0.72, 0)
+      .setScale(0.7);
+    scene.physics.add.existing(pipeImage, true);
+
     return {
       setX(pos: number) {
         pipeImage.setX(pos);
@@ -204,3 +215,132 @@ export function setupForkedPipe(
   }
   return undefined;
 }
+
+
+export function setupTripleForkedPipe(
+  scene: AbstractCatcherScene<unknown>,
+  centerX: number,
+  apple: GameObjectWithDynamicBody,
+  image?: boolean
+): ForkedPipe | undefined {
+  //const recentDirections: number[] = [];
+  /*const appleDirections = [-1, 0, 1]
+     let shuffled = appleDirections
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);*/
+
+  const pipe = scene.add.graphics();
+  pipe.setVisible(!image);
+  pipe.setDefaultStyles({
+    fillStyle: { color: BLUE },
+    lineStyle: { color: BLUE, width: 4 },
+  });
+
+  // TODO: draw actual triple-fork pipe path if visible
+
+  const directionTriggerPoint = scene.physics.add.staticSprite(centerX, 460, "move");
+  directionTriggerPoint.setVisible(false);
+  let collisionHandled = false;
+
+  scene.physics.add.collider(
+    apple,
+    directionTriggerPoint,
+    (apple) => {
+      /*const direction = appleDirections[
+        scene.registry.get(scene.triesDataKey) % appleDirections.length
+      ];*/
+      if (collisionHandled) return; 
+      
+      collisionHandled = true;
+      const direction = chooseNonRepeatingDirection(); 
+
+      const appleBody = (apple as GameObjectWithDynamicBody).body;
+      appleBody.setAllowGravity(false);
+      appleBody.setVelocityX(100 * direction);
+      appleBody.setVelocityY(100);
+      appleBody.x = directionTriggerPoint.x - 25 + direction * 20; // SNAP with slight offset
+
+      setTimeout(() => {
+        appleBody.setVelocityX(appleBody.velocity.x || 2 / 2);
+        appleBody.setAllowGravity(true);
+        collisionHandled = false; 
+      }, 500);
+    },
+    (apple) => {
+      return (apple as GameObjectWithDynamicBody).body.velocity.x === 0;
+    }
+  );
+
+  scene.physics.world.on("worldbounds", (body: Body) => {
+    if (body === apple.body) {
+      body.setVelocityX(0);
+    }
+  });
+
+  if (image) {
+    pipe.generateTexture("forked-pipe", 500, 300);
+
+    const pipeImage = scene.add
+      .image(centerX, 220, "pipe3")
+      .setOrigin(0.5, 0)
+      .setScale(0.8);
+    scene.physics.add.existing(pipeImage, true);
+
+    return {
+      setX(pos: number) {
+        pipeImage.setX(pos);
+        directionTriggerPoint.setX(pos - 75);
+        directionTriggerPoint.refreshBody();
+      },
+    };
+  }
+
+  return undefined;
+}
+
+const recentDirections: number[] = [];
+
+function chooseNonRepeatingDirection(): number {
+  const appleDirections = [-1, 0, 1];
+
+  // 打乱顺序，确保公平
+  const shuffled = appleDirections
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+
+  // 选择不会导致三连的方向
+  let chosen: number | undefined = undefined;
+
+  for (const dir of shuffled) {
+    // 如果最近两个方向都是 dir，就跳过它
+    if (
+      recentDirections.length >= 2 &&
+      recentDirections[0] === dir &&
+      recentDirections[1] === dir
+    ) {
+      continue;
+    } else {
+      chosen = dir;
+      break;
+    }
+  }
+
+  // 如果都不满足（极小概率），那就选第一个
+  if (chosen === undefined) {
+    chosen = shuffled[0];
+  }
+
+  // 更新历史（先 unshift，然后截断）
+  recentDirections.unshift(chosen);
+  if (recentDirections.length > 2) {
+    recentDirections.length = 2;
+  }
+
+  // ✅ 打印用于调试
+  console.log("Chosen direction:", chosen, "History:", [...recentDirections]);
+
+  return chosen;
+}
+
