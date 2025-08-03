@@ -163,7 +163,7 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
 
   private setupApple() {
     const appleX = this.rightTreeLeft + 100;
-    const appleY = 415;
+    const appleY = this.treeY + 110;
 
     this.apple = this.physics.add
       .sprite(appleX, appleY, "apple")
@@ -194,7 +194,7 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
     }
 
     const startX = this.rightTreeLeft + 100;
-    const startY = 415;
+    const startY = this.treeY + 110;
 
     this.apple.body.reset(startX, startY);
     this.apple.setVisible(true);
