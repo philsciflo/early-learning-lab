@@ -216,16 +216,19 @@ export function setupForkedPipe(
   return undefined;
 }
 
+
 export function setupTripleForkedPipe(
   scene: AbstractCatcherScene<unknown>,
   centerX: number,
   apple: GameObjectWithDynamicBody,
   image?: boolean
 ): ForkedPipe | undefined {
-  const appleDirections = [-1, 0, 1]
+  //const recentDirections: number[] = [];
+  /*const appleDirections = [-1, 0, 1]
+     let shuffled = appleDirections
     .map((value) => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
+    .map(({ value }) => value);*/
 
   const pipe = scene.add.graphics();
   pipe.setVisible(!image);
@@ -238,14 +241,19 @@ export function setupTripleForkedPipe(
 
   const directionTriggerPoint = scene.physics.add.staticSprite(centerX, 460, "move");
   directionTriggerPoint.setVisible(false);
+  let collisionHandled = false;
 
   scene.physics.add.collider(
     apple,
     directionTriggerPoint,
     (apple) => {
-      const direction = appleDirections[
+      /*const direction = appleDirections[
         scene.registry.get(scene.triesDataKey) % appleDirections.length
-      ];
+      ];*/
+      if (collisionHandled) return; 
+      
+      collisionHandled = true;
+      const direction = chooseNonRepeatingDirection(); 
 
       const appleBody = (apple as GameObjectWithDynamicBody).body;
       appleBody.setAllowGravity(false);
@@ -256,6 +264,7 @@ export function setupTripleForkedPipe(
       setTimeout(() => {
         appleBody.setVelocityX(appleBody.velocity.x || 2 / 2);
         appleBody.setAllowGravity(true);
+        collisionHandled = false; 
       }, 500);
     },
     (apple) => {
@@ -288,5 +297,50 @@ export function setupTripleForkedPipe(
   }
 
   return undefined;
+}
+
+const recentDirections: number[] = [];
+
+function chooseNonRepeatingDirection(): number {
+  const appleDirections = [-1, 0, 1];
+
+  // 打乱顺序，确保公平
+  const shuffled = appleDirections
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+
+  // 选择不会导致三连的方向
+  let chosen: number | undefined = undefined;
+
+  for (const dir of shuffled) {
+    // 如果最近两个方向都是 dir，就跳过它
+    if (
+      recentDirections.length >= 2 &&
+      recentDirections[0] === dir &&
+      recentDirections[1] === dir
+    ) {
+      continue;
+    } else {
+      chosen = dir;
+      break;
+    }
+  }
+
+  // 如果都不满足（极小概率），那就选第一个
+  if (chosen === undefined) {
+    chosen = shuffled[0];
+  }
+
+  // 更新历史（先 unshift，然后截断）
+  recentDirections.unshift(chosen);
+  if (recentDirections.length > 2) {
+    recentDirections.length = 2;
+  }
+
+  // ✅ 打印用于调试
+  console.log("Chosen direction:", chosen, "History:", [...recentDirections]);
+
+  return chosen;
 }
 

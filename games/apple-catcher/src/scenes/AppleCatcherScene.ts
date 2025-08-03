@@ -246,9 +246,11 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     const buttonY = 400;
     const buttonWidth = 100;
     const buttonHeight = 50;
+    let dropButton: Phaser.GameObjects.Graphics | undefined;
+    let dropUsed = false;
 
     if (!this.hideDropButton) {
-    const dropButton = this.add.graphics();
+    dropButton = this.add.graphics();
     dropButton.lineStyle(2, BLACK);
     dropButton.fillStyle(ORANGE);
 
@@ -268,10 +270,13 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     );
 
     dropButton.on("pointerdown", () => {
+      if (dropUsed || !this.canDrop()) return;
+
       if (this.canDrop()) {
         this.registry.inc(this.triesDataKey, 1);
         this.currentScore++; 
         this.doDrop();
+        dropUsed = true;
       }
     });
 
@@ -324,7 +329,8 @@ export abstract class AbstractCatcherScene<T> extends Scene {
       }
       this.doReset();
       this.currentScore = -1;
-      dropButton.setInteractive();
+      dropButton?.setInteractive();
+      dropUsed = false;
     });
   }
 
