@@ -176,6 +176,7 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
 
     this.apple.on('dragstart', () => {
       this.registry.values[this.triesDataKey] += 1;
+      this.currentScore++; 
     });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {

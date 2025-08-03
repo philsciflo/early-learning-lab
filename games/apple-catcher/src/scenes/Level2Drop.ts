@@ -93,6 +93,7 @@ export class Level2Drop extends AbstractCatcherScene<Level2ScoringData> {
     });*/
     this.apple.on('dragstart', () => {
       this.registry.values[this.triesDataKey] += 1;
+      this.currentScore++; 
     });
 
     this.apple.on('drag', (pointer: Pointer) => {

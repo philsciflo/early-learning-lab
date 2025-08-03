@@ -107,6 +107,7 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     this.input.setDraggable(this.apple);
     this.apple.on('dragstart', () => {
       this.registry.values[this.triesDataKey] += 1;
+      this.currentScore++; 
     });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
