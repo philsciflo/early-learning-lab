@@ -105,6 +105,7 @@ private setupApples() {
             apple.disableBody(true, false);
             if (!this.hasDraggedThisRound) {
               this.registry.values[this.triesDataKey] += 1;
+              this.currentScore++; 
               this.hasDraggedThisRound = true;
             }
         });
