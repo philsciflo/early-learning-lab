@@ -30,6 +30,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   protected leftEdgeGameBound = this.leftTreeLeft + 200;
   protected rightTreeLeft = GAME_AREA_WIDTH - 160;
   protected rightEdgeGameBound = this.rightTreeLeft;
+  protected treeY = 320;
 
   public triesDataKey: string;
   public scoreDataKey: string;
@@ -37,6 +38,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   private scoringData: T[];
 
   protected hideDropButton = false; // Controls Drop button visibility
+  protected applePyramid: Phaser.GameObjects.Image[] = [];
 
   /**
    * Score for the current drop
@@ -132,6 +134,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     this.renderDynamicNumbers();
     this.renderNavigationButtons();
     this.renderGameButtons();
+    this.applePyramid = this.createApplePyramid(this, this.rightTreeLeft + 100, this.treeY - 210);
   }
 
   private renderStaticBackgroundItems() {
@@ -164,12 +167,12 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     });
 
     this.add
-      .image(this.leftTreeLeft, 300, "tree")
+      .image(this.leftTreeLeft, this.treeY, "tree")
       .setOrigin(0, 0)
       .setDisplaySize(200, 300);
 
     this.add
-      .image(this.rightTreeLeft, 300, "tree")
+      .image(this.rightTreeLeft, this.treeY, "tree")
       .setOrigin(0, 0)
       .setDisplaySize(200, 300);
   }
@@ -177,7 +180,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   private renderDynamicNumbers() {
     const triesText = this.add.text(
       GUTTER_WIDTH + 30,
-      270,
+      this.treeY - 20,
       `Tries: ${this.registry.get(this.triesDataKey)}`,
       {
         fontFamily: "Arial",
@@ -201,7 +204,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
 
     const scoreText = this.add.text(
       GAME_AREA_WIDTH - 130,
-      270,
+      this.treeY - 20,
       `Score: ${this.registry.get(this.scoreDataKey)}`,
       {
         fontFamily: "Arial",
@@ -215,6 +218,9 @@ export abstract class AbstractCatcherScene<T> extends Scene {
       scoreDataChangeEventKey,
       (_parent: never, newValue: number) => {
         scoreText.setText(`Score: ${newValue}`);
+        if (this.applePyramid && this.showApplesUpTo) {
+          this.showApplesUpTo(this.applePyramid, Math.min(newValue, this.applePyramid.length));
+        }
       },
     );
     this.events.once("shutdown", () => {
@@ -243,7 +249,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   }
 
   private renderGameButtons() {
-    const buttonY = 400;
+    const buttonY = this.treeY + 100;
     const buttonWidth = 100;
     const buttonHeight = 50;
     let dropButton: Phaser.GameObjects.Graphics | undefined;
@@ -367,4 +373,40 @@ export abstract class AbstractCatcherScene<T> extends Scene {
       this,
     );
   }
+
+  protected createApplePyramid(scene: Phaser.Scene, centerX: number, centerY: number): Phaser.GameObjects.Image[] {
+    const apples: Phaser.GameObjects.Image[] = [];
+    const rows = 5;
+    const appleWidth = 30;  
+    const appleHeight = 28;
+    const spacingX = appleWidth;       
+    const spacingY = appleHeight * 1.1; 
+    const log = scene.add.image(centerX, centerY + 180, "log");
+    log.displayWidth = 180;
+    log.displayHeight = 20;
+  
+    for (let row = rows; row >= 0; row--) {
+      const applesInRow = row;
+      const rowY = centerY + row * spacingY;
+      const totalRowWidth = (applesInRow - 1) * spacingX;
+      const startX = centerX - totalRowWidth / 2;
+  
+      for (let i = 0; i < applesInRow; i++) {
+        const appleX = startX + i * spacingX;
+        const apple = scene.add.image(appleX, rowY, 'apple')
+        .setScale(0.4);
+        apple.setVisible(false);  
+        apples.push(apple);
+      }
+    }
+  
+    return apples;
+  }
+
+  protected showApplesUpTo(apples: Phaser.GameObjects.Image[], count: number) {
+    for (let i = 0; i < apples.length; i++) {
+      apples[i].setVisible(i < count);
+    }
+  }
+  
 }

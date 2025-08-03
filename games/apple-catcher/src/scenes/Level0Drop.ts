@@ -83,11 +83,11 @@ private setupApples() {
     this.apples = [];
 
     const applePositions = [
-        { x: this.rightTreeLeft + 100, y: 455 },  // Lower middle
-        { x: this.rightTreeLeft + 72, y: 415 },  // Left side
-        { x: this.rightTreeLeft + 128, y: 415 },  // Right side
-        { x: this.rightTreeLeft + 76, y: 375 },  // Upper left
-        { x: this.rightTreeLeft + 124, y: 375 }   // Upper right
+        { x: this.rightTreeLeft + 100, y: this.treeY + 150 },  // Lower middle
+        { x: this.rightTreeLeft + 72, y: this.treeY + 110 },  // Left side
+        { x: this.rightTreeLeft + 128, y: this.treeY + 110 },  // Right side
+        { x: this.rightTreeLeft + 76, y: this.treeY + 70 },  // Upper left
+        { x: this.rightTreeLeft + 124, y: this.treeY + 70 }   // Upper right
     ];
     for (let appleCount = 0; appleCount < 5; appleCount++) {
         const apple = this.physics.add
@@ -97,6 +97,7 @@ private setupApples() {
                 "apple"
             )
             .setDisplaySize(44, 44)
+            .setSize(70, 70)
             .setCollideWorldBounds(true)
             .setInteractive({ draggable: true })
             .disableBody();
@@ -127,11 +128,11 @@ private setupApples() {
 
 private resetApples() {
     const applePositions = [
-        { x: this.rightTreeLeft + 100, y: 455 },  
-        { x: this.rightTreeLeft + 72, y: 415 },  
-        { x: this.rightTreeLeft + 128, y: 415 }, 
-        { x: this.rightTreeLeft + 76, y: 375 },  
-        { x: this.rightTreeLeft + 124, y: 375 }
+      { x: this.rightTreeLeft + 100, y: this.treeY + 150 }, 
+      { x: this.rightTreeLeft + 72, y: this.treeY + 110 }, 
+      { x: this.rightTreeLeft + 128, y: this.treeY + 110 }, 
+      { x: this.rightTreeLeft + 76, y: this.treeY + 70 }, 
+      { x: this.rightTreeLeft + 124, y: this.treeY + 70 }
     ];
 
     this.apples.forEach((apple, index) => {

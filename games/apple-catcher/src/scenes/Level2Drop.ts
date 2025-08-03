@@ -79,7 +79,7 @@ export class Level2Drop extends AbstractCatcherScene<Level2ScoringData> {
 
   private setupApple() {
     const appleX = this.rightTreeLeft + 100; 
-    const appleY = 415;
+    const appleY = this.treeY + 110;
 
     this.apple = this.physics.add
         .sprite(appleX, appleY, "apple")
@@ -112,7 +112,7 @@ private resetApple() {
     if (this.apple.body) {
         this.physics.world.disableBody(this.apple.body);
     }
-    this.apple.body.reset(this.rightTreeLeft + 100, 415); 
+    this.apple.body.reset(this.rightTreeLeft + 100, this.treeY + 110); 
     this.apple.setVisible(true);
     this.apple.setActive(true);
     this.apple.setInteractive(); // Re-enable dragging
