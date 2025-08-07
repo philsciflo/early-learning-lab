@@ -28,7 +28,7 @@ export class Level2 extends AbstractCatcherScene<Level2ScoringData> {
     this.setupBasket();
     this.setupApple();
     setupForkedPipe(this, HALF_WIDTH, this.apple, true);
-
+    this.dragPositions = [];
     this.addCollisionHandling(this.basket, this.apple);
   }
 
@@ -42,6 +42,7 @@ export class Level2 extends AbstractCatcherScene<Level2ScoringData> {
     this.resetBasket();
     this.resetApple();
     this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
   protected recordScoreDataForCurrentTry(): Level2ScoringData {
@@ -65,7 +66,6 @@ export class Level2 extends AbstractCatcherScene<Level2ScoringData> {
       this.basket.on('dragstart', () => {
       
         this.isDragging = true;
-        this.dragPositions = [];
   
         this.recordDragPosition(this.basket.x, this.basket.y);
         
@@ -88,7 +88,6 @@ export class Level2 extends AbstractCatcherScene<Level2ScoringData> {
           y: Math.round(this.basket.y),
           time: Date.now() - this.registry.get(`${this.name}-startTime`)
         });
-        this.basket.disableInteractive();
           this.isDragging = false;
           if (this.dragInterval) {
             this.dragInterval.destroy();

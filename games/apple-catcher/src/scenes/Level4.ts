@@ -46,14 +46,13 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
 
   create() {
     super.create();
-
     this.pickPipeLayoutOption();
     this.setupAppleStartingPositions();
     this.setupBasket();
     this.setupApple();
     this.setupPipes();
-
     this.addCollisionHandling(this.basket, this.apple);
+    this.dragPositions = [];
   }
 
   private pickPipeLayoutOption() {
@@ -77,6 +76,7 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     this.resetAppleStartingPositions();
     this.resetPipes();
     this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
   private setupPipes() {
@@ -125,7 +125,6 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
       this.basket.on('dragstart', () => {
       
         this.isDragging = true;
-        this.dragPositions = [];
   
         this.recordDragPosition(this.basket.x, this.basket.y);
         
@@ -148,7 +147,6 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
           y: Math.round(this.basket.y),
           time: Date.now() - this.registry.get(`${this.name}-startTime`)
         });
-        this.basket.disableInteractive();
           this.isDragging = false;
           if (this.dragInterval) {
             this.dragInterval.destroy();

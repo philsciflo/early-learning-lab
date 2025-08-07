@@ -28,10 +28,9 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     super.create();
     this.setupBasket();
     this.setupApple();
-    //this.renderThreeForkedPipe();
     setupTripleForkedPipe(this, HALF_WIDTH, this.apple, true);
-
     this.addCollisionHandling(this.basket, this.apple);
+    this.dragPositions = [];
   }
 
   protected doDrop(): void {
@@ -43,6 +42,7 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     this.resetBasket();
     this.resetApple();
     this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
   protected recordScoreDataForCurrentTry(): Level3ScoringData {
@@ -74,7 +74,6 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
       this.basket.on('dragstart', () => {
       
         this.isDragging = true;
-        this.dragPositions = [];
   
         this.recordDragPosition(this.basket.x, this.basket.y);
         
@@ -97,7 +96,6 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
           y: Math.round(this.basket.y),
           time: Date.now() - this.registry.get(`${this.name}-startTime`)
         });
-        this.basket.disableInteractive();
           this.isDragging = false;
           if (this.dragInterval) {
             this.dragInterval.destroy();

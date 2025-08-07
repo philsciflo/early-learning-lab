@@ -105,7 +105,7 @@ export type Level4ScoringData = basketData & scoringData & {
   pipeLayout: 0 | 1;
 };
 
-export type Level0DropScoringData =appleData & {
+export type Level0DropScoringData ={
   tries: number,
   score: CaughtAppleCount;
   duration: number;

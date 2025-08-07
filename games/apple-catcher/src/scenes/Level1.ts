@@ -27,6 +27,7 @@ export class Level1 extends AbstractCatcherScene<Level1ScoringData> {
     super.create();
     this.setupBasket();
     this.setupApple();
+    this.dragPositions = [];
 
     renderVerticalPipe(this, HALF_WIDTH, true, "pipe4-2");
 
@@ -42,6 +43,7 @@ export class Level1 extends AbstractCatcherScene<Level1ScoringData> {
     this.resetBasket();
     this.resetApple();
     this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
   protected recordScoreDataForCurrentTry(): Level1ScoringData {
@@ -62,11 +64,10 @@ export class Level1 extends AbstractCatcherScene<Level1ScoringData> {
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
       .setInteractive({ draggable: true })
       .setScale(1.3,1);
-    this.basket.on('dragstart', () => {
-      
-      this.isDragging = true;
-      this.dragPositions = [];
 
+    this.basket.on('dragstart', () => {
+
+      this.isDragging = true;
       this.recordDragPosition(this.basket.x, this.basket.y);
       
       this.dragInterval = this.time.addEvent({
@@ -83,13 +84,8 @@ export class Level1 extends AbstractCatcherScene<Level1ScoringData> {
       });
     
     this.basket.on('dragend', () => {
-      this.dragPositions.push({
-        x: Math.round(this.basket.x),
-        y: Math.round(this.basket.y),
-        time: Date.now() - this.registry.get(`${this.name}-startTime`)
-      });
-      this.basket.disableInteractive();
-        this.isDragging = false;
+      this.recordDragPosition(this.basket.x, this.basket.y);
+      this.isDragging = false;
         if (this.dragInterval) {
           this.dragInterval.destroy();
           this.dragInterval = undefined;

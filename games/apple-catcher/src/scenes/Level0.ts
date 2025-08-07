@@ -40,6 +40,7 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
     this.setupApples();
     this.setupBasket();
     this.addCollisionHandling(this.basket, this.apples);
+    this.dragPositions = [];
   }
 
   protected doDrop() {
@@ -60,6 +61,7 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
     this.resetApples();
     this.resetBasket();
     this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
 
   }
 
@@ -86,7 +88,6 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
     this.basket.on('dragstart', () => {
       
       this.isDragging = true;
-      this.dragPositions = [];
 
       this.recordDragPosition(this.basket.x, this.basket.y);
       
@@ -109,7 +110,7 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
         y: Math.round(this.basket.y),
         time: Date.now() - this.registry.get(`${this.name}-startTime`)
       });
-      this.basket.disableInteractive();
+      
         this.isDragging = false;
         if (this.dragInterval) {
           this.dragInterval.destroy();

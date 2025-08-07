@@ -9,6 +9,8 @@ import { Level2DropScoringData } from "../scoring.ts";
 export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
+  private isDragging: boolean = false;
+  private dragInterval?: Phaser.Time.TimerEvent;
 
   constructor() {
     super(
@@ -27,6 +29,7 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
     this.setupApple();
     setupForkedPipe(this, HALF_WIDTH, this.apple, true);
     this.addCollisionHandling(this.basket, this.apple);
+    this.dragPositions = [];
   }
 
   protected doDrop(): void {
@@ -39,6 +42,7 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
     this.resetBasket();
     this.resetApple();
     this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
   protected recordScoreDataForCurrentTry(): Level2DropScoringData {
@@ -48,6 +52,7 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
     return {
       tries: 
         this.registry.get(this.triesDataKey),
+      applePath: this.dragPositions,
       score: this.currentScore > 0 ? 1 : 0,
       duration: duration,
     };
@@ -97,6 +102,16 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
     this.apple.on('dragstart', () => {
       this.registry.values[this.triesDataKey] += 1;
       this.currentScore++; 
+
+      this.isDragging = true;
+      this.recordDragPosition(this.apple.x, this.apple.y);
+
+      this.dragInterval = this.time.addEvent({
+        delay: 500,
+        callback: () => this.recordDragPosition(this.apple.x, this.apple.y),
+        callbackScope: this,
+        loop: true
+      });
     });
 
     this.apple.on('drag', (pointer: Pointer) => {
@@ -107,7 +122,18 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
     this.apple.on('dragend', () => {
       this.physics.world.enableBody(this.apple);
         //this.apple.setGravityY(300); // Fall speed
-        this.apple.disableInteractive();
+      this.apple.disableInteractive();
+
+      this.recordDragPosition(this.basket.x, this.basket.y);
+        this.isDragging = false;
+        if (this.dragInterval) {
+          this.dragInterval.destroy();
+          this.dragInterval = undefined;
+        }
+
+        const dragPath = [...this.dragPositions];
+        console.log("Full drag path:", dragPath);
+
     });
 }
 

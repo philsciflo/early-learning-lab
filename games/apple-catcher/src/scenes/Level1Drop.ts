@@ -11,7 +11,6 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
   private apple: SpriteWithDynamicBody;
   private isDragging: boolean = false;
   private dragInterval?: Phaser.Time.TimerEvent;
-  private dragStartTime: number = 0;
 
 
   constructor() {
@@ -29,11 +28,9 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
     super.create();
     this.setupBasket();
     this.setupApple();
-
     renderVerticalPipe(this, HALF_WIDTH, true);
-
     this.addCollisionHandling(this.basket, this.apple);
-    
+    this.dragPositions = [];
   }
 
   protected doDrop(): void {
@@ -45,6 +42,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
     this.resetBasket();
     this.resetApple();
     this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
   protected recordScoreDataForCurrentTry(): Level1DropScoringData {
@@ -54,6 +52,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
     return {
       tries: 
         this.registry.get(this.triesDataKey),
+      applePath: this.dragPositions,
       score: this.currentScore > 0 ? 1 : 0,
       duration: duration,
     };
@@ -99,15 +98,8 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
       this.currentScore++; 
 
       this.isDragging = true;
-      this.dragStartTime = Date.now();
-      this.dragPositions = [];
+      this.recordDragPosition(this.apple.x, this.apple.y);
 
-      this.dragPositions.push({
-        x: Math.round(this.apple.x),
-        y: Math.round(this.apple.y),
-        time: 0
-      });
-      
       this.dragInterval = this.time.addEvent({
         delay: 500,
         callback: () => this.recordDragPosition(this.apple.x, this.apple.y),
@@ -126,6 +118,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
         //this.apple.setGravityY(300); // Fall speed
         this.apple.disableInteractive();
 
+        this.recordDragPosition(this.basket.x, this.basket.y);
         this.isDragging = false;
         if (this.dragInterval) {
           this.dragInterval.destroy();
@@ -133,7 +126,6 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
         }
 
         const dragPath = [...this.dragPositions];
-        this.dragPositions = [];
         console.log("Full drag path:", dragPath);
     });
 }

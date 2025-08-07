@@ -14,8 +14,6 @@ export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
   private dropInterval: number;
   private isDragging = false;
   private hasDraggedThisRound = false;
-  private appleStartPositions: { x: number, y: number }[] = [];
-
   constructor() {
     super(
       "Level0Drop",
