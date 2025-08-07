@@ -57,12 +57,21 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
   protected doReset() {
     this.resetApples();
     this.resetBasket();
+    this.registry.set(`${this.name}-startTime`, Date.now());
+
   }
 
   protected recordScoreDataForCurrentTry(): Level0ScoringData {
+    const startTime = this.registry.get(`${this.name}-startTime`);
+    const endTime = Date.now();
+    const duration = startTime ? endTime - startTime : 0;
+
     return {
+      tries: 
+        this.registry.get(this.triesDataKey),
       score:
         this.currentScore > 0 ? (this.currentScore as CaughtAppleCount) : 0,
+      duration: duration,
     };
   }
 

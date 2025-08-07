@@ -73,6 +73,7 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     this.resetApple();
     this.resetAppleStartingPositions();
     this.resetPipes();
+    this.registry.set(`${this.name}-startTime`, Date.now());
   }
 
   private setupPipes() {
@@ -96,7 +97,12 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
   }
 
   protected recordScoreDataForCurrentTry(): Level4ScoringData {
+    const startTime = this.registry.get(`${this.name}-startTime`);
+    const endTime = Date.now();
+    const duration = startTime ? endTime - startTime : 0;
     return {
+      tries: 
+        this.registry.get(this.triesDataKey),
       apple: {
         x: this.apple.x,
         y: APPLE_TOP,
@@ -107,6 +113,7 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
       },
       pipeLayout: this.pipeLayout,
       score: this.currentScore > 0 ? 1 : 0,
+      duration: duration,
     };
   }
 

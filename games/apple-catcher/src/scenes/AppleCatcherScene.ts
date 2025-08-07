@@ -39,6 +39,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
 
   protected hideDropButton = false; // Controls Drop button visibility
   protected applePyramid: Phaser.GameObjects.Image[] = [];
+  public duration: number;
 
   /**
    * Score for the current drop
@@ -52,7 +53,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   protected currentScore = -1;
 
   protected constructor(
-    private name: keyof PLAYER_SCORING_DATA,
+    protected name: keyof PLAYER_SCORING_DATA,
     protected levelTitle: string,
     protected instructions: string,
     protected prevSceneKey: string,
@@ -105,21 +106,14 @@ export abstract class AbstractCatcherScene<T> extends Scene {
 
     this.registry.set(this.triesDataKey, 0);
     this.registry.set(this.scoreDataKey, 0);
+    this.registry.set(`${this.name}-startTime`, Date.now());
 
     this.events.once("shutdown", () => {
       /*
        When the scene is shutdown, by navigating to another scene, we record
        scores for the current scene
        */
-      const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
-      if (this.currentScore >= 0) {
-        this.scoringData.push(this.recordScoreDataForCurrentTry());
-      }
-      storeScoringDataForPlayer(
-        playerId,
-        this.name,
-        this.scoringData as unknown as [], // Blergh; generics hard
-      );
+       this.recordScoreForPlayer();
     });
   }
 
@@ -407,6 +401,19 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     for (let i = 0; i < apples.length; i++) {
       apples[i].setVisible(i < count);
     }
+  }
+
+  private recordScoreForPlayer() {
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
+    if (this.currentScore >= 0) {
+      this.scoringData.push(this.recordScoreDataForCurrentTry());
+    }
+  
+    storeScoringDataForPlayer(
+      playerId,
+      this.name,
+      this.scoringData as unknown as [], // Blergh; generics hard
+    );
   }
   
 }
