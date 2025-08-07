@@ -4,9 +4,9 @@ import Pointer = Phaser.Input.Pointer;
 import Body = Phaser.Physics.Arcade.Body;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
-import { CaughtAppleCount, Level0ScoringData } from "../scoring.ts";
+import { CaughtAppleCount, Level0DropScoringData } from "../scoring.ts";
 
-export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
+export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
   private baskets: SpriteWithStaticBody[] = [];
   private apples: SpriteWithDynamicBody[] = [];
   private tracks: Phaser.Physics.Arcade.Image[] = [];
@@ -54,7 +54,7 @@ export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
   }
 
 
-  protected recordScoreDataForCurrentTry(): Level0ScoringData {
+  protected recordScoreDataForCurrentTry(): Level0DropScoringData {
     const startTime = this.registry.get(`${this.name}-startTime`);
     const endTime = Date.now();
     const duration = startTime ? endTime - startTime : 0;

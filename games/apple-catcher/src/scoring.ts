@@ -48,11 +48,11 @@ export type PLAYER_SCORING_DATA = {
   Level2: { tryData: Level2ScoringData[] } & COMMON_SCORING_DATA;
   Level3: { tryData: Level3ScoringData[] } & COMMON_SCORING_DATA;
   Level4: { tryData: Level4ScoringData[] } & COMMON_SCORING_DATA;
-  Level0Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level1Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level2Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level3Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level4Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
+  Level0Drop: { tryData: Level0DropScoringData[] } & COMMON_SCORING_DATA;
+  Level1Drop: { tryData: Level1DropScoringData[] } & COMMON_SCORING_DATA;
+  Level2Drop: { tryData: Level2DropScoringData[] } & COMMON_SCORING_DATA;
+  Level3Drop: { tryData: Level3DropScoringData[] } & COMMON_SCORING_DATA;
+  Level4Drop: { tryData: Level4DropScoringData[] } & COMMON_SCORING_DATA;
 };
 
 /**
@@ -73,30 +73,51 @@ type Position = {
   y: number;
 };
 
-type BaseScoringData = {
-  basket: Position;
+type basketData = {
+  basketPath?: { x: number; y: number; time: number }[];
 };
 
-export type Level0ScoringData = {
-  tries: number,
-  score: CaughtAppleCount;
-  duration: number;
+type appleData = {
+  applePath?: { x: number; y: number; time: number }[];
 };
 
-export type BinaryScoringData = BaseScoringData & {
+
+export type scoringData = {
   tries: number,
   score: AppleCaught;
   duration: number;
 };
 
-export type Level1ScoringData = BinaryScoringData;
+export type Level0ScoringData =basketData & {
+  tries: number,
+  score: CaughtAppleCount;
+  duration: number;
+};
 
-export type Level2ScoringData = BinaryScoringData;
+export type Level1ScoringData = basketData & scoringData;
 
-export type Level3ScoringData = BinaryScoringData;
+export type Level2ScoringData = basketData & scoringData;
 
-export type Level4ScoringData = BinaryScoringData & {
+export type Level3ScoringData = basketData & scoringData;
+
+export type Level4ScoringData = basketData & scoringData & {
   apple: Position;
+  pipeLayout: 0 | 1;
+};
+
+export type Level0DropScoringData =appleData & {
+  tries: number,
+  score: CaughtAppleCount;
+  duration: number;
+};
+
+export type Level1DropScoringData = appleData & scoringData;
+
+export type Level2DropScoringData = appleData & scoringData;
+
+export type Level3DropScoringData = appleData & scoringData;
+
+export type Level4DropScoringData = appleData & scoringData & {
   pipeLayout: 0 | 1;
 };
 

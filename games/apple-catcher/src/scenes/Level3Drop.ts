@@ -5,9 +5,9 @@ import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import Point = Phaser.Geom.Point;
 import {ForkedPipe,setupTripleForkedPipe} from "../pipes.ts";
-import { Level3ScoringData } from "../scoring.ts";
+import { Level3DropScoringData } from "../scoring.ts";
 
-export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
+export class Level3Drop extends AbstractCatcherScene<Level3DropScoringData> {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
   private forkedPipe: ForkedPipe;
@@ -40,17 +40,13 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     this.registry.set(`${this.name}-startTime`, Date.now());
   }
 
-  protected recordScoreDataForCurrentTry(): Level3ScoringData {
+  protected recordScoreDataForCurrentTry(): Level3DropScoringData {
     const startTime = this.registry.get(`${this.name}-startTime`);
     const endTime = Date.now();
     const duration = startTime ? endTime - startTime : 0;
     return {
       tries: 
         this.registry.get(this.triesDataKey),
-      basket: {
-        x: this.basket.x,
-        y: this.basket.y,
-      },
       score: this.currentScore > 0 ? 1 : 0,
       duration: duration,
     };

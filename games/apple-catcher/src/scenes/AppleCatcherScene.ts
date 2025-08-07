@@ -31,6 +31,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   protected rightTreeLeft = GAME_AREA_WIDTH - 160;
   protected rightEdgeGameBound = this.rightTreeLeft;
   protected treeY = 320;
+  protected dragPositions: { x: number; y: number; time: number }[] = [];
 
   public triesDataKey: string;
   public scoreDataKey: string;
@@ -415,5 +416,20 @@ export abstract class AbstractCatcherScene<T> extends Scene {
       this.scoringData as unknown as [], // Blergh; generics hard
     );
   }
+
+  protected recordDragPosition(x: number, y: number) {
+    const level = this.name; 
+    const startTime = this.registry.get(`${level}-startTime`) as number;
+    if (!startTime) return;
+  
+    const position = {
+      x: Math.round(x),
+      y: Math.round(y),
+      time: Date.now() - startTime,
+    };
+  
+    this.dragPositions.push(position);
+  }
+  
   
 }

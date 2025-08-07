@@ -5,11 +5,11 @@ import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import { ForkedPipe, renderVerticalPipe, setupForkedPipe } from "../pipes.ts";
 import Zone = Phaser.GameObjects.Zone;
-import { Level4ScoringData } from "../scoring.ts";
+import { Level4DropScoringData } from "../scoring.ts";
 
 type PipeLayoutOption = 0 | 1;
 
-export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
+export class Level4Drop extends AbstractCatcherScene<Level4DropScoringData> {
   private readonly verticalPipeLocations = [HALF_WIDTH - 190, HALF_WIDTH + 170];
   private readonly forkedPipeLocations = [HALF_WIDTH + 240, HALF_WIDTH - 70];
   /**
@@ -98,21 +98,13 @@ export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
     this.forkedPipe.setX(this.forkedPipeLocations[this.pipeLayout]);
   }
 
-  protected recordScoreDataForCurrentTry(): Level4ScoringData {
+  protected recordScoreDataForCurrentTry(): Level4DropScoringData {
     const startTime = this.registry.get(`${this.name}-startTime`);
     const endTime = Date.now();
     const duration = startTime ? endTime - startTime : 0;
     return {
       tries: 
         this.registry.get(this.triesDataKey),
-      apple: {
-        x: this.apple.x,
-        y: APPLE_TOP,
-      },
-      basket: {
-        x: this.basket.x,
-        y: this.basket.y,
-      },
       pipeLayout: this.pipeLayout,
       score: this.currentScore > 0 ? 1 : 0,
       duration: duration,

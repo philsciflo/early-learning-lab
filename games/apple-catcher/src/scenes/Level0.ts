@@ -11,6 +11,8 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
   private apples: SpriteWithDynamicBody[] = [];
   // a reference to the Interval controlling the apple dropping
   private dropInterval: number;
+  private isDragging: boolean = false;
+  private dragInterval?: Phaser.Time.TimerEvent;
 
   constructor() {
     super(
@@ -69,6 +71,7 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
     return {
       tries: 
         this.registry.get(this.triesDataKey),
+      basketPath: this.dragPositions,
       score:
         this.currentScore > 0 ? (this.currentScore as CaughtAppleCount) : 0,
       duration: duration,
@@ -79,15 +82,48 @@ export class Level0 extends AbstractCatcherScene<Level0ScoringData> {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
       .setInteractive({ draggable: true })
-      .setScale(1.3,1)
-      .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
+      .setScale(1.3,1);
+    this.basket.on('dragstart', () => {
+      
+      this.isDragging = true;
+      this.dragPositions = [];
+
+      this.recordDragPosition(this.basket.x, this.basket.y);
+      
+      this.dragInterval = this.time.addEvent({
+        delay: 500,
+        callback: () => this.recordDragPosition(this.basket.x, this.basket.y),
+        callbackScope: this,
+        loop: true
+      });
+    });
+
+    this.basket.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
         this.basket.setPosition(dragX, dragY);
         this.basket.refreshBody();
       });
+    
+    this.basket.on('dragend', () => {
+      this.dragPositions.push({
+        x: Math.round(this.basket.x),
+        y: Math.round(this.basket.y),
+        time: Date.now() - this.registry.get(`${this.name}-startTime`)
+      });
+      this.basket.disableInteractive();
+        this.isDragging = false;
+        if (this.dragInterval) {
+          this.dragInterval.destroy();
+          this.dragInterval = undefined;
+        }
+
+        const dragPath = [...this.dragPositions];
+        console.log("Full drag path:", dragPath);
+    });
     this.resetBasket();
   }
 
   private resetBasket() {
+    this.basket.setInteractive();
     this.basket.setPosition(
       Phaser.Math.Between(this.leftEdgeGameBound, this.rightEdgeGameBound),
       BASKET_BOTTOM,
