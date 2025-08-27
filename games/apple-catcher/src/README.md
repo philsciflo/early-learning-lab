@@ -120,7 +120,7 @@ For example, when adding **Level5**:
         score: this.currentScore > 0 ? 1 : 0,
         duration: duration,
       };
-    }
+   }
   
    Then **recordScoreForPlayer()** in AppleCatcherScene.ts will push the content into scoringData and call storeScoringDataForPlayer() to record the data.
    
