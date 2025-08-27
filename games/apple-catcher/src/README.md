@@ -121,6 +121,6 @@ For example, when adding **Level5**:
         duration: duration,
       };
    }
-  
-   Then **recordScoreForPlayer()** in AppleCatcherScene.ts will push the content into scoringData and call storeScoringDataForPlayer() to record the data.
+
+  Then **recordScoreForPlayer()** in AppleCatcherScene.ts will push the content into scoringData and call storeScoringDataForPlayer() to record the data.
    
