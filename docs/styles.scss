@@ -45,7 +45,27 @@ body {
   border: 2px solid black;
   border-radius: 10px;
 
-  background-color: white;
+  background-color: rgb(238, 52, 210);
+}
+
+// The information banner on the landing page
+.banner2 {
+  padding: 2rem;
+
+  border: 2px solid black;
+  border-radius: 10px;
+
+  background-color: rgb(244, 204, 61);
+}
+
+// The ref. banner on the landing page
+.banner3 {
+  padding: 2rem;
+
+  border: 2px solid black;
+  border-radius: 10px;
+
+  background-color: rgb(61, 244, 214);
 }
 
 .game {
