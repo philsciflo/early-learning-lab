@@ -104,8 +104,23 @@ For example, when adding **Level5**:
    Level5: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
    Level5Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
 
-4. **Use storeScoringDataForPlayer() when recording data**
-   Pass the new level key ("Level5" or "Level5Drop") and the scoring data array.
-   ```ts
-   storeScoringDataForPlayer(playerId, "Level5", [newScoringData]);
+4. **Use recordScoreDataForCurrentTry()) when recording data**
 
+   Define **recordScoreDataForCurrentTry()** in Level5.ts to define the content of scoringData.
+   example:
+   ```ts
+   protected recordScoreDataForCurrentTry(): Level5ScoringData {
+    const startTime = this.registry.get(`${this.name}-startTime`);
+    const endTime = Date.now();
+    const duration = startTime ? endTime - startTime : 0;
+    return {
+      tries: 
+        this.registry.get(this.triesDataKey),
+        basketPath: this.dragPositions,
+        score: this.currentScore > 0 ? 1 : 0,
+        duration: duration,
+      };
+    }
+  
+   Then **recordScoreForPlayer()** in AppleCatcherScene.ts will push the content into scoringData and call storeScoringDataForPlayer() to record the data.
+   
