@@ -86,7 +86,7 @@ For example, when adding **Level5**:
    export type PLAYER_SCORING_DATA = {
      Level5: { tryData: Level5ScoringData[] } & COMMON_SCORING_DATA;
      Level5Drop: { tryData: Level5DropScoringData[] } & COMMON_SCORING_DATA;
-   };```
+   };
 
 2. **Define new scoring data types**
    Create Level5ScoringData and/or Level5DropScoringData types.
@@ -97,16 +97,15 @@ For example, when adding **Level5**:
    export type Level5DropScoringData = appleData & scoringData & {
      pipeLayout?: 0 | 1 | 2;
    };
-```
+
 3. **Initialize the new level in startNewScore()**
    Add empty entries for the new level so data can be recorded:
 ```ts
    Level5: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
    Level5Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
-```
 
 4. **Use storeScoringDataForPlayer() when recording data**
    Pass the new level key ("Level5" or "Level5Drop") and the scoring data array.
    ```ts
    storeScoringDataForPlayer(playerId, "Level5", [newScoringData]);
-```
+
