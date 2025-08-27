@@ -73,6 +73,7 @@ The structure is:
     }
   ]
 }
+```ts
 
 ### Extending the Scoring System
 
@@ -81,7 +82,7 @@ For example, when adding **Level5**:
 
 1. **Update `PLAYER_SCORING_DATA`**  
    Add a new entry for the level and its corresponding `Drop` level:
-   ```ts
+   
    export type PLAYER_SCORING_DATA = {
      ...
      Level5: { tryData: Level5ScoringData[] } & COMMON_SCORING_DATA;
@@ -90,7 +91,6 @@ For example, when adding **Level5**:
 
 2. **Define new scoring data types**
    Create Level5ScoringData and/or Level5DropScoringData types.
-   ```ts
 
    export type Level5ScoringData = basketData & scoringData & {
      specialField?: string; // add custom fields if needed
@@ -101,12 +101,12 @@ For example, when adding **Level5**:
 
 3. **Initialize the new level in startNewScore()**
    Add empty entries for the new level so data can be recorded:
-   ```ts
+
    Level5: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
    Level5Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
 
 
 4. **Use storeScoringDataForPlayer() when recording data**
    Pass the new level key ("Level5" or "Level5Drop") and the scoring data array.
-   ```ts
+   
    storeScoringDataForPlayer(playerId, "Level5", [newScoringData]);
