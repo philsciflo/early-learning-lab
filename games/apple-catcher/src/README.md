@@ -90,7 +90,7 @@ For example, when adding **Level5**:
 
 2. **Define new scoring data types**
    Create Level5ScoringData and/or Level5DropScoringData types.
-```ts
+   ```ts
    export type Level5ScoringData = basketData & scoringData & {
      specialField?: string; // add custom fields if needed
    };
@@ -100,7 +100,7 @@ For example, when adding **Level5**:
 
 3. **Initialize the new level in startNewScore()**
    Add empty entries for the new level so data can be recorded:
-```ts
+   ```ts
    Level5: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
    Level5Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
 
