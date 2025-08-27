@@ -73,7 +73,7 @@ The structure is:
     }
   ]
 }
-```ts
+```
 
 ### Extending the Scoring System
 
