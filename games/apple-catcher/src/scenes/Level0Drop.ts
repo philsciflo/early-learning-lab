@@ -14,6 +14,10 @@ export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
   private dropInterval: number;
   private isDragging = false;
   private hasDraggedThisRound = false;
+
+  private appleStartPositions: { x: number, y: number }[] = [];
+
+
   constructor() {
     super(
       "Level0Drop",
@@ -47,7 +51,9 @@ export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
   protected doReset() {
     this.resetApples();
     this.hasDraggedThisRound = false;
+
     this.registry.set(`${this.name}-startTime`, Date.now());
+
 
   }
 

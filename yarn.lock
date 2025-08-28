@@ -1465,6 +1465,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fix-it@workspace:games/fix-it":
+  version: 0.0.0-use.local
+  resolution: "fix-it@workspace:games/fix-it"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
+
 "flat-cache@npm:^4.0.0":
   version: 4.0.1
   resolution: "flat-cache@npm:4.0.1"
@@ -1896,6 +1907,17 @@ __metadata:
   checksum: 10c0/ebd04fbca961e6c1d6c0af3799adcc966a1babe798f685bb84e6599266599cd95d94630b10262f5424539bc4640107e8a33aa28585374abf561d30d16f4b39fb
   languageName: node
   linkType: hard
+
+"magic-cups@workspace:games/magic-cups":
+  version: 0.0.0-use.local
+  resolution: "magic-cups@workspace:games/magic-cups"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
 
 "make-fetch-happen@npm:^14.0.3":
   version: 14.0.3
@@ -2717,6 +2739,17 @@ __metadata:
   checksum: 10c0/d4679609bb2a9b48eeaf84632b6d844128d2412b95b6de07d53d8ee8baf4ca0857c9331dfa510390a0727b550fd543d4d1a10995ad86cdf078423fbb8d99831d
   languageName: node
   linkType: hard
+
+"template@workspace:games/template":
+  version: 0.0.0-use.local
+  resolution: "template@workspace:games/template"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
 
 "terser@npm:^5.31.0":
   version: 5.39.0

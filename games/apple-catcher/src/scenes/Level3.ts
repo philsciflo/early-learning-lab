@@ -28,7 +28,13 @@ export class Level3 extends AbstractCatcherScene<Level3ScoringData> {
     super.create();
     this.setupBasket();
     this.setupApple();
+
+    //this.renderThreeForkedPipe();
     setupTripleForkedPipe(this, HALF_WIDTH, this.apple, true);
+
+
+    setupTripleForkedPipe(this, HALF_WIDTH, this.apple, true);
+
     this.addCollisionHandling(this.basket, this.apple);
     this.dragPositions = [];
   }

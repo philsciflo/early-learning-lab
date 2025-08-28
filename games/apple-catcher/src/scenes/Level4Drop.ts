@@ -9,7 +9,10 @@ import { Level4DropScoringData } from "../scoring.ts";
 
 type PipeLayoutOption = 0 | 1;
 
+
+export class Level4Drop extends AbstractCatcherScene<Level4ScoringData> {
 export class Level4Drop extends AbstractCatcherScene<Level4DropScoringData> {
+
   private readonly verticalPipeLocations = [HALF_WIDTH - 190, HALF_WIDTH + 170];
   private readonly forkedPipeLocations = [HALF_WIDTH + 240, HALF_WIDTH - 70];
   /**
@@ -191,6 +194,7 @@ export class Level4Drop extends AbstractCatcherScene<Level4DropScoringData> {
         callbackScope: this,
         loop: true
       });
+
     });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {

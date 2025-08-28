@@ -92,6 +92,14 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
         .setInteractive({ draggable: true }) // Enable dragging
         .disableBody();
 
+
+    /*this.apple.on('dragstart', () => {
+        this.apple.disableBody(true, false); // Freeze physics during drag
+    });*/
+    this.apple.on('dragstart', () => {
+      this.registry.values[this.triesDataKey] += 1;
+      this.currentScore++; 
+
     
     this.apple.on('dragstart', () => {
       this.registry.values[this.triesDataKey] += 1;
@@ -106,6 +114,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
         callbackScope: this,
         loop: true
       });
+
     });
 
     this.apple.on('drag', (pointer: Pointer) => {
@@ -118,6 +127,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
         //this.apple.setGravityY(300); // Fall speed
         this.apple.disableInteractive();
 
+
         this.recordDragPosition(this.basket.x, this.basket.y);
         this.isDragging = false;
         if (this.dragInterval) {
@@ -127,6 +137,7 @@ export class Level1Drop extends AbstractCatcherScene<Level1DropScoringData> {
 
         const dragPath = [...this.dragPositions];
         console.log("Full drag path:", dragPath);
+
     });
 }
 

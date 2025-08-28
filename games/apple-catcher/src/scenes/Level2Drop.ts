@@ -103,6 +103,7 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
       this.registry.values[this.triesDataKey] += 1;
       this.currentScore++; 
 
+
       this.isDragging = true;
       this.recordDragPosition(this.apple.x, this.apple.y);
 
@@ -112,6 +113,7 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
         callbackScope: this,
         loop: true
       });
+
     });
 
     this.apple.on('drag', (pointer: Pointer) => {
@@ -122,6 +124,9 @@ export class Level2Drop extends AbstractCatcherScene<Level2DropScoringData> {
     this.apple.on('dragend', () => {
       this.physics.world.enableBody(this.apple);
         //this.apple.setGravityY(300); // Fall speed
+
+        this.apple.disableInteractive();
+
       this.apple.disableInteractive();
 
       this.recordDragPosition(this.basket.x, this.basket.y);

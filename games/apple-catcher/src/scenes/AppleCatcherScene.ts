@@ -31,6 +31,7 @@ export abstract class AbstractCatcherScene<T> extends Scene {
   protected rightTreeLeft = GAME_AREA_WIDTH - 160;
   protected rightEdgeGameBound = this.rightTreeLeft;
   protected treeY = 320;
+
   protected dragPositions: { x: number; y: number; time: number }[] = [];
 
   public triesDataKey: string;
@@ -40,7 +41,9 @@ export abstract class AbstractCatcherScene<T> extends Scene {
 
   protected hideDropButton = false; // Controls Drop button visibility
   protected applePyramid: Phaser.GameObjects.Image[] = [];
+
   public duration: number;
+
 
   /**
    * Score for the current drop
@@ -404,6 +407,8 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     }
   }
 
+
+
   private recordScoreForPlayer() {
     const playerId = this.registry.get(PLAYER_ID_DATA_KEY);
     if (this.currentScore >= 0) {
@@ -431,5 +436,6 @@ export abstract class AbstractCatcherScene<T> extends Scene {
     this.dragPositions.push(position);
   }
   
+
   
 }

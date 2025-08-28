@@ -5,7 +5,9 @@ import Pointer = Phaser.Input.Pointer;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import Point = Phaser.Geom.Point;
 import {ForkedPipe,setupTripleForkedPipe} from "../pipes.ts";
+import { Level3ScoringData } from "../scoring.ts";
 import { Level3DropScoringData } from "../scoring.ts";
+
 
 export class Level3Drop extends AbstractCatcherScene<Level3DropScoringData> {
   private basket: SpriteWithStaticBody;
@@ -57,7 +59,6 @@ export class Level3Drop extends AbstractCatcherScene<Level3DropScoringData> {
       duration: duration,
     };
   }
-
   private renderThreeForkedPipe() {
     const pipeX = HALF_WIDTH;  // center X
     const pipeY = 220;         // align top Y
@@ -119,6 +120,7 @@ export class Level3Drop extends AbstractCatcherScene<Level3DropScoringData> {
       this.registry.values[this.triesDataKey] += 1;
       this.currentScore++; 
 
+
       this.isDragging = true;
       this.recordDragPosition(this.apple.x, this.apple.y);
 
@@ -128,6 +130,7 @@ export class Level3Drop extends AbstractCatcherScene<Level3DropScoringData> {
         callbackScope: this,
         loop: true
       });
+
     });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
