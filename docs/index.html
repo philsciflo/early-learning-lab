@@ -8,6 +8,11 @@ layout: default
     <div class="heading">Tākaro i tētahi kēmu / Play a game</div>
   </div>
 
+  <div class="banner2 centered centered-text">
+    <div class="heading">Instruction</div>
+    <div class="heading">Touch any game icon and use a random 6+ character player name.</div>
+  </div>
+
   {% for game in site.games %}
   <a href="games/{{ game.ref }}" class="no-link-style">
     <div class="game" style="background-color: {{ game.colour }}">
@@ -22,4 +27,9 @@ layout: default
   <p class="centered centered-text">
     Made using icons from <a href="https://game-icons.net/">game-icons.net</a>
   </p>
+  <div class="banner3 centered centered-text">
+    <div class="heading">This site was developed at the University of Auckland</div>
+    <div class="heading">Lead Researcher: Dr. Florian Bednarski</div>
+    <div class="heading">Git: https://github.com/philsciflo/early-learning-lab</div>
+  </div>
 </div>
