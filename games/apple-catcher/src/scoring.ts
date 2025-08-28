@@ -36,6 +36,10 @@ export type COMMON_SCORING_DATA = {
    * The sum of all scores for all tries for this level
    */
   levelScore: number;
+  /**
+   * The total duration of all tries for this level (in ms)
+   */
+  totalDuration: number;
 };
 
 export type PLAYER_SCORING_DATA = {
@@ -44,11 +48,11 @@ export type PLAYER_SCORING_DATA = {
   Level2: { tryData: Level2ScoringData[] } & COMMON_SCORING_DATA;
   Level3: { tryData: Level3ScoringData[] } & COMMON_SCORING_DATA;
   Level4: { tryData: Level4ScoringData[] } & COMMON_SCORING_DATA;
-  Level0Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level1Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level2Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level3Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
-  Level4Drop: { tryData: Level0ScoringData[] } & COMMON_SCORING_DATA;
+  Level0Drop: { tryData: Level0DropScoringData[] } & COMMON_SCORING_DATA;
+  Level1Drop: { tryData: Level1DropScoringData[] } & COMMON_SCORING_DATA;
+  Level2Drop: { tryData: Level2DropScoringData[] } & COMMON_SCORING_DATA;
+  Level3Drop: { tryData: Level3DropScoringData[] } & COMMON_SCORING_DATA;
+  Level4Drop: { tryData: Level4DropScoringData[] } & COMMON_SCORING_DATA;
 };
 
 /**
@@ -69,28 +73,54 @@ type Position = {
   y: number;
 };
 
-type BaseScoringData = {
-  basket: Position;
+type basketData = {
+  basketPath?: { x: number; y: number; time: number }[];
 };
 
-export type Level0ScoringData = {
-  score: CaughtAppleCount;
+type appleData = {
+  applePath?: { x: number; y: number; time: number }[];
 };
 
-export type BinaryScoringData = BaseScoringData & {
+
+export type scoringData = {
+  tries: number,
   score: AppleCaught;
+  duration: number;
 };
 
-export type Level1ScoringData = BinaryScoringData;
+export type Level0ScoringData =basketData & {
+  tries: number,
+  score: CaughtAppleCount;
+  duration: number;
+};
 
-export type Level2ScoringData = BinaryScoringData;
+export type Level1ScoringData = basketData & scoringData;
 
-export type Level3ScoringData = BinaryScoringData;
+export type Level2ScoringData = basketData & scoringData;
 
-export type Level4ScoringData = BinaryScoringData & {
+export type Level3ScoringData = basketData & scoringData;
+
+export type Level4ScoringData = basketData & scoringData & {
   apple: Position;
   pipeLayout: 0 | 1;
 };
+
+export type Level0DropScoringData ={
+  tries: number,
+  score: CaughtAppleCount;
+  duration: number;
+};
+
+export type Level1DropScoringData = appleData & scoringData;
+
+export type Level2DropScoringData = appleData & scoringData;
+
+export type Level3DropScoringData = appleData & scoringData;
+
+export type Level4DropScoringData = appleData & scoringData & {
+  pipeLayout: 0 | 1;
+};
+
 
 export function removeScoreData(): void {
   localStorage.setItem(GAME_SCORE_DATA_KEY, "{}");
@@ -106,16 +136,16 @@ export function startNewScore(playerId: string): void {
   const newScoreData: PLAYER_INSTANCE_SCORING_DATA = {
     start: new Date(),
     scores: {
-      Level0: { tryData: [], tries: 0, levelScore: 0 },
-      Level1: { tryData: [], tries: 0, levelScore: 0 },
-      Level2: { tryData: [], tries: 0, levelScore: 0 },
-      Level3: { tryData: [], tries: 0, levelScore: 0 },
-      Level4: { tryData: [], tries: 0, levelScore: 0 },
-      Level0Drop: { tryData: [], tries: 0, levelScore: 0 },
-      Level1Drop: { tryData: [], tries: 0, levelScore: 0 },
-      Level2Drop: { tryData: [], tries: 0, levelScore: 0 },
-      Level3Drop: { tryData: [], tries: 0, levelScore: 0 },
-      Level4Drop: { tryData: [], tries: 0, levelScore: 0 },
+      Level0: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0},
+      Level1: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level2: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level3: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level4: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level0Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level1Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level2Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level3Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
+      Level4Drop: { tryData: [], tries: 0, levelScore: 0, totalDuration: 0 },
     },
     totalTries: 0,
     totalScore: 0,
@@ -171,6 +201,13 @@ export function storeScoringDataForPlayer(
       (previousValue, currentValue) => previousValue + currentValue.score,
       0,
     );
+
+    // Add total duration for this level
+    levelScoringData.totalDuration += scoringData.reduce(
+      (prev, curr) => prev + (curr.duration || 0),
+      0
+    );
+    
 
     // Recalculate the overall aggregate data
     playerInstanceData.totalScore = 0;

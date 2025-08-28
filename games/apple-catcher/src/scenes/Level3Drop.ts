@@ -6,11 +6,16 @@ import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
 import Point = Phaser.Geom.Point;
 import {ForkedPipe,setupTripleForkedPipe} from "../pipes.ts";
 import { Level3ScoringData } from "../scoring.ts";
+import { Level3DropScoringData } from "../scoring.ts";
 
-export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
+
+export class Level3Drop extends AbstractCatcherScene<Level3DropScoringData> {
   private basket: SpriteWithStaticBody;
   private apple: SpriteWithDynamicBody;
   private forkedPipe: ForkedPipe;
+  private isDragging: boolean = false;
+  private dragInterval?: Phaser.Time.TimerEvent;
+
 
   constructor() {
     super(
@@ -32,20 +37,26 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     this.nextSceneKey = "Level4Drop";
 
     this.addCollisionHandling(this.basket, this.apple);
+    this.dragPositions = [];
   }
 
   protected doReset(): void {
     this.resetBasket();
     this.resetApple();
+    this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
-  protected recordScoreDataForCurrentTry(): Level3ScoringData {
+  protected recordScoreDataForCurrentTry(): Level3DropScoringData {
+    const startTime = this.registry.get(`${this.name}-startTime`);
+    const endTime = Date.now();
+    const duration = startTime ? endTime - startTime : 0;
     return {
-      basket: {
-        x: this.basket.x,
-        y: this.basket.y,
-      },
+      tries: 
+        this.registry.get(this.triesDataKey),
+      applePath: this.dragPositions,
       score: this.currentScore > 0 ? 1 : 0,
+      duration: duration,
     };
   }
   private renderThreeForkedPipe() {
@@ -108,6 +119,18 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     this.apple.on('dragstart', () => {
       this.registry.values[this.triesDataKey] += 1;
       this.currentScore++; 
+
+
+      this.isDragging = true;
+      this.recordDragPosition(this.apple.x, this.apple.y);
+
+      this.dragInterval = this.time.addEvent({
+        delay: 500,
+        callback: () => this.recordDragPosition(this.apple.x, this.apple.y),
+        callbackScope: this,
+        loop: true
+      });
+
     });
 
     this.apple.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
@@ -116,6 +139,16 @@ export class Level3Drop extends AbstractCatcherScene<Level3ScoringData> {
     this.apple.on("dragend", () => {
       this.physics.world.enableBody(this.apple);
       this.apple.disableInteractive();
+
+      this.recordDragPosition(this.basket.x, this.basket.y);
+        this.isDragging = false;
+        if (this.dragInterval) {
+          this.dragInterval.destroy();
+          this.dragInterval = undefined;
+        }
+
+        const dragPath = [...this.dragPositions];
+        console.log("Full drag path:", dragPath);
     });
   }
 

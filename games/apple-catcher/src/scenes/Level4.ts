@@ -25,6 +25,9 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
   private secondAppleZone: Phaser.GameObjects.Zone;
   private verticalPipe: Phaser.GameObjects.Image;
   private forkedPipe: ForkedPipe;
+  private dropInterval: number;
+  private isDragging: boolean = false;
+  private dragInterval?: Phaser.Time.TimerEvent;
 
   constructor() {
     super(
@@ -43,14 +46,13 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
 
   create() {
     super.create();
-
     this.pickPipeLayoutOption();
     this.setupAppleStartingPositions();
     this.setupBasket();
     this.setupApple();
     this.setupPipes();
-
     this.addCollisionHandling(this.basket, this.apple);
+    this.dragPositions = [];
   }
 
   private pickPipeLayoutOption() {
@@ -73,6 +75,8 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     this.resetApple();
     this.resetAppleStartingPositions();
     this.resetPipes();
+    this.registry.set(`${this.name}-startTime`, Date.now());
+    this.dragPositions = [];
   }
 
   private setupPipes() {
@@ -96,17 +100,20 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
   }
 
   protected recordScoreDataForCurrentTry(): Level4ScoringData {
+    const startTime = this.registry.get(`${this.name}-startTime`);
+    const endTime = Date.now();
+    const duration = startTime ? endTime - startTime : 0;
     return {
+      tries: 
+        this.registry.get(this.triesDataKey),
+      pipeLayout: this.pipeLayout,
       apple: {
         x: this.apple.x,
         y: APPLE_TOP,
       },
-      basket: {
-        x: this.basket.x,
-        y: this.basket.y,
-      },
-      pipeLayout: this.pipeLayout,
+      basketPath: this.dragPositions,
       score: this.currentScore > 0 ? 1 : 0,
+      duration: duration,
     };
   }
 
@@ -114,10 +121,40 @@ export class Level4 extends AbstractCatcherScene<Level4ScoringData> {
     this.basket = this.physics.add
       .staticSprite(HALF_WIDTH, BASKET_BOTTOM, "basket")
       .setInteractive({ draggable: true })
-      .setScale(1.3,1)
-      .on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
-        this.basket.setPosition(dragX, dragY);
-        this.basket.refreshBody();
+      .setScale(1.3,1);
+      this.basket.on('dragstart', () => {
+      
+        this.isDragging = true;
+  
+        this.recordDragPosition(this.basket.x, this.basket.y);
+        
+        this.dragInterval = this.time.addEvent({
+          delay: 500,
+          callback: () => this.recordDragPosition(this.basket.x, this.basket.y),
+          callbackScope: this,
+          loop: true
+        });
+      });
+  
+      this.basket.on("drag", (_pointer: Pointer, dragX: number, dragY: number) => {
+          this.basket.setPosition(dragX, dragY);
+          this.basket.refreshBody();
+        });
+      
+      this.basket.on('dragend', () => {
+        this.dragPositions.push({
+          x: Math.round(this.basket.x),
+          y: Math.round(this.basket.y),
+          time: Date.now() - this.registry.get(`${this.name}-startTime`)
+        });
+          this.isDragging = false;
+          if (this.dragInterval) {
+            this.dragInterval.destroy();
+            this.dragInterval = undefined;
+          }
+  
+          const dragPath = [...this.dragPositions];
+          console.log("Full drag path:", dragPath);
       });
     this.resetBasket();
   }

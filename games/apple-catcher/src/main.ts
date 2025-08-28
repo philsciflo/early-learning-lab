@@ -1,6 +1,7 @@
 import { GameOver } from "./scenes/GameOver";
 import { MainMenu } from "./scenes/MainMenu";
 import { ModeSelection } from "./scenes/ModeSelection.ts";
+import "./timer/TimerPatch.ts";
 
 
 import { Game, Types } from "phaser";

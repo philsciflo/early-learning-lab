@@ -1,4 +1,4 @@
-import "./scenes/timer/TimerPatch.ts";
+import "./timer/TimerPatch.ts";
 import { Level1Intro } from "./scenes/Level1Intro.ts";
 import { Level2Intro } from "./scenes/Level2Intro.ts";
 import { Level3Intro } from "./scenes/Level3Intro.ts";
