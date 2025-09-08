@@ -102,6 +102,10 @@ export class MarbleTrackScene<T> extends Scene {
     this.load.image("bowl", "assets/bowl.png");
     this.load.image("box", "assets/box.png");
     this.load.image("logBall", "assets/logBall.png");
+    this.load.image("tube", "assets/tube.png");
+    this.load.image("funnel", "assets/funnel.png");
+    this.load.image("house", "assets/house.png");
+    this.load.image("houseOverlay", "assets/house-front.png");
   }
 
   init() {
