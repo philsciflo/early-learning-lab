@@ -1,11 +1,11 @@
 import { MarbleTrackScene } from "./MarblesTrackScene.ts";
 import { WHITE, GREEN, gameAreaWidth, gameAreaHeight, gameAreaX, gameAreaY} from "../constants.ts";
-import { Level0ScoringData } from "../scoring.ts";
+import { Level1ScoringData } from "../scoring.ts";
 import { Body } from "matter-js"; 
 
-export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
-  private allTracks: Phaser.GameObjects.Image[] = [];
-  private marble!:Phaser.Physics.Matter.Image;
+export class Level1 extends MarbleTrackScene<Level1ScoringData> {
+  private dropMarble!: Phaser.Physics.Matter.Image;
+  private dragMarble!:Phaser.Physics.Matter.Image;
 
   private isDragging = true;
   private dragStartTime = 0;
@@ -15,156 +15,40 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
 
   constructor() {
     super(
-      "Level0", 
-      '"Marbles Track" - Level 0 (Training)', 
-      "Let's play with marbles.", 
-      "Level0",
+      "Level1", 
+      '"Marbles Track" - Level 1 (test)',
+      "Help the marble reach the goal!",
       "Level1Intro",
-      false
-      
+      "Level2Intro",
+      true
     );
+    this.maxDropCount = 2;
   }
 
   // Initialize the scene
   override create(): void {
     this.matter.world.drawDebug = false;
     super.create();
+    this.boxX = gameAreaX - 450;
+    this.boxY = gameAreaY - 175;
     this.setupTrack();
     //this.setupDraggableTracks();
     this.setupHouse(gameAreaX + 185,gameAreaY + 160);
     this.setupBounds();
-    this.setupMarble();
+    this.setupDropMarble(this.boxX,this.boxY);
+    this.setupDragMarble()
     this.createFunnel(gameAreaX - 370,gameAreaY - 15);
-    this.allTracks = [];
-  }
-
-  // Sets up the marble so that it behaves likes a circle and is draggable
-  private setupMarble() {
-    // Display green box
-    this.add
-      .rectangle(gameAreaX + gameAreaWidth / 2 - 60, gameAreaY + gameAreaHeight / 2 - 60, 90, 90, WHITE)
-      .setStrokeStyle(5, GREEN);
-
-    this.marble = this.matter.add
-    .image(
-      gameAreaX + gameAreaWidth / 2 - 60,
-      gameAreaY + gameAreaHeight / 2 - 60,
-      "marble"
-    )
-    .setScale(0.06)
-    .setCircle(25)
-    .setFriction(0.01)
-    .setMass(10)
-    .setFrictionStatic(0.5)
-    .setBounce(0.5)
-    .setVelocityX(1)
-    .setAngularVelocity(0.15)
-    .setStatic(true) 
-    .setInteractive()
-    .setDepth(2);
-    (this.marble.body as MatterJS.BodyType).label = "dropMarble";
-
-    this.input.setDraggable(this.marble);
-
-    this.marble.on("dragstart", () => {
-      console.log("Drag started");
-      this.isDragging = true;
-      this.dragStartTime = Date.now();
-      this.dragPositions = [];
-      //initial position
-      this.dragPositions.push({
-        x: Math.round(this.marble.x),
-        y: Math.round(this.marble.y),
-        time: 0
-      });
-      this.recordDragPosition(this.marble, this.isDragging);
-      
-      // Set up interval to record every second
-      this.dragInterval = this.time.addEvent({
-        delay: 500, // 1 second
-        callback: () => this.recordDragPosition(this.marble, this.isDragging),
-        callbackScope: this,
-        loop: true
-      });
-
-      this.isAttempted = true;
-      this.registry.set(`${this.levelKey}-isAttempted`, true);
-      this.registry.inc(this.triesDataKey, 1);
-    });
-
-    this.marble.on("drag", (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
-    // Keep marble non-static during drag
-    this.marble.setStatic(false);
-    
-    // Calculate target position (with bounds checking)
-    const halfMarble = 20;
-    const left = gameAreaX - gameAreaWidth / 2 + halfMarble;
-    const right = gameAreaX + gameAreaWidth / 2 - halfMarble;
-    const top = gameAreaY - 25 - gameAreaHeight / 2 + halfMarble;
-    const bottom = gameAreaY + 25 + gameAreaHeight / 2 - halfMarble;
-    
-    const clampedX = Phaser.Math.Clamp(dragX, left, right);
-    const clampedY = Phaser.Math.Clamp(dragY, top, bottom);
-    
-    // Calculate velocity needed to move toward pointer
-    const dx = clampedX - this.marble.x;
-    const dy = clampedY - this.marble.y;
-    
-    // Calculate distance to pointer
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    //limit the speed to prevent tunneling
-    const maxDistance = 12; 
-    
-    if (distance > maxDistance) {
-      // Normalize the direction vector
-      const nx = dx / distance;
-      const ny = dy / distance;
-      
-      // Apply limited velocity in the right direction
-      const speed = 10; 
-      this.marble.setVelocity(nx * speed, ny * speed);
-      
-      this.marble.x += nx * maxDistance * 0.5;
-      this.marble.y += ny * maxDistance * 0.5;
-    } else {
-      //set the velocity to reach the target
-      const speed = 0.5; 
-      this.marble.setVelocity(dx * speed, dy * speed);
-    }
-    
-    this.marble.setIgnoreGravity(true);
-    this.marble.setAngularVelocity(0);
-  });
-
-  // When drag ends, restore normal physics behavior
-  this.marble.on("dragend", () => {
-    this.recordDragPosition(this.marble, this.isDragging);
-    (this as any).dragPositions = this.dragPositions;
-      console.log("Drag ended");
-      this.isDragging = false;
-      if (this.dragInterval) {
-        this.dragInterval.destroy();
-      }
-      
-      // Log all recorded positions
-      console.log("Full drag path:", this.dragPositions);
-
-    this.input.setDraggable(this.marble, false);
-    this.marble.disableInteractive();
-    this.marble.setIgnoreGravity(false);
-  });
-
+    this.setupButtons();
   }
   
   // Sets up the track which the marble rolls down
   private setupTrack(){
-    this.createTube(500, 15, gameAreaX-100, gameAreaY+105);
+    this.createTightTube(500, 15, gameAreaX-100, gameAreaY+105);
   }
 
-  private createTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
+  private createTightTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
     const height = 10;
-    const offset = 32;
+    const offset = 33;
 
     // --- 上下碰撞体 ---
     const top = this.matter.add.image(x, y - offset, "track")
@@ -178,7 +62,7 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
         .setVisible(false);
 
     // --- main 作为控制中心 ---
-    const main = this.matter.add.image(x, y, "tube")
+    const main = this.matter.add.image(x, y, "tighttube")
         .setDisplaySize(length + 10, offset * 2 + 7)
         .setAngle(angle)
         .setDepth(1)
@@ -188,7 +72,7 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
     main.setSensor(true); 
 
     // --- overlay ---
-    const overlay = this.add.image(x, y, "tube")
+    const overlay = this.add.image(x, y, "tighttube")
         .setDisplaySize(length + 10, offset * 2 + 7)
         .setAlpha(0.5)
         .setDepth(5);
@@ -204,12 +88,15 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
 
         const children = (main as any).children as Phaser.Physics.Matter.Image[];
         const offsetsArr = [-offset, offset];
+        
 
         children.forEach((child, i) => {
             const ox = offsetsArr[i] * -sin;
             const oy = offsetsArr[i] * cos;
+            const angleOffset = (i === 0 ? -1 : 1) * Phaser.Math.DEG_TO_RAD;
+
             Body.setPosition(child.body as Body, { x: main.x + ox, y: main.y + oy });
-            Body.setAngle(child.body as Body, rad);
+            Body.setAngle(child.body as Body, rad - angleOffset);
         });
 
         if ((main as any).overlay) {
@@ -347,4 +234,120 @@ protected setupHouse(bowlX: number, bowlY: number) {
   this.matter.world.add(sensor);
   this.bowlSensor = sensor;
 }
+
+private setupDropMarble(X: number, Y: number) {
+  const dropX = X;
+  const dropY = Y;
+  const boxWidth = 75;
+  const boxHeight = 60;
+
+  // Add drop ball
+  this.dropMarble = this.matter.add.image(dropX, dropY, "marble")
+    .setScale(0.06)
+    .setCircle(25)
+    .setFriction(0.02)
+    .setBounce(0.25)
+    .setFrictionStatic(0.5)
+    .setStatic(true)
+    .setFrictionAir(0.001)
+    .setDepth(2);
+    (this.dropMarble.body as MatterJS.BodyType).label = "dropMarble";
+
+  this.setupBox(X,Y,boxWidth,boxHeight);
+}
+
+private setupDragMarble() {
+  // Display green box
+  this.add
+    .rectangle(gameAreaX + gameAreaWidth / 2 - 60, gameAreaY + gameAreaHeight / 2 - 60, 90, 90, WHITE)
+    .setStrokeStyle(5, GREEN);
+
+  this.dragMarble = this.matter.add
+  .image(
+    gameAreaX + gameAreaWidth / 2 - 60,
+    gameAreaY + gameAreaHeight / 2 - 60,
+    "marble2"
+  )
+  .setScale(0.06)
+  .setCircle(25)
+  .setFriction(0.05)
+  .setBounce(0.25)
+  .setFrictionStatic(0.1)
+  .setStatic(true) 
+  .setInteractive()
+  .setDepth(2)
+
+  .on('dragstart', () => {
+    console.log("Drag started");
+    this.isDragging = true;
+    this.dragStartTime = Date.now();
+    this.dragPositions = [];
+    //initial position
+    this.dragPositions.push({
+      x: Math.round(this.dragMarble.x),
+      y: Math.round(this.dragMarble.y),
+      time: 0
+    });
+    
+    // Set up interval to record every second
+    this.dragInterval = this.time.addEvent({
+      delay: 500, // 1 second
+      callback: () => this.recordDragPosition(this.dragMarble, this.isDragging),
+      callbackScope: this,
+      loop: true
+    });
+  })
+  .on('dragend', () => {
+    this.recordDragPosition(this.dragMarble, this.isDragging);
+    (this as any).dragPositions = this.dragPositions;
+    console.log("Drag ended");
+    this.isDragging = false;
+    if (this.dragInterval) {
+      this.dragInterval.destroy();
+    }
+    
+
+    // Log all recorded positions
+    console.log("Full drag path:", this.dragPositions);
+  });
+
+  this.handleDrag(
+    this.boxX, 
+    this.boxY, 
+    this.dragMarble,
+    () => this.recordDragPosition(this.dragMarble,this.isDragging)
+  );
+}
+
+
+private setupButtons() {
+  const buttonX = gameAreaX + gameAreaWidth / 2 - 80;
+  const resetY = gameAreaY - 100;
+  const dropY = resetY + 60;
+
+
+
+}
+
+private lidCollider?: MatterJS.BodyType;
+  protected override onDropPressed() {
+  if (this.dropCount === 0) {
+    this.dropClickTime = Date.now();
+    this.time.delayedCall(100, () => {
+      this.releaseMarble(this.dropMarble, 5, 0.02);
+      this.rotateLidWithCollider(this.lidCollider);
+    });
+  } else if (this.dropCount === 1) {
+    if (this.isDragMarbleSnapped) {
+      this.secondDropClickTime = Date.now();
+      this.time.delayedCall(100, () => {
+        this.releaseMarble(this.dragMarble, 18, 0.01);
+        this.rotateLidWithCollider(this.lidCollider);
+      });
+    } else {
+      this.dropCount -= 1;
+    }
+  }
+}
+
 }

@@ -68,6 +68,7 @@ export class MarbleTrackScene<T> extends Scene {
   protected dropClickTime = 0;
   protected secondDropClickTime = 0;
   protected durationFromDropToDrag = 0;
+  protected hasDraggedBox = false;
 
   constructor(
     protected levelKey: keyof LEVEL_TRYDATA_MAP, //scoring change
@@ -103,6 +104,7 @@ export class MarbleTrackScene<T> extends Scene {
     this.load.image("box", "assets/box.png");
     this.load.image("logBall", "assets/logBall.png");
     this.load.image("tube", "assets/tube.png");
+    this.load.image("tighttube", "assets/tighttube.png");
     this.load.image("funnel", "assets/funnel.png");
     this.load.image("house", "assets/house.png");
     this.load.image("houseOverlay", "assets/house-front.png");
@@ -113,6 +115,7 @@ export class MarbleTrackScene<T> extends Scene {
     this.scoringData = []; // Clear previous scoring data
     this.currentScore = -1; // Reset current score
     this.scoreForThisTry = 0;
+    this.hasDraggedBox = false;
     this.isAttempted = false;
     this.registry.set(`${this.levelKey}-startTime`, Date.now());
     const attemptedKey = `${this.levelKey}-isAttempted`;
@@ -194,7 +197,7 @@ export class MarbleTrackScene<T> extends Scene {
 
     // Define game area container (white box)
     const gameAreaWidth = WIDTH * 0.92;
-    const gameAreaHeight = HEIGHT * 0.65;
+    const gameAreaHeight = HEIGHT * 0.65 + 50;
     const gameAreaX = WIDTH / 2;
     const gameAreaY = HEIGHT / 2 + 10;
 
@@ -268,6 +271,8 @@ export class MarbleTrackScene<T> extends Scene {
     resetButton.on("pointerdown", () => {
       if (this.isAttempted) {
         this.recordScoreForPlayer();
+        this.dropClickTime = 0;
+        this.secondDropClickTime = 0;
       }
       this.registry.set("skipAttemptIncrement", true);
       this.scene.restart();
@@ -474,6 +479,7 @@ export class MarbleTrackScene<T> extends Scene {
     );
     this.lid.setOrigin(0, 0.5);
     this.lid.setAngle(0);
+    this.lid.setDepth(6);
     this.lid.setStatic(true);
 
     //Display marble-background
@@ -540,7 +546,7 @@ export class MarbleTrackScene<T> extends Scene {
 
     const topWall = this.matter.add.rectangle(
       gameAreaX,
-      gameAreaY - gameAreaHeight / 2 - thickness / 2,
+      gameAreaY -25 - gameAreaHeight / 2 - thickness / 2,
       gameAreaWidth,
       thickness,
       { isStatic: true },
@@ -548,7 +554,7 @@ export class MarbleTrackScene<T> extends Scene {
 
     const bottomWall = this.matter.add.rectangle(
       gameAreaX,
-      gameAreaY + gameAreaHeight / 2 + thickness / 2,
+      gameAreaY + 25 + gameAreaHeight / 2 + thickness / 2,
       gameAreaWidth,
       thickness,
       { isStatic: true },
@@ -590,8 +596,8 @@ export class MarbleTrackScene<T> extends Scene {
         const halfMarble = 20;
         const left = gameAreaX - gameAreaWidth / 2 + halfMarble;
         const right = gameAreaX + gameAreaWidth / 2 - halfMarble;
-        const top = gameAreaY - gameAreaHeight / 2 + halfMarble;
-        const bottom = gameAreaY + gameAreaHeight / 2 - halfMarble;
+        const top = gameAreaY - 25 - gameAreaHeight / 2 + halfMarble;
+        const bottom = gameAreaY + 25 + gameAreaHeight / 2 - halfMarble;
 
         const clampedX = Phaser.Math.Clamp(dragX, left, right);
         const clampedY = Phaser.Math.Clamp(dragY, top, bottom);
@@ -745,9 +751,23 @@ export class MarbleTrackScene<T> extends Scene {
         tries: this.registry.get(this.triesDataKey), // Current number of tries
         score: this.scoreForThisTry,
         duration: this.duration,
-        ...(this.shouldRecordDropTime() && { DropTime: this.dropClickTime - startTime }),
-        ...(this.shouldRecordSecondDropTime() && { SecondDropTime: this.secondDropClickTime - startTime }),
-        ...(this.shouldRecordDropToDragDuration() && { DropToDragDuration: this.durationFromDropToDrag }),
+        ...(this.shouldRecordDropTime() && { 
+          DropTime: this.dropClickTime - startTime >= 0 
+            ? this.dropClickTime - startTime 
+            : "Not pressed"
+        }),
+    
+        ...(this.shouldRecordSecondDropTime() && { 
+          SecondDropTime: this.secondDropClickTime - startTime >= 0 
+            ? this.secondDropClickTime - startTime 
+            : "Not pressed"
+        }),
+        ...(this.shouldRecordDropToDragDuration() && { 
+          DropToDragDuration: this.hasDraggedBox
+            ? this.durationFromDropToDrag
+            : "Not dragged"
+        }),
+        
         ...(this.shouldRecordPath() && { path: this.dragPositions }),// Conditional
         ...(this.shouldRecordTrackPaths() && { trackPaths: this.trackPaths }), // Conditionally Include all track movements
       },
