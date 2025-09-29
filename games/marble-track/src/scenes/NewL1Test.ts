@@ -68,7 +68,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
         .setDepth(1)
         .setStatic(true);
 
-    // --- 空气模式（不碰撞） ---
+    // --- Air mode (no collision) ---
     main.setSensor(true); 
 
     // --- overlay ---
