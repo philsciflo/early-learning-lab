@@ -31,10 +31,12 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
     super.create();
     this.setupTrack();
     //this.setupDraggableTracks();
+
     this.setupHouse(gameAreaX + 185,gameAreaY + 160);
     this.setupBounds();
     this.setupMarble();
     this.createFunnel(gameAreaX - 370,gameAreaY - 15);
+
     this.allTracks = [];
   }
 
@@ -100,8 +102,10 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
     const halfMarble = 20;
     const left = gameAreaX - gameAreaWidth / 2 + halfMarble;
     const right = gameAreaX + gameAreaWidth / 2 - halfMarble;
+
     const top = gameAreaY - 25 - gameAreaHeight / 2 + halfMarble;
     const bottom = gameAreaY + 25 + gameAreaHeight / 2 - halfMarble;
+
     
     const clampedX = Phaser.Math.Clamp(dragX, left, right);
     const clampedY = Phaser.Math.Clamp(dragY, top, bottom);
@@ -159,7 +163,9 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
   
   // Sets up the track which the marble rolls down
   private setupTrack(){
+
     this.createTube(500, 15, gameAreaX-100, gameAreaY+105);
+
   }
 
   private createTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
@@ -222,9 +228,198 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
     return main;
 }
 
+
+private createDraggableTrack(length: number, angle: number, x: number, y: number, index: number): Phaser.Physics.Matter.Image {
+  const trackId = `track-${index}`;
+  
+  const track = this.createTube(length, angle, x, y); 
+  const skin = (track as any).overlay as Phaser.GameObjects.Image;
+
+  track.setCollisionCategory(this.draggableTrackCategory);
+  track.setCollidesWith(~this.draggableTrackCategory);
+
+  skin.setInteractive();
+  this.input.setDraggable(skin);
+
+  const originalAngle = angle;
+
+  let dragInterval: Phaser.Time.TimerEvent;
+  let dragStartTime = 0;
+
+  skin.on("dragstart", () => {
+    track.setSensor(false);
+    const startTime = this.registry.get(`${this.levelKey}-startTime`);
+    // Initialize tracking for this drag
+    if (!this.trackPaths) this.trackPaths = [];
+    this.trackPaths.push({
+      trackId,
+      path: [{
+        x: Math.round(track.x),
+        y: Math.round(track.y),
+        time: 0.0 // First point at 0 seconds
+      }]
+    })
+    ;
+    
+    // Initialize timing
+    dragStartTime = Date.now();
+    this.trackPaths[this.trackPaths.length - 1].path.push({
+      x: Math.round(track.x),
+      y: Math.round(track.y),
+      time: Date.now() - startTime // milliseconds since drag started
+    });
+
+    // Set up 500ms interval using Phaser's timer
+    dragInterval = this.time.addEvent({
+      delay: 500, // 0.5 seconds
+      callback: () => {
+        
+        this.trackPaths[this.trackPaths.length - 1].path.push({
+          x: Math.round(track.x),
+          y: Math.round(track.y),
+          time: Date.now() - startTime // milliseconds since drag started
+        });
+      },
+      callbackScope: this,
+      loop: true
+    });
+
+    if (!this.isAttempted) {
+      this.registry.inc(this.triesDataKey, 1);
+      this.isAttempted = true;
+      this.registry.set(`${this.levelKey}-isAttempted`, true);
+    }
+  });
+
+  skin.on("drag", (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+    const now = Date.now();
+    
+    // Keep track non-static during drag
+    track.setStatic(false);
+    track.setCollisionCategory(this.draggableTrackCategory);
+    track.setCollidesWith(~this.draggableTrackCategory);
+    
+    // Calculate bounds for the track
+    const halfTrackWidth = track.displayWidth / 2;
+    const halfTrackHeight = track.displayHeight / 2;
+    const left = gameAreaX - gameAreaWidth / 2 + halfTrackWidth;
+    const right = gameAreaX + gameAreaWidth / 2 - halfTrackWidth;
+    const top = gameAreaY - gameAreaHeight / 2 + halfTrackHeight;
+    const bottom = gameAreaY + gameAreaHeight / 2 - halfTrackHeight;
+    
+    // Clamp target position to stay within boundaries
+    const clampedX = Phaser.Math.Clamp(dragX, left, right);
+    const clampedY = Phaser.Math.Clamp(dragY, top, bottom);
+    
+    const dx = clampedX - track.x;
+    const dy = clampedY - track.y;
+  
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Prevent tunneling by limiting movement speed
+    const maxDistance = 12;
+    
+    if (distance > maxDistance) {
+      const nx = dx / distance;
+      const ny = dy / distance;
+      
+      const speed = 10;
+      track.setVelocity(nx * speed, ny * speed);
+      
+      track.x += nx * maxDistance * 0.5;
+      track.y += ny * maxDistance * 0.5;
+    } else {
+      const speed = 0.5;
+      track.setVelocity(dx * speed, dy * speed);
+    }
+    
+    track.setAngle(originalAngle);
+    track.setAngularVelocity(0);
+    
+    skin.setPosition(track.x, track.y);
+    skin.setAngle(originalAngle); 
+
+    (track as any).syncChildren();
+  });
+
+  // When drag ends
+  skin.on("dragend", () => {
+    track.setSensor(true);
+    const startTime = this.registry.get(`${this.levelKey}-startTime`);
+    if (this.trackPaths && this.trackPaths.length > 0) {
+      this.trackPaths[this.trackPaths.length - 1].path.push({
+        x: Math.round(track.x),
+        y: Math.round(track.y),
+        time: Date.now() - startTime //Final position
+      });
+    }
+    // Clean up interval
+    if (dragInterval) {
+      dragInterval.destroy();
+    }
+
+    // Stop all movement
+    track.setVelocity(0, 0);
+    track.setAngularVelocity(0);
+    track.setStatic(true);
+    track.setCollisionCategory(this.draggableTrackCategory);
+    track.setCollidesWith(~this.draggableTrackCategory);
+
+    skin.setPosition(track.x, track.y);
+    skin.setAngle(originalAngle);
+  });
+
+  return track;
+}
+
+private draggableTrackCategory: number = 0;
+
+  private initializeCollisionCategories() {
+    if (this.draggableTrackCategory === 0) {
+      this.draggableTrackCategory = this.matter.world.nextCategory();
+    }
+  }
+
+  private trackPositions = [
+    { x: gameAreaX + 340, y: gameAreaY + 190 },
+    { x: gameAreaX + 340, y: gameAreaY + 100 },
+    { x: gameAreaX + 380, y: gameAreaY + 160 }
+  ];
+
+  private setupDraggableTracks() {
+    this.add
+      .rectangle(gameAreaX + gameAreaWidth / 2 - 130, gameAreaY + gameAreaHeight / 2 - 110, 220, 180, WHITE)
+      .setStrokeStyle(5, GREEN);
+
+    const trackConfigs = [
+      { length: 200, angle: 15 },
+      { length: 200, angle: -20 },
+      { length: 150, angle: 30 }
+    ];
+
+    for (let i = 0; i < 3; i++) {
+      const { length, angle } = trackConfigs[i];
+      const { x, y } = this.trackPositions[i];
+      const track = this.createDraggableTrack(length, angle, x, y, i);
+      this.allTracks.push(track);
+    }
+  }  
+  
+  
+
+
+  // Sets up the finishing line to end the fun
+  private setupFlag(){
+  const flag = this.add.image(gameAreaX+250, gameAreaY+90, "flag");
+  flag.setScale(0.1);
+  }
+
+
   private createFunnel(x: number, y: number): Phaser.Physics.Matter.Image {
     const height = 10;
     const offset = 60;
+
+    // --- 上下碰撞体 ---
 
     const top = this.matter.add.image(x - offset - 5, y - 30 , "track")
         .setDisplaySize(100, height)
@@ -238,13 +433,16 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
         .setStatic(true)
         .setVisible(false);
 
-    
+    // --- main 作为控制中心 ---
+
     const main = this.matter.add.image(x, y, "funnel")
         .setDisplaySize(200, 220)
         .setDepth(1)
         .setStatic(true);
 
+
     // ---air mode ---
+
     main.setSensor(true); 
 
     // --- overlay ---
