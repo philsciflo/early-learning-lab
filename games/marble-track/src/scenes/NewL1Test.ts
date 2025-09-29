@@ -50,7 +50,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
     const height = 10;
     const offset = 33;
 
-    // --- 上下碰撞体 ---
+    // --- Top and bottom colliders ---
     const top = this.matter.add.image(x, y - offset, "track")
         .setDisplaySize(length, height)
         .setStatic(true)
