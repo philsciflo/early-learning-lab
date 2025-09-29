@@ -441,7 +441,7 @@ private draggableTrackCategory: number = 0;
         .setStatic(true);
 
 
-    // ---air mode ---
+    // ---Air mode ---
 
     main.setSensor(true); 
 
