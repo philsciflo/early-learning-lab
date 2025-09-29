@@ -80,7 +80,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
     (main as any).overlay = overlay;
     (main as any).children = [top, bottom];
 
-    // --- 同步 top/bottom 和 overlay ---
+    // --- Synchronize top/bottom and overlay ---
     (main as any).syncChildren = () => {
         const rad = Phaser.Math.DegToRad(main.angle);
         const sin = Math.sin(rad);
