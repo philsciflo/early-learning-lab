@@ -61,7 +61,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
         .setStatic(true)
         .setVisible(false);
 
-    // --- main 作为控制中心 ---
+    // --- main as control center ---
     const main = this.matter.add.image(x, y, "tighttube")
         .setDisplaySize(length + 10, offset * 2 + 7)
         .setAngle(angle)
