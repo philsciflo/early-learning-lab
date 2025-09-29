@@ -131,7 +131,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
         .setDepth(1)
         .setStatic(true);
 
-    // ---air mode ---
+    // ---Air mode ---
     main.setSensor(true); 
 
     // --- overlay ---
