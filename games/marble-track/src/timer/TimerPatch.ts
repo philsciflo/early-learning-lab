@@ -1,7 +1,7 @@
 // src/timer/TimerPatch.ts
 
 
-import { MarbleTrackScene } from "../MarblesTrackScene";
+import { MarbleTrackScene } from "../scenes/MarblesTrackScene";
 // 
 import * as Timer from "./Timer";
 

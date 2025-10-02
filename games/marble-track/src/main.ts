@@ -1,11 +1,18 @@
-import "./scenes/timer/TimerPatch.ts";
-import { Level1Intro } from "./scenes/Level1Intro.ts";
+import "./timer/TimerPatch.ts";
+//import { Level1Intro } from "./scenes/Level1Intro.ts";
+import { Level1Intro } from "./scenes/NewL1Intro.ts";
 import { Level2Intro } from "./scenes/Level2Intro.ts";
 import { Level3Intro } from "./scenes/Level3Intro.ts";
+import { Level0Test } from "./scenes/Level0Test.ts";
+
+//import { Level3 } from "./scenes/LevelTest2.ts";
+//import { Level3 } from "./scenes/LevelTest3.ts";
+
 import { Level0 } from "./scenes/Level0.ts";
-import { Level1 } from "./scenes/Level1.ts";
+//import { Level1 } from "./scenes/Level1.ts";
+import { Level1 } from "./scenes/NewL1Test.ts";
 import { Level2 } from "./scenes/Level2.ts";
-import { Level3 } from "./scenes/Level3.ts";
+//import { Level3 } from "./scenes/Level3.ts";
 import { Level4 } from "./scenes/Level4.ts";
 import { GameOver } from "./scenes/GameOver.ts"; //GameOver is for testing, you can switch back to GameOver if you want the original one
 import { MainMenu } from "./scenes/MainMenu.ts"; //MainMenu is for testing, you can switch back to MainMenu0 if you want the original one
@@ -37,12 +44,14 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  //scene: [Level4],
+
+  //scene: [Level1],
+
   scene: [
     MainMenu,
     UIScene,
     MarbleTrackScene,
-    Level0,
+    Level0Test,
     Level1Intro,
     Level1,
     Level2Intro,

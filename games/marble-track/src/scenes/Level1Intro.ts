@@ -128,9 +128,6 @@ export class Level1Intro extends MarbleTrackScene<Level1IntroScoringData> {
     const buttonX = gameAreaX + gameAreaWidth / 2 - 80;
     const resetY = gameAreaY - 100;
     const dropY = resetY + 60;
-
-
-
   }
 
   private setupFlag() {

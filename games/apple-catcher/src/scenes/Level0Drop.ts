@@ -4,9 +4,9 @@ import Pointer = Phaser.Input.Pointer;
 import Body = Phaser.Physics.Arcade.Body;
 import SpriteWithDynamicBody = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 import SpriteWithStaticBody = Phaser.Types.Physics.Arcade.SpriteWithStaticBody;
-import { CaughtAppleCount, Level0ScoringData } from "../scoring.ts";
+import { CaughtAppleCount, Level0DropScoringData } from "../scoring.ts";
 
-export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
+export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
   private baskets: SpriteWithStaticBody[] = [];
   private apples: SpriteWithDynamicBody[] = [];
   private tracks: Phaser.Physics.Arcade.Image[] = [];
@@ -14,7 +14,9 @@ export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
   private dropInterval: number;
   private isDragging = false;
   private hasDraggedThisRound = false;
+
   private appleStartPositions: { x: number, y: number }[] = [];
+
 
   constructor() {
     super(
@@ -41,6 +43,7 @@ export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
     this.setupTracks();
     this.baskets.forEach((basket) => {
     this.addCollisionHandling(basket, this.apples); 
+    this.hasDraggedThisRound = false;
   });
     this.hideDropButton = true;
   }
@@ -49,12 +52,23 @@ export class Level0Drop extends AbstractCatcherScene<Level0ScoringData> {
     this.resetApples();
     this.hasDraggedThisRound = false;
 
+    this.registry.set(`${this.name}-startTime`, Date.now());
+
+
   }
 
-  protected recordScoreDataForCurrentTry(): Level0ScoringData {
+
+  protected recordScoreDataForCurrentTry(): Level0DropScoringData {
+    const startTime = this.registry.get(`${this.name}-startTime`);
+    const endTime = Date.now();
+    const duration = startTime ? endTime - startTime : 0;
+
     return {
+      tries: 
+        this.registry.get(this.triesDataKey),
       score:
         this.currentScore > 0 ? (this.currentScore as CaughtAppleCount) : 0,
+      duration: duration,
     };
   }
 

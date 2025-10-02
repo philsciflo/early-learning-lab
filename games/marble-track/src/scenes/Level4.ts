@@ -101,6 +101,7 @@ export class Level4 extends MarbleTrackScene<Level4ScoringData> {
       .on('dragstart', () => {
         console.log("Drag started");
         this.isDragging = true;
+        this.hasDraggedBox = true;
         this.dragStartTime = Date.now();
         this.durationFromDropToDrag = this.dragStartTime - this.dropClickTime;
         this.dragPositions = [];
