@@ -12,7 +12,7 @@ import { Level0 } from "./scenes/Level0.ts";
 //import { Level1 } from "./scenes/Level1.ts";
 import { Level1 } from "./scenes/NewL1Test.ts";
 import { Level2 } from "./scenes/Level2.ts";
-//import { Level3 } from "./scenes/Level3.ts";
+import { Level3 } from "./scenes/Level3.ts";
 import { Level4 } from "./scenes/Level4.ts";
 import { GameOver } from "./scenes/GameOver.ts"; //GameOver is for testing, you can switch back to GameOver if you want the original one
 import { MainMenu } from "./scenes/MainMenu.ts"; //MainMenu is for testing, you can switch back to MainMenu0 if you want the original one
