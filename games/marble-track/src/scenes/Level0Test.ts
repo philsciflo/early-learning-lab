@@ -31,11 +31,12 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
     super.create();
     this.setupTrack();
     //this.setupDraggableTracks();
-    this.setupHouse(gameAreaX + 185,gameAreaY + 85);
-    this.setupFlag();
+
+    this.setupHouse(gameAreaX + 185,gameAreaY + 160);
     this.setupBounds();
     this.setupMarble();
-    this.createFunnel(gameAreaX - 370,gameAreaY - 90);
+    this.createFunnel(gameAreaX - 370,gameAreaY - 15);
+
     this.allTracks = [];
   }
 
@@ -101,8 +102,10 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
     const halfMarble = 20;
     const left = gameAreaX - gameAreaWidth / 2 + halfMarble;
     const right = gameAreaX + gameAreaWidth / 2 - halfMarble;
-    const top = gameAreaY - gameAreaHeight / 2 + halfMarble;
-    const bottom = gameAreaY + gameAreaHeight / 2 - halfMarble;
+
+    const top = gameAreaY - 25 - gameAreaHeight / 2 + halfMarble;
+    const bottom = gameAreaY + 25 + gameAreaHeight / 2 - halfMarble;
+
     
     const clampedX = Phaser.Math.Clamp(dragX, left, right);
     const clampedY = Phaser.Math.Clamp(dragY, top, bottom);
@@ -160,7 +163,9 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
   
   // Sets up the track which the marble rolls down
   private setupTrack(){
-    this.createTube(500, 15, gameAreaX-100, gameAreaY+30);
+
+    this.createTube(500, 15, gameAreaX-100, gameAreaY+105);
+
   }
 
   private createTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
@@ -222,6 +227,7 @@ export class Level0Test extends MarbleTrackScene<Level0ScoringData> {
     (main as any).syncChildren();
     return main;
 }
+
 
 private createDraggableTrack(length: number, angle: number, x: number, y: number, index: number): Phaser.Physics.Matter.Image {
   const trackId = `track-${index}`;
@@ -408,11 +414,13 @@ private draggableTrackCategory: number = 0;
   flag.setScale(0.1);
   }
 
+
   private createFunnel(x: number, y: number): Phaser.Physics.Matter.Image {
     const height = 10;
     const offset = 60;
 
     // --- 上下碰撞体 ---
+
     const top = this.matter.add.image(x - offset - 5, y - 30 , "track")
         .setDisplaySize(100, height)
         .setAngle(60)
@@ -426,12 +434,15 @@ private draggableTrackCategory: number = 0;
         .setVisible(false);
 
     // --- main 作为控制中心 ---
+
     const main = this.matter.add.image(x, y, "funnel")
         .setDisplaySize(200, 220)
         .setDepth(1)
         .setStatic(true);
 
-    // --- 空气模式（不碰撞） ---
+
+    // ---Air mode ---
+
     main.setSensor(true); 
 
     // --- overlay ---
