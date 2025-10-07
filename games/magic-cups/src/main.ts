@@ -1,4 +1,7 @@
-import { Level } from "./scenes/Level.ts";
+import { Level1 } from "./scenes/Level1.ts";
+import { Level2 } from "./scenes/Level2.ts";
+import { Level3 } from "./scenes/Level3.ts";
+import { Level4 } from "./scenes/Level4.ts";
 import { GameOver } from "./scenes/GameOver.ts";
 import { MainMenu } from "./scenes/MainMenu.ts";
 
@@ -17,7 +20,14 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  scene: [MainMenu, Level, GameOver],
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 300 },
+      debug: false,
+    },
+  },
+  scene: [MainMenu, Level1, Level2, Level3, Level4, GameOver],
 };
 
 export default new Game(config);

@@ -2,14 +2,17 @@
 
 The Tākaro i tētahi kēmu (Play a game) is a website designed to host a number of learning games for early childhood research
 
-MacOS or Linux are recommended for development; consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you only have Windows available
 
-Author: Florian Bednarski | University of Auckland | Waipapa Taumata Rau
+Author: Florian Bednarski | Psychology | University of Auckland | Waipapa Taumata Rau
+
+Research Assistant: Jervid Cheng | Computer Science | University of Auckland | Waipapa Taumata Rau
 
 Collaborator: Nick from https://www.iontech.nz/ | https://github.com/nick-lironi-irvine
 
-Development: Marble Track, in particular, was developed independently by Team 21 as part of the COMPSCI 399 Capstone Project.    The team worked within the open-source Early Learning Lab monorepo and contributed all new scenes, UI elements, game logic, and data collection systems for Marble Track.
 
+## Student Development Teams
+
+Marble Track, in particular, was developed independently by Team 21 as part of the COMPSCI 399 Capstone Project.    The team worked within the open-source Early Learning Lab monorepo and contributed all new scenes, UI elements, game logic, and data collection systems for Marble Track.
 
     Fei Lan – Project Manager, UI Designer
     Jervid Cheng – Level Developer (Marble Track L3), Data Collection, Debugging, Game mechanics refinement
@@ -18,8 +21,18 @@ Development: Marble Track, in particular, was developed independently by Team 21
     Yiqing Cheng – Level Developer (Marble Track L1 & Apple Catcher Navigation page), Data Collection Support
     Shuxuan Huang – Level Developer (Marble Track L2 & Apple Catcher L3–4), Data Collection Support
 
+Fix-It and Magic Cups were developed by Team 47, Uncommon Sense, as part of the COMPSCI 399 Capstone Project in Semester 2, 2025. The team worked within the open-source Early Learning Lab monorepo and contributed all new scenes, UI elements, game logic, and data collection systems for these two games.
+
+    Gauri Saxena – Project Manager, UI Designer (foreground assets)
+    Juniper Robinson - UI Design (backgrounds)
+    Chi Kuen Lai (Tony) Data management (JSON), Programming  
+    Tom Anderson - Programming (Fix-It)
+    Hayden Sime - Programming (Magic Cups)
+    Yuhan Zi - Programming (Magic Cups), Data management (data collection)
 
 ## Pre requisite tools
+
+MacOS or Linux are recommended for development; consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if you only have Windows available
 
 1. [Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git)
 2. [Node](https://nodejs.org/en). I recommend installing using [NVM](https://github.com/nvm-sh/nvm) and then following [these instructions](https://typicode.github.io/husky/how-to.html#node-version-managers-and-guis) to fix the Husky Git Hooks
@@ -82,3 +95,6 @@ Every commit to the `main` branch will publish the site to the URL shown in [the
 using the [Github Actions workflows](./.github/workflows/jekyll-gh-pages.yml).
 
 The build process will build each game and copy the built output to the `docs/games/<game name>` directory.
+
+[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=19992801)
+>>>>>>> 91cb75e342a884244fdc86e369f1ee8082fea8a9
