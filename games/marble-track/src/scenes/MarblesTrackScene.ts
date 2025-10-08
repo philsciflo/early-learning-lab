@@ -104,9 +104,8 @@ export class MarbleTrackScene<T> extends Scene {
     this.load.image("box", "assets/box.png");
     this.load.image("logBall", "assets/logBall.png");
     this.load.image("tube", "assets/tube.png");
-
     this.load.image("tighttube", "assets/tighttube.png");
-
+    this.load.image("slide", "assets/slide.png");
     this.load.image("funnel", "assets/funnel.png");
     this.load.image("house", "assets/house.png");
     this.load.image("houseOverlay", "assets/house-front.png");
@@ -833,4 +832,133 @@ export class MarbleTrackScene<T> extends Scene {
     box.setFrictionStatic(0.5);
     box.setFriction(friction);
   }
+
+
+  //New Levels Functions
+
+  protected createFunnel(x: number, y: number): Phaser.Physics.Matter.Image {
+    const height = 10;
+    const offset = 60;
+
+    const top = this.matter.add.image(x - offset - 5, y - 30 , "track")
+        .setDisplaySize(100, height)
+        .setAngle(60)
+        .setStatic(true)
+        .setVisible(false);
+
+    const bottom = this.matter.add.image(x + offset + 5, y - 30, "track")
+        .setDisplaySize(100, height)
+        .setAngle(-60)
+        .setStatic(true)
+        .setVisible(false);
+
+    
+    const main = this.matter.add.image(x, y, "funnel")
+        .setDisplaySize(200, 220)
+        .setDepth(1)
+        .setStatic(true);
+
+    // ---air mode ---
+    main.setSensor(true); 
+
+    // --- overlay ---
+    const overlay = this.add.image(x, y, "funnel")
+        .setDisplaySize(200, 220)
+        .setAlpha(0.5)
+        .setDepth(5);
+    this.setupJunction(x + 20,y + 50);      
+    return main;
+}
+
+private setupJunction(bowlX: number, bowlY: number) {
+  
+  const bowlRadius = 70;
+
+  const bowlImage = this.add.image(bowlX, bowlY, 'bowl');
+  bowlImage.setOrigin(0.5, 0.5);
+  bowlImage.setVisible(false);
+  bowlImage.setScale(0.1);
+  bowlImage.setRotation(Phaser.Math.DegToRad(30));
+
+  const arcLength = Math.PI * bowlRadius;
+  const segments = Math.floor(arcLength / 20);
+  const parts: MatterJS.BodyType[] = [];
+
+  const rotateDegrees = 15;
+  const rotateRadians = Phaser.Math.DegToRad(rotateDegrees);
+
+  for (let i = 0; i <= segments; i++) {
+    const angle = Math.PI - (i * Math.PI/ 2.1) / segments;
+    const rotatedAngle = angle + rotateRadians;
+    const x = bowlX + 10 + bowlRadius * Math.cos(rotatedAngle);
+    const y = bowlY - 20 + bowlRadius * Math.sin(rotatedAngle)*0.8; 
+    const circle = this.matter.bodies.circle(x, y, 5, {
+      isStatic: true,
+      friction: 0.01,
+    });
+    parts.push(circle);
+  }
+
+  const compoundBody = this.matter.body.create({ parts, isStatic: true });
+  this.matter.world.add(compoundBody);
+}
+
+// Sets up a bowl where the marble will land
+protected setupHouse(bowlX: number, bowlY: number) {
+  const bowlRadius = 42;
+  const bowlImage = this.add.image(bowlX, bowlY + 12, "house");
+  bowlImage.setOrigin(0.5, 0.5);
+  bowlImage.setScale(0.1);
+  bowlImage.setDepth(0);
+  const overlay = this.add.image(bowlX, bowlY + 12, "houseOverlay")
+        .setDisplaySize(200, 220)
+        .setScale(0.1)
+        .setAlpha(0.5)
+        .setDepth(3);
+
+  const arcLength = Math.PI * bowlRadius;
+  const segments = Math.floor(arcLength / 18);
+  const parts: MatterJS.BodyType[] = [];
+
+  for (let i = 1; i <= segments - 1; i++) {
+    const angle = Math.PI - (i * Math.PI) / segments;
+    const x = bowlX + bowlRadius * Math.cos(angle);
+    const y = bowlY + 34  + bowlRadius * Math.sin(angle);
+    const circle = this.matter.bodies.circle(x, y, 10, {
+      isStatic: true,
+      friction: 0.01,
+    });
+    parts.push(circle);
+  }
+
+  for (let i = 1; i <= segments - 1; i++) {
+    const angle = Math.PI - (i * Math.PI/ 1.5) / segments;
+    const rotatedAngle = angle + Phaser.Math.DegToRad(150);
+    const x = bowlX + bowlRadius *1.4 * Math.cos(rotatedAngle);
+    const y = bowlY - 5 + bowlRadius *1.4 * Math.sin(rotatedAngle)*0.8; 
+    const circle = this.matter.bodies.circle(x, y, 10, {
+      isStatic: true,
+      friction: 0.01,
+    });
+    parts.push(circle);
+  }
+
+  const compoundBody = this.matter.body.create({ parts, isStatic: true });
+  this.matter.world.add(compoundBody);
+
+  this.matter.add.image(bowlX + 50, bowlY + 20, "track")
+        .setDisplaySize(100, 30)
+        .setAngle(90)
+        .setStatic(true)
+        .setVisible(false);
+  
+  //
+  const sensor = this.matter.bodies.circle(bowlX, bowlY + 50, 20, {
+    isSensor: true,
+    isStatic: true,
+    label: "bowlSensor",
+  });
+  this.matter.world.add(sensor);
+  this.bowlSensor = sensor;
+}
 }

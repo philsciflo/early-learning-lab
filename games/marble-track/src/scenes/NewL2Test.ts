@@ -1,9 +1,9 @@
 import { MarbleTrackScene } from "./MarblesTrackScene.ts";
 import { WHITE, GREEN, gameAreaWidth, gameAreaHeight, gameAreaX, gameAreaY} from "../constants.ts";
-import { Level1ScoringData } from "../scoring.ts";
+import { Level2ScoringData } from "../scoring.ts";
 import { Body } from "matter-js"; 
 
-export class Level1 extends MarbleTrackScene<Level1ScoringData> {
+export class Level2 extends MarbleTrackScene<Level2ScoringData> {
   private dropMarble!: Phaser.Physics.Matter.Image;
   private dragMarble!:Phaser.Physics.Matter.Image;
 
@@ -15,11 +15,11 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
 
   constructor() {
     super(
-      "Level1", 
-      '"Marbles Track" - Level 1 (test)',
+      "Level2", 
+      '"Marbles Track" - Level 2 (test)',
       "Help the marble reach the goal!",
-      "Level1Intro",
       "Level2Intro",
+      "Level3Intro",
       true
     );
     this.maxDropCount = 2;
@@ -33,7 +33,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
     this.boxY = gameAreaY - 175;
     this.setupTrack();
     //this.setupDraggableTracks();
-    this.setupHouse(gameAreaX + 185,gameAreaY + 160);
+    this.setupHouse(gameAreaX + 185,gameAreaY + 175);
     this.setupBounds();
     this.setupDropMarble(this.boxX,this.boxY);
     this.setupDragMarble()
@@ -43,12 +43,20 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
   
   // Sets up the track which the marble rolls down
   private setupTrack(){
-    this.createTightTube(500, 15, gameAreaX-100, gameAreaY+105);
+    this.createWideTube(500, 196, gameAreaX-100, gameAreaY+105);
+    // Add a dot in the middle of the track to stuck the marble
+    const dot = this.matter.add.image(gameAreaX + 20, gameAreaY + 170, "logBall")
+      .setScale(0.08)  
+      .setDepth(2)     
+      .setCircle(15)         
+      .setStatic(true)
+      .setBounce(0.2)
+      .setFriction(0.05);
   }
 
-  private createTightTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
+  private createWideTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
     const height = 10;
-    const offset = 33;
+    const offset = 45;
 
     const top = this.matter.add.image(x, y - offset, "track")
         .setDisplaySize(length, height)
@@ -62,7 +70,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
 
     // --- main ---
     const main = this.matter.add.image(x, y, "tighttube")
-        .setDisplaySize(length + 10, offset * 2 + 7)
+        .setDisplaySize(length + 10, offset * 2 + 20)
         .setAngle(angle)
         .setDepth(1)
         .setStatic(true);
@@ -107,6 +115,7 @@ export class Level1 extends MarbleTrackScene<Level1ScoringData> {
     (main as any).syncChildren();
     return main;
 }
+
 
 private setupDropMarble(X: number, Y: number) {
   const dropX = X;
@@ -214,7 +223,7 @@ private lidCollider?: MatterJS.BodyType;
     if (this.isDragMarbleSnapped) {
       this.secondDropClickTime = Date.now();
       this.time.delayedCall(100, () => {
-        this.releaseMarble(this.dragMarble, 18, 0.01);
+        this.releaseMarble(this.dragMarble, 25, 0.01);
         this.rotateLidWithCollider(this.lidCollider);
       });
     } else {
