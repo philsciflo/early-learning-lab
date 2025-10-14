@@ -3,18 +3,24 @@ import {WHITE, GREEN, gameAreaWidth, gameAreaHeight, gameAreaX, gameAreaY} from 
 import { Level3ScoringData } from "../scoring.ts";
 import { Body } from "matter-js"; 
 
-export class Level3 extends MarbleTrackScene<Level3ScoringData> {
+export class Level3V2 extends MarbleTrackScene<Level3ScoringData> {
   private dropMarble!: Phaser.Physics.Matter.Image;
   private staticTracks: Phaser.Physics.Matter.Image[] = [];
   private allTracks: Phaser.GameObjects.Image[] = [];
   private boundaryTracks: Phaser.Physics.Matter.Image[] = [];
+  
+  private draggableTrackCategory: number = 0;
+  private marbleCategory: number = 0;
+  private trackMainCategory: number = 0;
+  private trackChildCategory: number = 0;
+  private boundaryCategory: number = 0;
 
   constructor() {
     super(
-      "Level3",
-      '"Marbles Track" - Level 3 (Test)',
+      "Level3V2",
+      '"Marbles Track" - Level 3 version 2(Test)',
       "Help the marble reach the goal!",
-      "Level3Intro",
+      "Level3V1",
       "Level4",
       true
     );
@@ -26,6 +32,7 @@ export class Level3 extends MarbleTrackScene<Level3ScoringData> {
     this.trackPaths = [];
     this.allTracks = [];
     this.staticTracks = [];
+    this.initializeCollisionCategories();
     this.setupTrack();
     this.setupHouse(gameAreaX + 185,gameAreaY + 160);
     this.createFunnel(gameAreaX - 370,gameAreaY - 15);
@@ -35,14 +42,24 @@ export class Level3 extends MarbleTrackScene<Level3ScoringData> {
     this.setupDropMarble();
     this.setupButtons();
     this.shuffleTracks();
-    this.initializeCollisionCategories();
+    
   }
 
   private setupTrack() {
     const wholeX = gameAreaX - 100
     const wholeY = gameAreaY + 105;
     const track1 =  this.createTube(180, 15, wholeX + 154.5, wholeY + 41.4, 32);
+    const rightBracket = this.matter.add.image(wholeX + 50, wholeY + 53, "track")
+      .setDisplaySize(30, 1)
+      .setAngle(15)
+      .setStatic(true)
+      .setVisible(false);
     const track2 = this.createTube(180, 15, wholeX - 154.5, wholeY - 41.4, 32);
+    const leftBracket = this.matter.add.image(wholeX - 75, wholeY + 18, "track")
+      .setDisplaySize(30, 1)
+      .setAngle(15)
+      .setStatic(true)
+      .setVisible(false);
     this.staticTracks.push(track1);
     this.staticTracks.push(track2);
     this.staticTracks.forEach(track => track.setSensor(false));
@@ -85,12 +102,17 @@ export class Level3 extends MarbleTrackScene<Level3ScoringData> {
     });
   }
 
-  private draggableTrackCategory: number = 0;
-
   private initializeCollisionCategories() {
-    if (this.draggableTrackCategory === 0) {
+    if (this.draggableTrackCategory === 0)
       this.draggableTrackCategory = this.matter.world.nextCategory();
-    }
+    if (this.marbleCategory === 0)
+      this.marbleCategory = this.matter.world.nextCategory();
+    if (this.trackMainCategory === 0)
+      this.trackMainCategory = this.matter.world.nextCategory();
+    if (this.trackChildCategory === 0)
+      this.trackChildCategory = this.matter.world.nextCategory();
+    if (this.boundaryCategory === 0)
+      this.boundaryCategory = this.matter.world.nextCategory();
   }
 
   private createTube(length: number, angle: number, x: number, y: number, offset: number): Phaser.Physics.Matter.Image {
@@ -100,22 +122,24 @@ export class Level3 extends MarbleTrackScene<Level3ScoringData> {
     const top = this.matter.add.image(x, y - offset, "track")
         .setDisplaySize(length, height)
         .setStatic(true)
-        .setVisible(false);
+        .setVisible(false)
+        .setCollisionCategory(this.trackChildCategory);
 
     const bottom = this.matter.add.image(x, y + offset, "track")
         .setDisplaySize(length, height)
         .setStatic(true)
-        .setVisible(false);
+        .setVisible(false)
+        .setCollisionCategory(this.trackChildCategory);
 
     // --- Main body as the control center ---
     const main = this.matter.add.image(x, y, "tube")
         .setDisplaySize(length + 10, offset * 2 + 7)
         .setAngle(angle)
         .setDepth(0)
-        .setStatic(true);
+        .setStatic(true)
+        .setCollisionCategory(this.trackMainCategory)
+        .setCollidesWith(~ this.trackChildCategory | ~ this.marbleCategory);
 
-    // --- Air mode (no collision) ---
-    main.setSensor(true); 
     main.setIgnoreGravity(true);
 
     // --- overlay ---
@@ -215,9 +239,13 @@ private createDraggableTrack(x: number, y: number, type: number): Phaser.Physics
   const track = this.createTube(length, angle, x, y, offset); 
   const skin = (track as any).overlay as Phaser.GameObjects.Image;
 
-  track.setSensor(false);
   track.setCollisionCategory(this.draggableTrackCategory);
   track.setCollidesWith(~this.draggableTrackCategory);
+
+  (track as any).children.forEach((child: Phaser.Physics.Matter.Image) => {
+    child.setCollisionCategory(this.draggableTrackCategory);
+    child.setCollidesWith(~this.draggableTrackCategory);
+  });
 
   skin.setInteractive();
   this.input.setDraggable(skin);
@@ -228,11 +256,6 @@ private createDraggableTrack(x: number, y: number, type: number): Phaser.Physics
   let dragStartTime = 0;
 
   skin.on("dragstart", () => {
-    this.allTracks.forEach(track => {
-      (track as any).children.forEach((child: Phaser.Physics.Matter.Image) => {
-        child.setSensor(true);
-      });
-    });
     (track as any).overlay.setVisible(false);
     const startTime = this.registry.get(`${this.levelKey}-startTime`);
     // Initialize tracking for this drag
@@ -316,12 +339,6 @@ private createDraggableTrack(x: number, y: number, type: number): Phaser.Physics
   // When drag ends
   skin.on("dragend", () => {
     skin.setPosition(track.x, track.y);
-    //track.setSensor(true);
-    this.allTracks.forEach(track => {
-      (track as any).children.forEach((child: Phaser.Physics.Matter.Image) => {
-        child.setSensor(false);
-      });
-    });
     const startTime = this.registry.get(`${this.levelKey}-startTime`);
     if (this.trackPaths && this.trackPaths.length > 0) {
       this.trackPaths[this.trackPaths.length - 1].path.push({
@@ -380,7 +397,8 @@ override update(time: number, delta: number): void {
       .setBounce(0.5)
       .setFrictionStatic(0.5)
       .setStatic(true)
-      .setDepth(2);
+      .setDepth(2)
+      .setCollisionCategory(this.marbleCategory);
     (this.dropMarble.body as MatterJS.BodyType).label = "dropMarble";
 
     this.setupBox(boxX, boxY, 75, 60);
@@ -400,7 +418,8 @@ override update(time: number, delta: number): void {
       .setDisplaySize(zoneWidth, 5)
       .setStatic(true)
       .setVisible(false)
-      .setSensor(true); 
+      .setSensor(true)
+      .setCollisionCategory(this.boundaryCategory);
   
     // --- Left boundary ---
     const leftBoundary = this.matter.add.image(zoneX - zoneWidth/2, zoneY, "track")
@@ -408,7 +427,8 @@ override update(time: number, delta: number): void {
       .setAngle(90)
       .setStatic(true)
       .setVisible(false)
-      .setSensor(true); 
+      .setSensor(true)
+      .setCollisionCategory(this.boundaryCategory); 
   
     // --- Right boundary ---
     const rightBoundary = this.matter.add.image(zoneX + zoneWidth/2, zoneY, "track")
@@ -416,25 +436,46 @@ override update(time: number, delta: number): void {
       .setAngle(90)
       .setStatic(true)
       .setVisible(false)
-      .setSensor(true); 
+      .setSensor(true)
+      .setCollisionCategory(this.boundaryCategory); 
   
     this.boundaryTracks = [bottomBoundary, leftBoundary, rightBoundary];
   }
 
   protected override onDropPressed() {
-    this.staticTracks.forEach(track => track.setSensor(true));
+    this.staticTracks.forEach(track => {
+      track.setCollidesWith(~ this.marbleCategory)
+    });
     this.boundaryTracks.forEach(boundary => boundary.setSensor(false));
     this.dropClickTime = Date.now();
     this.releaseMarble(this.dropMarble, 25, 0.05);
     this.rotateLidWithCollider(this.lidCollider);
     this.allTracks.forEach(track => {
-      (track as any).children.forEach((child: Phaser.Physics.Matter.Image) => {
-        child.setStatic(true);
-      });
+      const mainX = track.x;
+      const mainY = track.y;
+      
+      const zoneX = gameAreaX + 100;
+      const zoneY = gameAreaY - 110;
+      const zoneWidth = 550;
+      const zoneHeight = 310;
+      
+      const inZone =
+          mainX >= zoneX - zoneWidth / 2 &&
+          mainX <= zoneX + zoneWidth / 2 &&
+          mainY >= zoneY - zoneHeight / 2 &&
+          mainY <= zoneY + zoneHeight / 2;
+      
+      if (!inZone) {
+        (track as any).setCollidesWith(~ (this.boundaryCategory | this.marbleCategory));
+      } else{
+        (track as any).setCollidesWith(~ this.marbleCategory);
+      }
+      
       const skin = (track as any).overlay as Phaser.GameObjects.Image;
       this.input.setDraggable(skin, false);
       skin.disableInteractive();
-      (track as any).setSensor(true);
+      (track as any).setIgnoreGravity(false);
+      (track as any).setStatic(false);
     });
   }
 }
