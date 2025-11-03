@@ -1,8 +1,33 @@
+/* Different fonts */
+@font-face {
+  font-family: "Magical Star";
+  src: url("./assets/Copyduck.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Body";
+  src: url("./assets/MagicEnglish.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Unbounded";
+  src: url("./assets/Unbounded.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   margin: 0;
   padding: 0;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #000000;
+  background-color: #F6DDB1;
 }
 
 #app {
@@ -15,5 +40,55 @@ body {
 }
 
 input {
+  font-family: "Body", sans-serif;
   font-size: xxx-large;
+  border: 2px solid #0D3B66;
+  padding: 16px 12px;
+  border-radius: 20px;
+  box-sizing: border-box;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+input::placeholder {
+  color: #b5b4b4;
+  opacity: 0.5;
+}
+
+/* Colours for the gradient */
+:root {
+  --primary: #FF7700;   /* main orange */
+  --secondary: #ffb92e; /* warm golden-yellow glow */
+  --accent: #fa8c9d;    /* playful pink highlight */
+  --highlight: #FFFFFF; /* soft white shimmer */
+}
+
+/* For Gradient Header in Main Menu */
+.gradient-text .ch {
+  display: inline-block;
+  font-family: "Magical Star", sans-serif;
+  background: linear-gradient(
+    45deg,
+    var(--primary),
+    var(--secondary),
+    var(--accent),
+    var(--primary)
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientAnimation 8s ease infinite, float 3s infinite ease-in-out;
+  animation-delay: calc(var(--i) * 120ms), calc(var(--i) * 120ms);
+}
+
+@keyframes gradientAnimation {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+  0% { transform: translate(10%, 10%) translateY(0); }
+  50% { transform: translate(10%, 10%) translateY(-20px); }
+  100% { transform: translate(10%, 10%) translateY(0); }
 }

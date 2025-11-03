@@ -1,57 +1,44 @@
-import { Level1 } from "./scenes/Level1.ts";
-import { GameOver } from "./scenes/GameOver.ts";
-import { MainMenu } from "./scenes/MainMenu.ts";
-import { Game, Types } from "phaser";
-import { LevelSelect } from "./scenes/LevelSelect.ts";
-import { Level2 } from "./scenes/Level2.ts";
-import { Level3 } from "./scenes/Level3.ts";
-import { Level4 } from "./scenes/Level4.ts";
-import { Level5 } from "./scenes/Level5.ts";
-import { Level6 } from "./scenes/Level6.ts";
-import { Level7 } from "./scenes/Level7.ts";
-import { Level8 } from "./scenes/Level8.ts";
-import { Level9 } from "./scenes/Level9.ts";
-import { Level10 } from "./scenes/Level10.ts";
-import { Level11 } from "./scenes/Level11.ts";
-import { Level12 } from "./scenes/Level12.ts";
+import { HEIGHT, WIDTH} from "./constants";
+import Phaser from "phaser";
+import { Level1 } from "./scenes/Level1";
+import { Level1Drop } from "./scenes/Level1Drop";
+import { Level2 } from "./scenes/Level2";
+import { Level2Drop } from "./scenes/Level2Drop";
+import { Level3 } from "./scenes/Level3";
+import { Level3Drop } from "./scenes/Level3Drop";
+import { Level4 } from "./scenes/Level4";
+import { Level4Drop } from "./scenes/Level4Drop";
+import { Level5 } from "./scenes/Level5";
+import { Level5Drop } from "./scenes/Level5Drop";
+import { Level6 } from "./scenes/Level6";
+import { Level6Drop } from "./scenes/Level6Drop";
+import LevelSelectScene from "./scenes/LevelSelectScene";
 
-const config: Types.Core.GameConfig = {
+import { GameOver } from "./scenes/GameOver";
+import { MainMenu } from "./scenes/MainMenu";
+import  UIScene from "./scenes/UIScene";
+
+const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 1920,
-  height: 1200,
+  width: WIDTH,
+  height: HEIGHT,
   parent: "game-container",
-  backgroundColor: "#6ABFC1",
+  backgroundColor: "#9BC1BC",
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: Phaser.Scale.FIT,  
+    autoCenter: Phaser.Scale.CENTER_BOTH, 
   },
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  scene: [
-    MainMenu,
-    Level1,
-    Level2,
-    Level3,
-    Level4,
-    Level5,
-    Level6,
-    Level7,
-    Level8,
-    Level9,
-    Level10,
-    Level11,
-    Level12,
-    LevelSelect,
-    GameOver,
-  ],
   physics: {
     default: "matter",
     matter: {
-      gravity: { x: 0, y: 3 },
+      gravity: { y: 1 },
       debug: false,
     },
   },
+  scene: [MainMenu, UIScene, LevelSelectScene, Level1Drop, Level1, Level2Drop, Level2, Level3Drop, Level3, Level4Drop, Level4, Level5Drop, Level5, Level6Drop, Level6, GameOver], 
 };
 
-export default new Game(config);
+const game = new Phaser.Game(config);

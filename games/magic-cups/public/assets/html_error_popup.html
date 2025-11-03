@@ -1,0 +1,40 @@
+<div id="error-popup" style="
+  background: #FFFFFF;
+  border: 3px solid #0D3B66;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  width: 450px; 
+
+">
+  <h2 style="
+    color: #d96e3c;
+    font-family: 'Body', sans-serif;
+    font-size: 28px;
+    margin: 0 0 20px 0;
+  ">Validation Error</h2>
+  
+  <p id="errorMessage" style="
+    color: #0D3B66;
+    font-family: 'Body', sans-serif;
+    font-size: 22px;
+    margin: 0 0 25px 0;
+    line-height: 1.4;
+  "></p>
+  
+  <button id="closeBtn" style="
+    background: #d96e3c;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-family: 'Body', sans-serif;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+  " onmouseover="this.style.background='#B71C1C'" 
+     onmouseout="this.style.background='#d96e3c'">
+    Close
+  </button>
+</div>

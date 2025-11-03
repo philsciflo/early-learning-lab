@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .transition-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .curtain {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(45deg, #FF7700, #FF5500);
+            transition: transform 0.5s ease-in-out;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        
+        .curtain-left {
+            left: 0;
+            transform-origin: left;
+            transform: translateX(0%);
+        }
+
+        .curtain-right {
+            right: 0;
+            transform-origin: right;
+            transform: translateX(0%);
+        }
+
+        /* OPEN — move them OUTSIDE screen */
+        .curtain-open .curtain-left {
+            transform: translateX(-110%); /* push to left side of screen */
+        }
+
+        .curtain-open .curtain-right {
+            transform: translateX(110%); /* push right */
+        }
+
+        /* CLOSED — meet perfectly in the center */
+        .curtain-close .curtain-left {
+            transform: translateX(0%);
+        }
+
+        .curtain-close .curtain-right {
+            transform: translateX(0%);
+        }
+        
+        .transition-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Magical Star', Arial, sans-serif;
+            font-size: 48px;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            text-align: center;
+            z-index: 1002;
+        }
+        
+        .show-text {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="transition-overlay curtain-open" id="transitionOverlay">
+
+        <!-- curtains-->
+        <div class="curtain curtain-left"></div>
+        <div class="curtain curtain-right"></div>
+
+        <div class="transition-text" id="transitionText">Loading...</div>
+    </div>
+</body>
+</html>
