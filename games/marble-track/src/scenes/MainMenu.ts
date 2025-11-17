@@ -25,13 +25,15 @@ export class MainMenu extends Scene {
   preload() {
     this.load.image("background", "assets/background.png");
     this.load.html("name_input", "assets/html_text_input.html");
-    this.load.image("download-data", "assets/download-data.png");
+    this.load.image("download-json", "assets/download-json.png");
     this.load.image("delete-data", "assets/delete-data.png");
     this.load.image("start", "assets/power-button.png");
     this.load.image("move", "assets/move.png");
     this.load.audio("bgm", "assets/bgm.mp3");
     this.load.image("icon-music-on", "assets/icon-music-on.png");
     this.load.image("icon-music-off", "assets/icon-music-off.png");
+    this.load.image("download-csv", "assets/download-csv.png");
+    this.load.image("download-png", "assets/download-png.png");
   }
 
   create() {
@@ -85,20 +87,27 @@ export class MainMenu extends Scene {
     });
 
     this.add
-      .sprite(HALF_WIDTH - 100, HEIGHT - 50, "delete-data")
+      .sprite(HALF_WIDTH - 150, HEIGHT - 50, "delete-data")
       .setDisplaySize(100, 100)
       .setInteractive()
       .on("pointerdown", () => {
+        const ok = window.confirm("Delete all saved score data?");
+        if (!ok) return;
         removeScoreData();
       });
 
     this.add
-      .sprite(HALF_WIDTH + 100, HEIGHT - 50, "download-data")
+      .sprite(HALF_WIDTH + 150, HEIGHT - 50, "download-json")
       .setDisplaySize(100, 100)
       .setInteractive()
       .on("pointerdown", () => {
+        const raw = getScoreDataJSONString();
+        if (!raw || raw === "{}") {
+          window.alert("No data to export!");
+          return;
+        }
         const jsonStr = JSON.stringify(
-          JSON.parse(getScoreDataJSONString()),
+          JSON.parse(raw),
           null,
           2,
         );
@@ -113,5 +122,253 @@ export class MainMenu extends Scene {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       });
+
+      this.add
+      .image(HALF_WIDTH - 50, HEIGHT - 50, "download-csv")
+      .setDisplaySize(100, 100)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        exportMouseCSVFromScoreJSON();
+      });
+
+      this.add
+      .image(HALF_WIDTH + 50, HEIGHT - 50, "download-png")
+      .setDisplaySize(100, 100)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        const w = this.scale.width;
+        const h = this.scale.height;
+        exportMousePathPNGFromScoreJSON(w, h);
+      });
+
+      // =============== Helper types for mouse/track path export ===============
+
+type MovementPoint = {
+  x: number;
+  y: number;
+  time: number;
+};
+
+type MovementSegment = {
+  playerId: string;
+  sessionIndex: number; // the nth game session (index in outer ByteMe array)
+  level: string;        // "Level0" / "Level3" / ...
+  attempt: number;      // the nth attempt of entering this level
+  tryIndex: number;     // index in scoringData array (corresponding to tries)
+  trackId?: string;     // track id (used in Level3)
+  points: MovementPoint[];
+};
+
+// =============== Collect all movement segments from scoring JSON ===============
+
+function collectMovementSegments(): MovementSegment[] {
+  const jsonStr = getScoreDataJSONString();
+  if (!jsonStr || jsonStr === "{}") {
+    return [];
+  }
+
+  let allData: any;
+  try {
+    allData = JSON.parse(jsonStr);
+  } catch (e) {
+    console.error("Failed to parse score JSON:", e);
+    return [];
+  }
+
+  const segments: MovementSegment[] = [];
+
+  // allData: { [playerId: string]: PLAYER_INSTANCE_SCORING_DATA[] }
+  Object.entries(allData).forEach(([playerId, sessions]) => {
+    if (!Array.isArray(sessions)) return;
+
+    (sessions as any[]).forEach((session, sessionIndex) => {
+      const scores = session.scores;
+      if (!Array.isArray(scores)) return;
+
+      scores.forEach((scoreEntry: any) => {
+        const level = scoreEntry.level;
+        const attempt = scoreEntry.attempt;
+        const scoringData = scoreEntry.scoringData;
+
+        if (!Array.isArray(scoringData)) return;
+
+        scoringData.forEach((sd: any, idx: number) => {
+          const tryIndex = idx + 1;
+
+          // 1) Dragging path (Level0/1/2/4)
+          if (Array.isArray(sd.path) && sd.path.length > 0) {
+            const points: MovementPoint[] = sd.path.map((p: any) => ({
+              x: p.x,
+              y: p.y,
+              time: p.time,
+            }));
+            segments.push({
+              playerId,
+              sessionIndex,
+              level,
+              attempt,
+              tryIndex,
+              points,
+            });
+          }
+
+          // 2) Track paths (Level3)
+          if (Array.isArray(sd.trackPaths) && sd.trackPaths.length > 0) {
+            sd.trackPaths.forEach((tp: any) => {
+              if (!Array.isArray(tp.path) || tp.path.length === 0) return;
+              const points: MovementPoint[] = tp.path.map((p: any) => ({
+                x: p.x,
+                y: p.y,
+                time: p.time,
+              }));
+
+              segments.push({
+                playerId,
+                sessionIndex,
+                level,
+                attempt,
+                tryIndex,
+                trackId: tp.trackId,
+                points,
+              });
+            });
+          }
+        });
+      });
+    });
+  });
+
+  return segments;
+}
+
+// =============== Export CSV ===============
+
+function exportMouseCSVFromScoreJSON(): void {
+  const segments = collectMovementSegments();
+  if (segments.length === 0) {
+    alert("No mouse or track path data to export!");
+    return;
+  }
+
+  // Columns can be added or removed as needed; these include core information
+  const header =
+    "playerId,session,level,attempt,tryIndex,trackId,x,y,time\n";
+  const rows: string[] = [];
+
+  for (const seg of segments) {
+    for (const p of seg.points) {
+      rows.push(
+        [
+          seg.playerId,
+          seg.sessionIndex,
+          seg.level,
+          seg.attempt,
+          seg.tryIndex,
+          seg.trackId ?? "",
+          p.x,
+          p.y,
+          Math.round(p.time),
+        ].join(","),
+      );
+    }
+  }
+
+  const csv = header + rows.join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "marble_track_paths.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// =============== Export PNG (all paths overlayed) ===============
+
+function exportMousePathPNGFromScoreJSON(
+  width = 1280,
+  height = 720,
+): void {
+  const segments = collectMovementSegments();
+  if (segments.length === 0) {
+    alert("No mouse or track path data to export!");
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    console.error("Could not get 2D context for canvas");
+    return;
+  }
+
+  // White background
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Different levels use different colors
+  const levelKeys = Array.from(new Set(segments.map((s) => s.level)));
+  const levelColors: Record<string, string> = {};
+  levelKeys.forEach((lvl, i) => {
+    const hue = (i / levelKeys.length) * 360;
+    levelColors[lvl] = `hsl(${hue}, 80%, 60%)`;
+  });
+
+  // Draw each path
+  ctx.lineWidth = 2;
+
+  segments.forEach((seg) => {
+    const pts = seg.points;
+    if (pts.length === 0) return;
+
+    ctx.strokeStyle = levelColors[seg.level] || "#000000";
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) {
+      ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.stroke();
+
+    // Start point: green dot
+    const start = pts[0];
+    ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.arc(start.x, start.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // End point: blue triangle
+    const end = pts[pts.length - 1];
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y - 8);
+    ctx.lineTo(end.x - 6, end.y + 6);
+    ctx.lineTo(end.x + 6, end.y + 6);
+    ctx.closePath();
+    ctx.fill();
+  });
+
+  // Simple legend (level -> color)
+  ctx.font = "16px Arial";
+  ctx.fillStyle = "black";
+  ctx.fillText("Level Colors:", 20, 30);
+  levelKeys.forEach((lvl, i) => {
+    const y = 50 + i * 20;
+    ctx.fillStyle = levelColors[lvl];
+    ctx.fillRect(40, y - 10, 30, 10);
+    ctx.fillStyle = "black";
+    ctx.fillText(lvl, 80, y);
+  });
+
+  const url = canvas.toDataURL("image/png");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "marble_track_paths.png";
+  a.click();
+}
+
   }
 }
