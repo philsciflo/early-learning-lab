@@ -1,27 +1,19 @@
 import { MarbleTrackScene } from "./MarblesTrackScene.ts";
 import { WHITE, GREEN, gameAreaWidth, gameAreaHeight, gameAreaX, gameAreaY} from "../constants.ts";
-import { Level1IntroScoringData } from "../scoring.ts";
+import { Level2IntroScoringData } from "../scoring.ts";
 import { Body } from "matter-js"; 
 
-export class Level1Intro extends MarbleTrackScene<Level1IntroScoringData> {
-  private allTracks: Phaser.GameObjects.Image[] = [];
-  private marble!:Phaser.Physics.Matter.Image;
+export class Level2Intro extends MarbleTrackScene<Level2IntroScoringData> {
   private dropMarble!: Phaser.Physics.Matter.Image;
   private stuckMarble!: Phaser.Physics.Matter.Image;
 
-  private isDragging = true;
-  private dragStartTime = 0;
-  private nextRecordTime = 0;
-
-  private dragInterval?: Phaser.Time.TimerEvent;
-
   constructor() {
     super(
-      "Level1Intro", 
-      '"Marbles Track" - Level 1 (Intro)', 
+      "Level2Intro", 
+      '"Marbles Track" - Level 2 (Intro)', 
       "Watch the marble reach the goal!", 
-      "Level0",
       "Level1",
+      "Level2",
       true
       
     );
@@ -34,19 +26,17 @@ export class Level1Intro extends MarbleTrackScene<Level1IntroScoringData> {
     this.boxX = gameAreaX - 450;
     this.boxY = gameAreaY - 175;
     this.setupTrack();
-    //this.setupDraggableTracks();
-    this.setupHouse(gameAreaX + 185,gameAreaY + 160);
+    this.setupHouse(gameAreaX + 185,gameAreaY + 175);
     this.setupBounds();
     this.setupDropMarble(this.boxX,this.boxY);
     this.createFunnel(gameAreaX - 370,gameAreaY - 15);
-    this.allTracks = [];
     this.setupButtons();
   }
   
   // Sets up the track which the marble rolls down
   private setupTrack(){
-    this.createTightTube(500, 15, gameAreaX-100, gameAreaY+105);
-    this.stuckMarble = this.matter.add.image(690.8, 556.6 , "marble")
+    this.createWideTube(500, 196, gameAreaX-100, gameAreaY+105);
+    this.stuckMarble = this.matter.add.image(563.2, 541.5 , "marble")
       .setScale(0.06)
       .setCircle(25)
       .setFriction(0.02)
@@ -61,11 +51,19 @@ export class Level1Intro extends MarbleTrackScene<Level1IntroScoringData> {
     this.time.delayedCall(100, () => {
       this.stuckMarble.setStatic(false);
     });
+
+    const dot = this.matter.add.image(gameAreaX + 20, gameAreaY + 170, "logBall")
+      .setScale(0.08)  
+      .setDepth(2)     
+      .setCircle(15)         
+      .setStatic(true)
+      .setBounce(0.2)
+      .setFriction(0.05);
   }
 
-  private createTightTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
+  private createWideTube(length: number, angle: number, x: number, y: number): Phaser.Physics.Matter.Image {
     const height = 10;
-    const offset = 33;
+    const offset = 45;
 
     const top = this.matter.add.image(x, y - offset, "track")
         .setDisplaySize(length, height)
@@ -79,12 +77,12 @@ export class Level1Intro extends MarbleTrackScene<Level1IntroScoringData> {
 
     // --- main ---
     const main = this.matter.add.image(x, y, "tighttube")
-        .setDisplaySize(length + 10, offset * 2 + 7)
+        .setDisplaySize(length + 10, offset * 2 + 20)
         .setAngle(angle)
         .setDepth(1)
         .setStatic(true);
 
-    // --- air mode ---
+    // air mode
     main.setSensor(true); 
 
     // --- overlay ---

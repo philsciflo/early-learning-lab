@@ -93,6 +93,7 @@ export type LEVEL_TRYDATA_MAP = {
   Level2: Level2ScoringData[];
   Level3Intro: Level3IntroScoringData[];
   Level3: Level3ScoringData[];
+  Level3V2: Level3ScoringData[];
   Level4: Level4ScoringData[];
 };
 
