@@ -309,6 +309,30 @@ function exportMousePathPNGFromScoreJSON(
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // draw legend (top-left corner)
+  ctx.font = "18px Arial";
+  ctx.fillStyle = "black";
+  ctx.fillText("Legend:", 20, 40);
+
+  // legend-start point
+  ctx.fillStyle = "green";
+  ctx.beginPath();
+  ctx.arc(40, 70, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "black";
+  ctx.fillText("Start point", 60, 75);
+
+  // legend-end point
+  ctx.fillStyle = "blue";
+  ctx.beginPath();
+  ctx.moveTo(35, 100 - 8);
+  ctx.lineTo(29, 100 + 6);
+  ctx.lineTo(41, 100 + 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "black";
+  ctx.fillText("End point", 60, 105);
+
   // Different levels use different colors
   const levelKeys = Array.from(new Set(segments.map((s) => s.level)));
   const levelColors: Record<string, string> = {};
@@ -354,9 +378,9 @@ function exportMousePathPNGFromScoreJSON(
   // Simple legend (level -> color)
   ctx.font = "16px Arial";
   ctx.fillStyle = "black";
-  ctx.fillText("Level Colors:", 20, 30);
+  ctx.fillText("Level Colors:", 20, 140);
   levelKeys.forEach((lvl, i) => {
-    const y = 50 + i * 20;
+    const y = 160 + i * 25;
     ctx.fillStyle = levelColors[lvl];
     ctx.fillRect(40, y - 10, 30, 10);
     ctx.fillStyle = "black";

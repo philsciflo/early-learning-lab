@@ -29,7 +29,7 @@ export class Level1 extends AbstractCatcherScene<Level1ScoringData> {
     this.setupApple();
     this.dragPositions = [];
 
-    renderVerticalPipe(this, HALF_WIDTH, true, "pipe4-2");
+    renderVerticalPipe(this, HALF_WIDTH, true);
 
     this.addCollisionHandling(this.basket, this.apple);
   }
@@ -71,7 +71,7 @@ export class Level1 extends AbstractCatcherScene<Level1ScoringData> {
       this.recordDragPosition(this.basket.x, this.basket.y);
       
       this.dragInterval = this.time.addEvent({
-        delay: 500,
+        delay: 100,
         callback: () => this.recordDragPosition(this.basket.x, this.basket.y),
         callbackScope: this,
         loop: true

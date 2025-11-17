@@ -70,7 +70,7 @@ export class Level2 extends AbstractCatcherScene<Level2ScoringData> {
         this.recordDragPosition(this.basket.x, this.basket.y);
         
         this.dragInterval = this.time.addEvent({
-          delay: 500,
+          delay: 100,
           callback: () => this.recordDragPosition(this.basket.x, this.basket.y),
           callbackScope: this,
           loop: true
