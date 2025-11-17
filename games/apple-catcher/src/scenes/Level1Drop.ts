@@ -99,7 +99,7 @@ private setupApple() {
     this.isDragging = true;
     this.recordDragPosition(this.apple.x, this.apple.y);
     this.dragInterval = this.time.addEvent({
-      delay: 500,
+      delay: 100,
       callback: () => this.recordDragPosition(this.apple.x, this.apple.y),
       callbackScope: this,
       loop: true
@@ -116,7 +116,7 @@ private setupApple() {
     //this.apple.setGravityY(300); // Fall speed
     this.apple.disableInteractive();
 
-    this.recordDragPosition(this.basket.x, this.basket.y);
+    this.recordDragPosition(this.apple.x, this.apple.y);
     this.isDragging = false;
     if (this.dragInterval) {
       this.dragInterval.destroy();
