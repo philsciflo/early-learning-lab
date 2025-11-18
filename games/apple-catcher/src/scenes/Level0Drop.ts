@@ -16,6 +16,10 @@ export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
   private hasDraggedThisRound = false;
 
   private appleStartPositions: { x: number, y: number }[] = [];
+  private appleDragPaths: {
+    appleId: string;
+    path: { x: number; y: number; time: number }[];
+  }[] = [];
 
 
   constructor() {
@@ -51,7 +55,7 @@ export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
   protected doReset() {
     this.resetApples();
     this.hasDraggedThisRound = false;
-
+    this.appleDragPaths = [];
     this.registry.set(`${this.name}-startTime`, Date.now());
 
 
@@ -69,6 +73,7 @@ export class Level0Drop extends AbstractCatcherScene<Level0DropScoringData> {
       score:
         this.currentScore > 0 ? (this.currentScore as CaughtAppleCount) : 0,
       duration: duration,
+      appleDragPaths: this.appleDragPaths,
     };
   }
 
@@ -103,6 +108,15 @@ private setupApples() {
         { x: this.rightTreeLeft + 76, y: this.treeY + 70 },  // Upper left
         { x: this.rightTreeLeft + 124, y: this.treeY + 70 }   // Upper right
     ];
+
+    const appleIds = [
+      "apple-bottom",
+      "apple-middle-left",
+      "apple-middle-right",
+      "apple-top-left",
+      "apple-top-right",
+    ];
+
     for (let appleCount = 0; appleCount < 5; appleCount++) {
         const apple = this.physics.add
             .sprite(
@@ -116,8 +130,41 @@ private setupApples() {
             .setInteractive({ draggable: true })
             .disableBody();
 
+        const appleId = appleIds[appleCount];
+        
+        let dragInterval: Phaser.Time.TimerEvent | undefined;
+
         apple.on('dragstart', () => {
             apple.disableBody(true, false);
+            const startTime = this.registry.get(`${this.name}-startTime`);
+
+            this.appleDragPaths.push({
+              appleId,
+              path: [
+                {
+                  x: Math.round(apple.x),
+                  y: Math.round(apple.y),
+                  time: 0,
+                },
+              ],
+            });
+
+            dragInterval = this.time.addEvent({
+              delay: 100, // ms
+              loop: true,
+              callback: () => {
+                const start = this.registry.get(`${this.name}-startTime`);
+                const t = start ? Date.now() - start : 0;
+                const current = this.appleDragPaths[this.appleDragPaths.length - 1];
+                current.path.push({
+                  x: Math.round(apple.x),
+                  y: Math.round(apple.y),
+                  time: t,
+                });
+              },
+              callbackScope: this,
+            });
+
             if (!this.hasDraggedThisRound) {
               this.registry.values[this.triesDataKey] += 1;
               this.currentScore++; 
@@ -131,9 +178,23 @@ private setupApples() {
         });
 
         apple.on('dragend', () => {
-            apple.enableBody(true, apple.x, apple.y, true, true);
-            apple.setGravityY(300); // Fall speed
-            apple.setInteractive({ draggable: false });
+          const start = this.registry.get(`${this.name}-startTime`);
+          const t = start ? Date.now() - start : 0;
+          if (this.appleDragPaths && this.appleDragPaths.length > 0) {
+            const current = this.appleDragPaths[this.appleDragPaths.length - 1];
+            current.path.push({
+              x: Math.round(apple.x),
+              y: Math.round(apple.y),
+              time: t,
+            });
+          }
+          if (dragInterval) {
+            dragInterval.destroy();
+            dragInterval = undefined;
+          }
+          apple.enableBody(true, apple.x, apple.y, true, true);
+          apple.setGravityY(300); // Fall speed
+          apple.setInteractive({ draggable: false });
         });
         this.apples.push(apple);
     }

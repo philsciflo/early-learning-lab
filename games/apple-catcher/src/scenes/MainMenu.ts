@@ -14,6 +14,35 @@ import {
   startNewScore,
 } from "../scoring.ts";
 
+/**
+ * A single point in a movement path.
+ */
+type MovementPoint = {
+  x: number;
+  y: number;
+  time: number;
+};
+
+/**
+ * A logical segment of movement:
+ * - one player
+ * - one session
+ * - one level
+ * - one attempt + record entry
+ * - one path type (basket or apple)
+ * - optionally one appleId (for Level0Drop multi-apple paths)
+ */
+type MovementSegment = {
+  playerId: string;
+  sessionIndex: number; // Which session (index in PLAYER_INSTANCE_SCORING_DATA[])
+  level: string; // e.g., "Level0", "Level1Drop", "Level0Drop", etc.
+  attemptIndex: number; // Which attempt (outer tryData index + 1)
+  recordIndex: number; // Which record inside one attempt (inner index + 1)
+  pathType: "basket" | "apple";
+  appleId?: string; // For Level0Drop multi-apple drag paths
+  points: MovementPoint[];
+};
+
 export class MainMenu extends Scene {
   constructor() {
     super("MainMenu");
@@ -32,12 +61,14 @@ export class MainMenu extends Scene {
   }
 
   create() {
+    // ===== Background =====
     this.add
       .image(0, 0, "background")
       .setOrigin(0)
       .setDisplaySize(this.scale.width, this.scale.height)
       .setDepth(-1);
 
+    // ===== Title banner =====
     renderTextBanner(
       this,
       { backgroundAlpha: 0.6 },
@@ -47,6 +78,7 @@ export class MainMenu extends Scene {
       },
     );
 
+    // ===== Player ID banner =====
     renderTextBanner(
       this,
       { y: HALF_HEIGHT, height: 150, backgroundAlpha: 0.6 },
@@ -56,10 +88,12 @@ export class MainMenu extends Scene {
       },
     );
 
+    // ===== Player ID input =====
     const nameInput = this.add.dom(0, 0).createFromCache("name_input");
     nameInput.setOrigin(0.5);
     nameInput.setPosition(HALF_WIDTH, HALF_HEIGHT + 90);
 
+    // ===== Start button =====
     const startButton = this.add
       .sprite(HALF_WIDTH + QUARTER_WIDTH + 50, HALF_HEIGHT + 70, "start")
       .setDisplaySize(100, 100)
@@ -78,7 +112,7 @@ export class MainMenu extends Scene {
 
     // ========== Button Area: Delete + JSON + CSV + PNG ==========
 
-    // Delete saved data (with confirmation dialog)
+    // Delete all saved data (with confirmation dialog)
     this.add
       .sprite(HALF_WIDTH - 150, HEIGHT - 50, "delete-data")
       .setDisplaySize(100, 100)
@@ -89,7 +123,7 @@ export class MainMenu extends Scene {
         removeScoreData();
       });
 
-    // JSON export (original logic kept, only added empty-data check)
+    // JSON export button
     this.add
       .sprite(HALF_WIDTH + 150, HEIGHT - 50, "download-json")
       .setDisplaySize(100, 100)
@@ -120,7 +154,7 @@ export class MainMenu extends Scene {
       .setDisplaySize(100, 100)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
-        exportMouseCSVFromScoreJSON();
+        this.exportMouseCSVFromScoreJSON();
       });
 
     // PNG export button
@@ -131,272 +165,305 @@ export class MainMenu extends Scene {
       .on("pointerdown", () => {
         const w = this.scale.width;
         const h = this.scale.height;
-        exportMousePathPNGFromScoreJSON(w, h);
+        this.exportMousePathPNGFromScoreJSON(w, h);
       });
+  }
 
-    // =============== Helper functions for Apple Catcher export tools ===============
-    // Put inside create() to follow same style as Marble Track
+  // ===================== Data collection helpers =====================
 
-    type MovementPoint = {
-      x: number;
-      y: number;
-      time: number;
-    };
+  /**
+   * Collect all movement segments (basket + apple paths) from the scoring JSON.
+   * Supports:
+   *  - Level0 ~ Level4: basketPath
+   *  - Level1Drop ~ Level4Drop: applePath
+   *  - Level0Drop: appleDragPaths (multiple apples, each with its own path)
+   */
+  private collectMovementSegmentsFromScoreJSON(): MovementSegment[] {
+    const jsonStr = getScoreDataJSONString();
+    if (!jsonStr || jsonStr === "{}") {
+      return [];
+    }
 
-    type MovementSegment = {
-      playerId: string;
-      sessionIndex: number; // Which session (index in PLAYER_INSTANCE_SCORING_DATA[])
-      level: string;        // e.g., "Level0", "Level1Drop", etc.
-      attemptIndex: number; // Which attempt (outer tryData index + 1)
-      recordIndex: number;  // Which record inside one attempt (inner index + 1)
-      pathType: "basket" | "apple";
-      points: MovementPoint[];
-    };
+    let allData: any;
+    try {
+      allData = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("Failed to parse score JSON:", e);
+      return [];
+    }
 
-    /**
-     * Extract all movement paths from Apple Catcher scoring JSON:
-     * - Level0 ~ Level4: basketPath
-     * - Level1Drop ~ Level4Drop: applePath
-     */
-    function collectMovementSegmentsFromScoreJSON(): MovementSegment[] {
-      const jsonStr = getScoreDataJSONString();
-      if (!jsonStr || jsonStr === "{}") {
-        return [];
-      }
+    const segments: MovementSegment[] = [];
 
-      let allData: any;
-      try {
-        allData = JSON.parse(jsonStr);
-      } catch (e) {
-        console.error("Failed to parse score JSON:", e);
-        return [];
-      }
+    // allData: { [playerId: string]: PLAYER_INSTANCE_SCORING_DATA[] }
+    Object.entries(allData).forEach(([playerId, sessions]) => {
+      if (!Array.isArray(sessions)) return;
 
-      const segments: MovementSegment[] = [];
+      (sessions as any[]).forEach((session, sessionIndex) => {
+        const scores = session?.scores;
+        if (!scores) return;
 
-      // allData: { [playerId: string]: PLAYER_INSTANCE_SCORING_DATA[] }
-      Object.entries(allData).forEach(([playerId, sessions]) => {
-        if (!Array.isArray(sessions)) return;
+        // Iterate over each level entry (e.g., "Level0", "Level0Drop", "Level1Drop", etc.)
+        Object.entries(scores).forEach(([levelKey, levelData]) => {
+          const tryDataArr = (levelData as any)?.tryData;
+          // tryDataArr is LevelXScoringData[][] at runtime
+          if (!Array.isArray(tryDataArr)) return;
 
-        (sessions as any[]).forEach((session, sessionIndex) => {
-          const scores = session?.scores;
-          if (!scores) return;
+          tryDataArr.forEach((oneAttemptData: any, attemptIndex: number) => {
+            if (!Array.isArray(oneAttemptData)) return;
 
-          // Iterate level entries (Level0 / Level1Drop / ...)
-          Object.entries(scores).forEach(([levelKey, levelData]) => {
-            const tryDataArr = (levelData as any)?.tryData;
-            // tryDataArr is LevelXScoringData[][] at runtime
-            if (!Array.isArray(tryDataArr)) return;
+            oneAttemptData.forEach(
+              (record: any, recordIndex: number) => {
+                // Basket path (non-drop levels)
+                if (
+                  Array.isArray(record.basketPath) &&
+                  record.basketPath.length > 0
+                ) {
+                  const points: MovementPoint[] = record.basketPath.map(
+                    (p: any) => ({
+                      x: p.x,
+                      y: p.y,
+                      time: p.time,
+                    }),
+                  );
 
-            tryDataArr.forEach((oneAttemptData: any, attemptIndex: number) => {
-              if (!Array.isArray(oneAttemptData)) return;
+                  segments.push({
+                    playerId,
+                    sessionIndex,
+                    level: levelKey,
+                    attemptIndex: attemptIndex + 1,
+                    recordIndex: recordIndex + 1,
+                    pathType: "basket",
+                    points,
+                  });
+                }
 
-              oneAttemptData.forEach(
-                (record: any, recordIndex: number) => {
-                  // Basket path (non-drop levels)
-                  if (
-                    Array.isArray(record.basketPath) &&
-                    record.basketPath.length > 0
-                  ) {
-                    const points: MovementPoint[] = record.basketPath.map(
-                      (p: any) => ({
-                        x: p.x,
-                        y: p.y,
-                        time: p.time,
-                      }),
-                    );
+                // Apple path (single applePath, used in some Drop levels)
+                if (
+                  Array.isArray(record.applePath) &&
+                  record.applePath.length > 0
+                ) {
+                  const points: MovementPoint[] = record.applePath.map(
+                    (p: any) => ({
+                      x: p.x,
+                      y: p.y,
+                      time: p.time,
+                    }),
+                  );
 
-                    segments.push({
-                      playerId,
-                      sessionIndex,
-                      level: levelKey,
-                      attemptIndex: attemptIndex + 1,
-                      recordIndex: recordIndex + 1,
-                      pathType: "basket",
-                      points,
-                    });
-                  }
+                  segments.push({
+                    playerId,
+                    sessionIndex,
+                    level: levelKey,
+                    attemptIndex: attemptIndex + 1,
+                    recordIndex: recordIndex + 1,
+                    pathType: "apple",
+                    points,
+                  });
+                }
 
-                  // Apple path (drop levels)
-                  if (
-                    Array.isArray(record.applePath) &&
-                    record.applePath.length > 0
-                  ) {
-                    const points: MovementPoint[] = record.applePath.map(
-                      (p: any) => ({
-                        x: p.x,
-                        y: p.y,
-                        time: p.time,
-                      }),
-                    );
+                // Level0Drop (and any future levels) with multiple apple drag paths
+                // record.appleDragPaths: { appleId: string; path: MovementPoint[] }[]
+                if (
+                  Array.isArray(record.appleDragPaths) &&
+                  record.appleDragPaths.length > 0
+                ) {
+                  record.appleDragPaths.forEach(
+                    (drag: any, appleIndex: number) => {
+                      if (!Array.isArray(drag.path) || drag.path.length === 0) {
+                        return;
+                      }
 
-                    segments.push({
-                      playerId,
-                      sessionIndex,
-                      level: levelKey,
-                      attemptIndex: attemptIndex + 1,
-                      recordIndex: recordIndex + 1,
-                      pathType: "apple",
-                      points,
-                    });
-                  }
-                },
-              );
-            });
+                      const points: MovementPoint[] = drag.path.map(
+                        (p: any) => ({
+                          x: p.x,
+                          y: p.y,
+                          time: p.time,
+                        }),
+                      );
+
+                      segments.push({
+                        playerId,
+                        sessionIndex,
+                        level: levelKey,
+                        attemptIndex: attemptIndex + 1,
+                        recordIndex: recordIndex + 1,
+                        pathType: "apple",
+                        appleId:
+                          typeof drag.appleId === "string"
+                            ? drag.appleId
+                            : `apple-${appleIndex + 1}`,
+                        points,
+                      });
+                    },
+                  );
+                }
+              },
+            );
           });
         });
       });
+    });
 
-      return segments;
+    return segments;
+  }
+
+  // ===================== CSV export =====================
+
+  /**
+   * Export all basket and apple movement paths into a CSV file.
+   * Adds an "appleId" column to distinguish different apples in Level0Drop.
+   */
+  private exportMouseCSVFromScoreJSON(): void {
+    const segments = this.collectMovementSegmentsFromScoreJSON();
+    if (segments.length === 0) {
+      alert("No basket or apple path data to export!");
+      return;
     }
 
-    // =============== Export CSV ===============
-    function exportMouseCSVFromScoreJSON(): void {
-      const segments = collectMovementSegmentsFromScoreJSON();
-      if (segments.length === 0) {
-        alert("No basket or apple path data to export!");
-        return;
+    const header =
+      "playerId,session,level,attemptIndex,recordIndex,pathType,appleId,x,y,time\n";
+    const rows: string[] = [];
+
+    for (const seg of segments) {
+      for (const p of seg.points) {
+        rows.push(
+          [
+            seg.playerId,
+            seg.sessionIndex,
+            seg.level,
+            seg.attemptIndex,
+            seg.recordIndex,
+            seg.pathType,
+            seg.appleId ?? "",
+            p.x,
+            p.y,
+            Math.round(p.time),
+          ].join(","),
+        );
       }
-
-      const header =
-        "playerId,session,level,attemptIndex,recordIndex,pathType,x,y,time\n";
-      const rows: string[] = [];
-
-      for (const seg of segments) {
-        for (const p of seg.points) {
-          rows.push(
-            [
-              seg.playerId,
-              seg.sessionIndex,
-              seg.level,
-              seg.attemptIndex,
-              seg.recordIndex,
-              seg.pathType,
-              p.x,
-              p.y,
-              Math.round(p.time),
-            ].join(","),
-          );
-        }
-      }
-
-      const csv = header + rows.join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "apple_catcher_paths.csv";
-      a.click();
-      URL.revokeObjectURL(url);
     }
 
-    // =============== Export PNG: Visualize all movement paths ===============
-    function exportMousePathPNGFromScoreJSON(
-      width = 1280,
-      height = 720,
-    ): void {
-      const segments = collectMovementSegmentsFromScoreJSON();
-      if (segments.length === 0) {
-        alert("No basket or apple path data to export!");
-        return;
+    const csv = header + rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "apple_catcher_paths.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ===================== PNG export =====================
+
+  /**
+   * Visualize all movement paths (basket + apple) on a canvas and export as PNG.
+   */
+  private exportMousePathPNGFromScoreJSON(
+    width = 1280,
+    height = 720,
+  ): void {
+    const segments = this.collectMovementSegmentsFromScoreJSON();
+    if (segments.length === 0) {
+      alert("No basket or apple path data to export!");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      console.error("Could not get 2D context for canvas");
+      return;
+    }
+
+    // White background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Legend (top-left corner)
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("Legend:", 20, 40);
+
+    // Start point (green circle)
+    ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.arc(40, 70, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "black";
+    ctx.fillText("Start point", 60, 75);
+
+    // End point (blue triangle)
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.moveTo(35, 100 - 8);
+    ctx.lineTo(29, 100 + 6);
+    ctx.lineTo(41, 100 + 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "black";
+    ctx.fillText("End point", 60, 105);
+
+    // Assign colors for each level
+    const levelKeys = Array.from(new Set(segments.map((s) => s.level)));
+    const levelColors: Record<string, string> = {};
+    levelKeys.forEach((lvl, i) => {
+      const hue = (i / levelKeys.length) * 360;
+      levelColors[lvl] = `hsl(${hue}, 80%, 60%)`;
+    });
+
+    ctx.lineWidth = 2;
+
+    // Draw each movement segment
+    segments.forEach((seg) => {
+      const pts = seg.points;
+      if (pts.length === 0) return;
+
+      ctx.strokeStyle = levelColors[seg.level] || "#000000";
+
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i].x, pts[i].y);
       }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        console.error("Could not get 2D context for canvas");
-        return;
-      }
-
-      // White background
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Legend (top-left corner)
-      ctx.font = "18px Arial";
-      ctx.fillStyle = "black";
-      ctx.fillText("Legend:", 20, 40);
+      ctx.stroke();
 
       // Start point (green circle)
+      const start = pts[0];
       ctx.fillStyle = "green";
       ctx.beginPath();
-      ctx.arc(40, 70, 6, 0, Math.PI * 2);
+      ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "black";
-      ctx.fillText("Start point", 60, 75);
 
       // End point (blue triangle)
+      const end = pts[pts.length - 1];
       ctx.fillStyle = "blue";
       ctx.beginPath();
-      ctx.moveTo(35, 100 - 8);
-      ctx.lineTo(29, 100 + 6);
-      ctx.lineTo(41, 100 + 6);
+      ctx.moveTo(end.x, end.y - 7);
+      ctx.lineTo(end.x - 5, end.y + 5);
+      ctx.lineTo(end.x + 5, end.y + 5);
       ctx.closePath();
       ctx.fill();
+    });
+
+    // Level color legend
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("Level Colors:", 20, 140);
+    levelKeys.forEach((lvl, i) => {
+      const y = 160 + i * 25;
+      ctx.fillStyle = levelColors[lvl];
+      ctx.fillRect(40, y - 10, 30, 10);
       ctx.fillStyle = "black";
-      ctx.fillText("End point", 60, 105);
+      ctx.fillText(lvl, 80, y);
+    });
 
-      // Assign colors for each level
-      const levelKeys = Array.from(new Set(segments.map((s) => s.level)));
-      const levelColors: Record<string, string> = {};
-      levelKeys.forEach((lvl, i) => {
-        const hue = (i / levelKeys.length) * 360;
-        levelColors[lvl] = `hsl(${hue}, 80%, 60%)`;
-      });
-
-      ctx.lineWidth = 2;
-
-      segments.forEach((seg) => {
-        const pts = seg.points;
-        if (pts.length === 0) return;
-
-        ctx.strokeStyle = levelColors[seg.level] || "#000000";
-
-        ctx.beginPath();
-        ctx.moveTo(pts[0].x, pts[0].y);
-        for (let i = 1; i < pts.length; i++) {
-          ctx.lineTo(pts[i].x, pts[i].y);
-        }
-        ctx.stroke();
-
-        // Start point (green)
-        const start = pts[0];
-        ctx.fillStyle = "green";
-        ctx.beginPath();
-        ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // End point (blue)
-        const end = pts[pts.length - 1];
-        ctx.fillStyle = "blue";
-        ctx.beginPath();
-        ctx.moveTo(end.x, end.y - 7);
-        ctx.lineTo(end.x - 5, end.y + 5);
-        ctx.lineTo(end.x + 5, end.y + 5);
-        ctx.closePath();
-        ctx.fill();
-      });
-
-      // Level color legend
-      ctx.font = "16px Arial";
-      ctx.fillStyle = "black";
-      ctx.fillText("Level Colors:", 20, 140);
-      levelKeys.forEach((lvl, i) => {
-        const y = 160 + i * 25;
-        ctx.fillStyle = levelColors[lvl];
-        ctx.fillRect(40, y - 10, 30, 10);
-        ctx.fillStyle = "black";
-        ctx.fillText(lvl, 80, y);
-      });
-
-      const url = canvas.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "apple_catcher_paths.png";
-      a.click();
-    }
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "apple_catcher_paths.png";
+    a.click();
   }
 }

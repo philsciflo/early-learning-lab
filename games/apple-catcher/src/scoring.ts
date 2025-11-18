@@ -81,12 +81,19 @@ type appleData = {
   applePath?: { x: number; y: number; time: number }[];
 };
 
+type AppleDragPath = {
+  appleId: string;
+  path: { x: number; y: number; time: number }[];
+};
+
 
 export type scoringData = {
   tries: number,
   score: AppleCaught;
   duration: number;
 };
+
+
 
 export type Level0ScoringData =basketData & {
   tries: number,
@@ -109,6 +116,7 @@ export type Level0DropScoringData ={
   tries: number,
   score: CaughtAppleCount;
   duration: number;
+  appleDragPaths?: AppleDragPath[];
 };
 
 export type Level1DropScoringData = appleData & scoringData;
