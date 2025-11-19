@@ -345,15 +345,15 @@ export class Level6 extends FixItScene<BlockGameScoringData> {
       }
     //Movable Block Data Collection
     this.movableBlockOne.on("dragstart", () => { 
-      this.startPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.startPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) });
       this.blockNameList.push("BlockOne")
       this.numberOfBlocksMoved += 1;
       this.movableBlockOne.setScale(0.16);
 
       this.dragInterval = this.time.addEvent({
-        delay: 1000,
+        delay: 100,
         callback: () => {
-          this.currentPathList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000})
+          this.currentPathList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) })
         },
         callbackScope: this,
         loop: true
@@ -362,7 +362,7 @@ export class Level6 extends FixItScene<BlockGameScoringData> {
     });
     
     this.movableBlockOne.on("dragend", () => { 
-      this.endPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.endPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) });
         this.middlePositionList.push(this.currentPathList);
         this.currentPathList = [];
         this.movableBlockOne.setScale(0.15);
@@ -373,15 +373,15 @@ export class Level6 extends FixItScene<BlockGameScoringData> {
     });
 
     this.movableBlockTwo.on("dragstart", () => { 
-      this.startPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.startPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) });
       this.blockNameList.push("BlockTwo")
       this.numberOfBlocksMoved += 1;
       this.movableBlockTwo.setScale(0.16);
 
       this.dragInterval = this.time.addEvent({
-        delay: 1000,
+        delay: 100,
         callback: () => {
-          this.currentPathList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000})
+          this.currentPathList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) })
         },
         callbackScope: this,
         loop: true
@@ -390,7 +390,7 @@ export class Level6 extends FixItScene<BlockGameScoringData> {
     });
     
     this.movableBlockTwo.on("dragend", () => { 
-      this.endPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.endPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) });
         this.middlePositionList.push(this.currentPathList);
         this.currentPathList = [];
         this.movableBlockTwo.setScale(0.15);
@@ -401,15 +401,15 @@ export class Level6 extends FixItScene<BlockGameScoringData> {
     });
 
     this.movableBlockThree.on("dragstart", () => { 
-      this.startPositionList.push({x: Math.round(this.movableBlockThree.x), y: Math.round(this.movableBlockThree.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.startPositionList.push({x: Math.round(this.movableBlockThree.x), y: Math.round(this.movableBlockThree.y), time: Math.round((this.time.now - this.time.startTime) / 1) });
       this.blockNameList.push("BlockThree")
       this.numberOfBlocksMoved += 1;
       this.movableBlockThree.setScale(0.16);
 
       this.dragInterval = this.time.addEvent({
-        delay: 1000,
+        delay: 100,
         callback: () => {
-          this.currentPathList.push({x: Math.round(this.movableBlockThree.x), y: Math.round(this.movableBlockThree.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000})
+          this.currentPathList.push({x: Math.round(this.movableBlockThree.x), y: Math.round(this.movableBlockThree.y), time: Math.round((this.time.now - this.time.startTime) / 1)})
         },
         callbackScope: this,
         loop: true
@@ -418,7 +418,7 @@ export class Level6 extends FixItScene<BlockGameScoringData> {
     });
     
     this.movableBlockThree.on("dragend", () => { 
-      this.endPositionList.push({x: Math.round(this.movableBlockThree.x), y: Math.round(this.movableBlockThree.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.endPositionList.push({x: Math.round(this.movableBlockThree.x), y: Math.round(this.movableBlockThree.y), time: Math.round((this.time.now - this.time.startTime) / 1) });
         this.middlePositionList.push(this.currentPathList);
         this.currentPathList = [];
         this.movableBlockThree.setScale(0.15);
@@ -507,7 +507,7 @@ export class Level6 extends FixItScene<BlockGameScoringData> {
       stageId: this.key,
       blockEvents: blockEvents,
       amountOfBlocksMoved: this.numberOfBlocksMoved,
-      timeToEnd: (this.time.now - this.time.startTime) / 1000,
+      timeToEnd: Math.round(this.time.now - this.time.startTime),
       structureCollapsed: this.didStructureCollapse(),
     };
   }

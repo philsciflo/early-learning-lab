@@ -1,9 +1,44 @@
 import { Scene, GameObjects } from "phaser";
-import {PLAYER_ID_DATA_KEY, WIDTH, HALF_WIDTH, HEIGHT, HALF_HEIGHT, QUARTER_WIDTH, QUARTER_HEIGHT} from "../constants.ts";
-import {getScoreDataJSONString, removeScoreData, startNewScore} from "../scoring.ts";
+import {
+  PLAYER_ID_DATA_KEY,
+  WIDTH,
+  HALF_WIDTH,
+  HEIGHT,
+  HALF_HEIGHT,
+  QUARTER_WIDTH,
+  QUARTER_HEIGHT,
+} from "../constants.ts";
+import {
+  getScoreDataJSONString,
+  removeScoreData,
+  startNewScore,
+} from "../scoring.ts";
 import { BlockGameScoringData, Position } from "../scoring.ts";
-import { renderTextBanner, renderBanner} from "../banners.ts";
-import { AudioManager } from "../AudioManager"; 
+import { renderTextBanner, renderBanner } from "../banners.ts";
+import { AudioManager } from "../AudioManager";
+
+/**
+ * A single point in a movement path.
+ */
+type MovementPoint = {
+  x: number;
+  y: number;
+  time: number;
+};
+
+/**
+ * A logical segment of movement in Fix It:
+ * one player, one session, one level, one attempt, one block event.
+ */
+type MovementSegment = {
+  playerId: string;
+  sessionIndex: number; // index in PLAYER_INSTANCE_SCORING_DATA[]
+  level: string; // e.g. "Level1", "Level2", ...
+  attemptId: string;
+  blockName: string;
+  eventIndex: number; // 1-based index inside blockEvents[]
+  points: MovementPoint[];
+};
 
 export class MainMenu extends Scene {
   title: GameObjects.Text;
@@ -17,11 +52,17 @@ export class MainMenu extends Scene {
     this.load.html("name_input", "assets/html_text_input.html");
     this.load.html("drop_down", "assets/html_drop_down.html");
 
+    this.load.image("download-json", "assets/download-json.png");
+    this.load.image("download-png", "assets/download-png.png");
+    this.load.image("download-csv", "assets/download-csv.png");
     this.load.image("download-data", "assets/download-data.png");
     this.load.image("delete-data", "assets/delete-data.png");
     this.load.image("start", "assets/play-button.png");
 
-    this.load.html("download_success_popup", "assets/html_download_success_popup.html");
+    this.load.html(
+      "download_success_popup",
+      "assets/html_download_success_popup.html",
+    );
     this.load.html("delete_popup", "assets/html_delete_popup.html");
     this.load.html("success_popup", "assets/html_success_popup.html");
     this.load.html("error_popup", "assets/html_error_popup.html");
@@ -35,8 +76,8 @@ export class MainMenu extends Scene {
     this.load.image("toggle_off", "assets/toggle_button_off.png");
 
     //load font
-    this.load.font('Unbounded', 'assets/Unbounded.ttf', 'truetype');
-    this.load.font('Unbounded-Black', 'assets/Unbounded-Black.ttf', 'truetype');
+    this.load.font("Unbounded", "assets/Unbounded.ttf", "truetype");
+    this.load.font("Unbounded-Black", "assets/Unbounded-Black.ttf", "truetype");
     this.load.audio("game_start", "assets/game_start.mp3");
     this.load.audio("button_press", "assets/button_press.mp3");
     this.load.audio("button_restart", "assets/button_restart.mp3");
@@ -54,23 +95,35 @@ export class MainMenu extends Scene {
       .image(0, 0, "background")
       .setScale(1.2)
       .setOrigin(0)
-      .setDisplaySize(this.scale.width, this.scale.height )
-      .setDepth(-5); 
-    
-    //add in claw + gift and peeko
-    this.add.image(WIDTH - 300, 250, "peeko").setScale(0.2).setDepth(1).postFX.addShadow(0, 10, 0.003, 1, 0x333333, 30, 1); 
-    this.add.image(68, 0, "claw").setScale(0.29).setDepth(1).setOrigin(0,0).postFX.addShadow(0, 10, 0.003, 1, 0x333333, 30, 1); 
-    this.add.image(298, 250, "gift").setScale(0.22).setDepth(1).postFX.addShadow(0, 10, 0.003, 1, 0x333333, 30, 1); 
+      .setDisplaySize(this.scale.width, this.scale.height)
+      .setDepth(-5);
 
-    
+    //add in claw + gift and peeko
+    this.add
+      .image(WIDTH - 300, 250, "peeko")
+      .setScale(0.2)
+      .setDepth(1)
+      .postFX.addShadow(0, 10, 0.003, 1, 0x333333, 30, 1);
+    this.add
+      .image(68, 0, "claw")
+      .setScale(0.29)
+      .setDepth(1)
+      .setOrigin(0, 0)
+      .postFX.addShadow(0, 10, 0.003, 1, 0x333333, 30, 1);
+    this.add
+      .image(298, 250, "gift")
+      .setScale(0.22)
+      .setDepth(1)
+      .postFX.addShadow(0, 10, 0.003, 1, 0x333333, 30, 1);
+
     //'Fix It!' Text
-    renderBanner(this, 
-      { x: HALF_WIDTH - 450,
-        y: 34,
-        height: 230,
-        width: 900,
-      });
-    
+    renderBanner(this, {
+      x: HALF_WIDTH - 450,
+      y: 34,
+      height: 230,
+      width: 900,
+    });
+
     this.title = this.add
       .text(HALF_WIDTH, 150, "Fix It!", {
         fontFamily: "Unbounded-Black",
@@ -78,21 +131,21 @@ export class MainMenu extends Scene {
         color: "#ED6A5A",
         align: "center",
       })
-      .setOrigin(0.5).setFontStyle('bold');
+      .setOrigin(0.5)
+      .setFontStyle("bold");
 
-     this.title.setShadow(0, 4, 'rgba(0, 0, 0, 0.6)', 4, false, true);
+    this.title.setShadow(0, 4, "rgba(0, 0, 0, 0.6)", 4, false, true);
 
-
-    renderBanner(this, 
-      { x: HALF_WIDTH - 900,
-        y: 312,
-        height: 714,
-        width: 1800,
-      });
+    renderBanner(this, {
+      x: HALF_WIDTH - 900,
+      y: 312,
+      height: 714,
+      width: 1800,
+    });
 
     //'Enter your Player ID:' Text
     this.playerIDText = this.add
-      .text(HALF_WIDTH - 350, HALF_HEIGHT-130, "Player ID:", {
+      .text(HALF_WIDTH - 350, HALF_HEIGHT - 130, "Player ID:", {
         fontFamily: "Unbounded",
         fontSize: 64,
         color: "#5D576B",
@@ -102,7 +155,7 @@ export class MainMenu extends Scene {
 
     //'Enter your Age:' Text
     this.playerIDText = this.add
-      .text(HALF_WIDTH-350, HALF_HEIGHT, "Your Age:", {
+      .text(HALF_WIDTH - 350, HALF_HEIGHT, "Your Age:", {
         fontFamily: "Unbounded",
         fontSize: 64,
         color: "#5D576B",
@@ -113,7 +166,7 @@ export class MainMenu extends Scene {
 
     //'Enter your Location:' Text
     this.playerIDText = this.add
-      .text(HALF_WIDTH-350, HALF_HEIGHT+130, "Location:", {
+      .text(HALF_WIDTH - 350, HALF_HEIGHT + 130, "Location:", {
         fontFamily: "Unbounded",
         fontSize: 64,
         color: "#5D576B",
@@ -124,7 +177,7 @@ export class MainMenu extends Scene {
 
     //'Coordinates:' Text
     this.playerIDText = this.add
-      .text(HALF_WIDTH-420, HALF_HEIGHT+260, "Coordinates:", {
+      .text(HALF_WIDTH - 420, HALF_HEIGHT + 260, "Coordinates:", {
         fontFamily: "Unbounded",
         fontSize: 64,
         color: "#5D576B",
@@ -137,83 +190,85 @@ export class MainMenu extends Scene {
     const nameInput = this.add.dom(0, 0).createFromCache("name_input");
     nameInput.setOrigin(0.5);
     nameInput.setPosition(HALF_WIDTH + 180, HALF_HEIGHT - 130);
-      
+
     //Player Age Text Input
     const ageInput = this.add.dom(0, 0).createFromCache("name_input");
     ageInput.setOrigin(0.5);
-    ageInput.setPosition(HALF_WIDTH+ 180, HALF_HEIGHT);
+    ageInput.setPosition(HALF_WIDTH + 180, HALF_HEIGHT);
 
     //Player Location Dropdown
-    const dropdownElement = this.add.dom(0, 0).createFromCache("drop_down") 
+    const dropdownElement = this.add.dom(0, 0).createFromCache("drop_down");
     dropdownElement.setOrigin(0.5);
-    dropdownElement.setPosition(HALF_WIDTH+180, HALF_HEIGHT + 130);
-    
+    dropdownElement.setPosition(HALF_WIDTH + 180, HALF_HEIGHT + 130);
+
     //Toggle coordinates + block name hover button
-    const toggleButton = this.add.sprite(HALF_WIDTH - 52, HALF_HEIGHT + 260, 'toggle_off')
-        .setInteractive()
-        .setDisplaySize(140, 70)
-        .setOrigin(0.5)
-        .on("pointerdown", () => {
-          AudioManager.I.playSfx(this, "button_press");
+    const toggleButton = this.add
+      .sprite(HALF_WIDTH - 52, HALF_HEIGHT + 260, "toggle_off")
+      .setInteractive()
+      .setDisplaySize(140, 70)
+      .setOrigin(0.5)
+      .on("pointerdown", () => {
+        AudioManager.I.playSfx(this, "button_press");
 
-          if (!this.registry.has("coordinates_mode") || this.registry.get("coordinates_mode") == false) {
-            this.registry.set("coordinates_mode", true)
-            toggleButton.setTexture("toggle_on");
-          }
-          else {
-            this.registry.set("coordinates_mode", false)
-            toggleButton.setTexture("toggle_off");
-          }
+        if (
+          !this.registry.has("coordinates_mode") ||
+          this.registry.get("coordinates_mode") == false
+        ) {
+          this.registry.set("coordinates_mode", true);
+          toggleButton.setTexture("toggle_on");
+        } else {
+          this.registry.set("coordinates_mode", false);
+          toggleButton.setTexture("toggle_off");
+        }
+      });
 
-        });
-
-        toggleButton.postFX.addShadow(0, 10, 0.002, 1, 0x333333, 30, 1); //shadow effect
+    toggleButton.postFX.addShadow(0, 10, 0.002, 1, 0x333333, 30, 1); //shadow effect
 
     // - - - Delete Data Button - - -
     // Confirm popup (hidden by default)
-    const confirmPopup = this.add.dom(HALF_WIDTH, HALF_HEIGHT)
+    const confirmPopup = this.add
+      .dom(HALF_WIDTH, HALF_HEIGHT)
       .createFromCache("delete_popup")
       .setOrigin(0.5)
       .setDepth(20)
       .setVisible(false);
 
     // Success popup (hidden by default)
-    const successPopup = this.add.dom(HALF_WIDTH, QUARTER_HEIGHT - QUARTER_HEIGHT / 2)
+    const successPopup = this.add
+      .dom(HALF_WIDTH, QUARTER_HEIGHT - QUARTER_HEIGHT / 2)
       .createFromCache("success_popup")
       .setOrigin(0.5)
       .setDepth(21) // above confirmPopup
       .setVisible(false);
 
     const deleteButton = this.add
-      .sprite(HALF_WIDTH - 250, HEIGHT - 150, "delete-data")
+      .sprite(HALF_WIDTH - 500, HEIGHT - 150, "delete-data")
       .setDisplaySize(130, 130)
       .setInteractive({ useHandCursor: true })
-      .on("pointerover", () => { //hover effects
+      .on("pointerover", () => {
+        //hover effects
 
         deleteButton.setDisplaySize(150, 150);
       })
       .on("pointerout", () => {
         deleteButton.setDisplaySize(130, 130);
       })
-
-
-
-      .on("pointerdown", () => { //when pressed
+      .on("pointerdown", () => {
+        //when pressed
         AudioManager.I.playSfx(this, "button_press");
 
         this.time.delayedCall(150, () => {
-
           // Show popup with animation (same as error popup)
           confirmPopup.setVisible(true);
           confirmPopup.setAlpha(0);
           confirmPopup.setY(HALF_HEIGHT - 20); // start slightly above
-          
+
           this.tweens.add({
             targets: confirmPopup,
             alpha: 1,
             y: HALF_HEIGHT,
             duration: 500,
-            ease: 'Sine.easeOut'
+            ease: "Sine.easeOut",
           });
 
           // get popup buttons
@@ -228,27 +283,29 @@ export class MainMenu extends Scene {
           // YES click
           yesBtn.onclick = () => {
             AudioManager.I.playSfx(this, "button_press");
-            
+
             // Animate popup out first
             this.tweens.add({
               targets: confirmPopup,
               alpha: 0,
               y: HALF_HEIGHT - 20,
               duration: 500,
-              ease: 'Sine.easeIn',
+              ease: "Sine.easeIn",
               onComplete: () => {
                 confirmPopup.setVisible(false);
                 confirmPopup.setAlpha(1);
                 confirmPopup.setY(HALF_HEIGHT);
-                
+
                 // Perform delete action
                 removeScoreData();
 
                 // Show success popup with animation
                 successPopup.setVisible(true);
                 successPopup.setAlpha(0);
-                const startY = QUARTER_HEIGHT - QUARTER_HEIGHT / 2 - 20; // start slightly above
-                const endY = QUARTER_HEIGHT - QUARTER_HEIGHT / 2 + 35;   // final position
+                const startY =
+                  QUARTER_HEIGHT - QUARTER_HEIGHT / 2 - 20; // start slightly above
+                const endY =
+                  QUARTER_HEIGHT - QUARTER_HEIGHT / 2 + 35; // final position
                 successPopup.setY(startY);
 
                 // Fade in & slide down
@@ -257,7 +314,7 @@ export class MainMenu extends Scene {
                   alpha: 1,
                   y: endY,
                   duration: 500,
-                  ease: 'Sine.easeOut',
+                  ease: "Sine.easeOut",
                   onComplete: () => {
                     // Stay visible for 2s then fade out
                     this.time.delayedCall(2000, () => {
@@ -266,17 +323,17 @@ export class MainMenu extends Scene {
                         alpha: 0,
                         y: endY - 20, // slide up a little
                         duration: 500,
-                        ease: 'Sine.easeIn',
+                        ease: "Sine.easeIn",
                         onComplete: () => {
                           successPopup.setVisible(false);
                           successPopup.setAlpha(1); // reset for next time
-                          successPopup.setY(endY);  // reset Y position
-                        }
+                          successPopup.setY(endY); // reset Y position
+                        },
                       });
                     });
-                  }
+                  },
                 });
-              }
+              },
             });
           };
 
@@ -289,44 +346,44 @@ export class MainMenu extends Scene {
               alpha: 0,
               y: HALF_HEIGHT - 20,
               duration: 500,
-              ease: 'Sine.easeIn',
+              ease: "Sine.easeIn",
               onComplete: () => {
                 confirmPopup.setVisible(false);
                 confirmPopup.setAlpha(1);
                 confirmPopup.setY(HALF_HEIGHT);
-              }
+              },
             });
           };
         });
       });
-    
-      deleteButton.postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1); //shadow effect
-    
 
+    deleteButton.postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1); //shadow effect
 
-    // - - - Download Data Button - - -
+    // - - - Download Data Buttons - - -
 
     // Download 'success' popup (hidden by default)
-    const downloadSuccessPopup = this.add.dom(HALF_WIDTH, QUARTER_HEIGHT - QUARTER_HEIGHT / 2)
-        .createFromCache("download_success_popup")
-        .setOrigin(0.5)
-        .setDepth(22) 
-        .setVisible(false);
+    const downloadSuccessPopup = this.add
+      .dom(HALF_WIDTH, QUARTER_HEIGHT - QUARTER_HEIGHT / 2)
+      .createFromCache("download_success_popup")
+      .setOrigin(0.5)
+      .setDepth(22)
+      .setVisible(false);
     const DOWNLOAD_POPUP_ORIGINAL_Y = QUARTER_HEIGHT - QUARTER_HEIGHT / 2;
 
-    //Download button
-    const downloadButton = this.add
-      .sprite(HALF_WIDTH + 250, HEIGHT - 150, "download-data")
+    // JSON download button (original behaviour, unchanged)
+    const downloadJsonButton = this.add
+      .sprite(HALF_WIDTH - 250, HEIGHT - 150, "download-json")
       .setDisplaySize(130, 130)
       .setInteractive({ useHandCursor: true })
-      .on("pointerover", () => { // hover effects
-
-        downloadButton.setDisplaySize(150, 150);
+      .on("pointerover", () => {
+        // hover effects
+        downloadJsonButton.setDisplaySize(150, 150);
       })
       .on("pointerout", () => {
-        downloadButton.setDisplaySize(130, 130);
+        downloadJsonButton.setDisplaySize(130, 130);
       })
-      .on("pointerdown", () => { // when button is pressed
+      .on("pointerdown", () => {
+        // when button is pressed
         AudioManager.I.playSfx(this, "button_press");
 
         const jsonStr = JSON.stringify(
@@ -345,12 +402,12 @@ export class MainMenu extends Scene {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        //Download success popup
+        // Download success popup (same style as before)
         downloadSuccessPopup.setVisible(true);
         downloadSuccessPopup.setAlpha(0);
 
         const startY = DOWNLOAD_POPUP_ORIGINAL_Y - 20; // slide down from slightly above
-        const endY = DOWNLOAD_POPUP_ORIGINAL_Y + 35;   // final position
+        const endY = DOWNLOAD_POPUP_ORIGINAL_Y + 35; // final position
 
         downloadSuccessPopup.setY(startY);
 
@@ -358,91 +415,211 @@ export class MainMenu extends Scene {
 
         // Fade in & slide down
         this.tweens.add({
-            targets: downloadSuccessPopup,
-            alpha: 1,
-            y: endY,
-            duration: 500,
-            ease: 'Sine.easeOut',
-            onComplete: () => {
-                this.time.delayedCall(2000, () => {
-                    this.tweens.add({
-                        targets: downloadSuccessPopup,
-                        alpha: 0,
-                        y: endY - 20, // slide up
-                        duration: 500,
-                        ease: 'Sine.easeIn',
-                        onComplete: () => {
-                            downloadSuccessPopup.setVisible(false);
-                            downloadSuccessPopup.setAlpha(1);
-                            downloadSuccessPopup.setY(endY);
-                        }
-                    });
-                });
-            }
+          targets: downloadSuccessPopup,
+          alpha: 1,
+          y: endY,
+          duration: 500,
+          ease: "Sine.easeOut",
+          onComplete: () => {
+            this.time.delayedCall(2000, () => {
+              this.tweens.add({
+                targets: downloadSuccessPopup,
+                alpha: 0,
+                y: endY - 20, // slide up
+                duration: 500,
+                ease: "Sine.easeIn",
+                onComplete: () => {
+                  downloadSuccessPopup.setVisible(false);
+                  downloadSuccessPopup.setAlpha(1);
+                  downloadSuccessPopup.setY(endY);
+                },
+              });
+            });
+          },
         });
       });
-      
-      downloadButton.postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1); //shadow effect
 
+    downloadJsonButton.postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1); //shadow effect
 
+    // CSV download button (new, same style + popup as JSON)
+    const downloadCsvButton = this.add
+      .sprite(HALF_WIDTH + 250, HEIGHT - 150, "download-csv")
+      .setDisplaySize(130, 130)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerover", () => {
+        downloadCsvButton.setDisplaySize(150, 150);
+      })
+      .on("pointerout", () => {
+        downloadCsvButton.setDisplaySize(130, 130);
+      })
+      .on("pointerdown", () => {
+        AudioManager.I.playSfx(this, "button_press");
 
-      // - - - Start Button - - -
+        const ok = this.exportMouseCSVFromScoreJSON();
+        if (!ok) {
+          return;
+        }
 
-      //Start Button
-      const startButton = this.add
-        .sprite(HALF_WIDTH, HEIGHT - 150, "start")
-        .setDisplaySize(130, 130)
-        .setInteractive({ useHandCursor: true });
+        // Reuse the same download success popup
+        downloadSuccessPopup.setVisible(true);
+        downloadSuccessPopup.setAlpha(0);
 
-      // ERROR POPUP (hidden by default)
-      const errorPopup = this.add.dom(HALF_WIDTH, HALF_HEIGHT)
-        .createFromCache("error_popup")
-        .setOrigin(0.5)
-        .setDepth(25) 
-        .setVisible(false);
+        const startY = DOWNLOAD_POPUP_ORIGINAL_Y - 20;
+        const endY = DOWNLOAD_POPUP_ORIGINAL_Y + 35;
 
+        downloadSuccessPopup.setY(startY);
+        this.tweens.killTweensOf(downloadSuccessPopup);
 
-      //Start Button Pressed
-      startButton.on("pointerdown", () => {
-      const playerId = (nameInput.getChildByName("input") as HTMLInputElement).value;
-      const playerAge = (ageInput.getChildByName("input") as HTMLInputElement).value;
-      const playerLocation = (dropdownElement.getChildByID('dropDown') as HTMLSelectElement).value;
+        this.tweens.add({
+          targets: downloadSuccessPopup,
+          alpha: 1,
+          y: endY,
+          duration: 500,
+          ease: "Sine.easeOut",
+          onComplete: () => {
+            this.time.delayedCall(2000, () => {
+              this.tweens.add({
+                targets: downloadSuccessPopup,
+                alpha: 0,
+                y: endY - 20,
+                duration: 500,
+                ease: "Sine.easeIn",
+                onComplete: () => {
+                  downloadSuccessPopup.setVisible(false);
+                  downloadSuccessPopup.setAlpha(1);
+                  downloadSuccessPopup.setY(endY);
+                },
+              });
+            });
+          },
+        });
+      });
 
-      let errorMessage = "";
+    downloadCsvButton.postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1);
 
-      if (playerId?.length < 6) { 
-        errorMessage = "Please enter a Player ID with at least 6 characters.";
+    // PNG download button (new, same style + popup as JSON)
+    const downloadPngButton = this.add
+      .sprite(HALF_WIDTH + 500, HEIGHT - 150, "download-png")
+      .setDisplaySize(130, 130)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerover", () => {
+        downloadPngButton.setDisplaySize(150, 150);
+      })
+      .on("pointerout", () => {
+        downloadPngButton.setDisplaySize(130, 130);
+      })
+      .on("pointerdown", () => {
+        AudioManager.I.playSfx(this, "button_press");
 
-      } else if (!playerAge || playerAge.trim() === "") {
-        errorMessage = "Please enter your age.";
-      } else if (Number(playerAge) > 100) {
-        errorMessage = "Please enter an age less than 100"
+        const w = this.scale.width;
+        const h = this.scale.height;
+        const ok = this.exportMousePathPNGFromScoreJSON(w, h);
+        if (!ok) {
+          return;
+        }
 
-      } else if (playerLocation === "Select") {
+        // Reuse the same download success popup
+        downloadSuccessPopup.setVisible(true);
+        downloadSuccessPopup.setAlpha(0);
+
+        const startY = DOWNLOAD_POPUP_ORIGINAL_Y - 20;
+        const endY = DOWNLOAD_POPUP_ORIGINAL_Y + 35;
+
+        downloadSuccessPopup.setY(startY);
+        this.tweens.killTweensOf(downloadSuccessPopup);
+
+        this.tweens.add({
+          targets: downloadSuccessPopup,
+          alpha: 1,
+          y: endY,
+          duration: 500,
+          ease: "Sine.easeOut",
+          onComplete: () => {
+            this.time.delayedCall(2000, () => {
+              this.tweens.add({
+                targets: downloadSuccessPopup,
+                alpha: 0,
+                y: endY - 20,
+                duration: 500,
+                ease: "Sine.easeIn",
+                onComplete: () => {
+                  downloadSuccessPopup.setVisible(false);
+                  downloadSuccessPopup.setAlpha(1);
+                  downloadSuccessPopup.setY(endY);
+                },
+              });
+            });
+          },
+        });
+      });
+
+    downloadPngButton.postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1);
+
+    // - - - Start Button - - -
+
+    //Start Button
+    const startButton = this.add
+      .sprite(HALF_WIDTH, HEIGHT - 150, "start")
+      .setDisplaySize(130, 130)
+      .setInteractive({ useHandCursor: true });
+
+    // ERROR POPUP (hidden by default)
+    const errorPopup = this.add
+      .dom(HALF_WIDTH, HALF_HEIGHT)
+      .createFromCache("error_popup")
+      .setOrigin(0.5)
+      .setDepth(25)
+      .setVisible(false);
+
+    //Start Button Pressed
+    startButton
+      .on("pointerdown", () => {
+        const playerId = (nameInput.getChildByName(
+          "input",
+        ) as HTMLInputElement).value;
+        const playerAge = (ageInput.getChildByName(
+          "input",
+        ) as HTMLInputElement).value;
+        const playerLocation = (
+          dropdownElement.getChildByID("dropDown") as HTMLSelectElement
+        ).value;
+
+        let errorMessage = "";
+
+        if (playerId?.length < 6) {
+          errorMessage = "Please enter a Player ID with at least 6 characters.";
+        } else if (!playerAge || playerAge.trim() === "") {
+          errorMessage = "Please enter your age.";
+        } else if (Number(playerAge) > 100) {
+          errorMessage = "Please enter an age less than 100";
+        } else if (playerLocation === "Select") {
           errorMessage = "Please select a location.";
-      }
+        }
 
-
-      if (errorMessage) {
+        if (errorMessage) {
           // Show error popup
           AudioManager.I.playSfx(this, "button_restart");
           const popupEl = errorPopup.getChildByID("error-popup");
-          const messageEl = popupEl.querySelector("#errorMessage") as HTMLElement;
-          const closeBtn = popupEl.querySelector("#closeBtn") as HTMLButtonElement;
-          
+          const messageEl = popupEl.querySelector(
+            "#errorMessage",
+          ) as HTMLElement;
+          const closeBtn = popupEl.querySelector(
+            "#closeBtn",
+          ) as HTMLButtonElement;
+
           messageEl.textContent = errorMessage;
-          
+
           // Show popup with animation
           errorPopup.setVisible(true);
           errorPopup.setAlpha(0);
           errorPopup.setY(HALF_HEIGHT - 20); // start slightly above
-          
+
           this.tweens.add({
             targets: errorPopup,
             alpha: 1,
             y: HALF_HEIGHT,
             duration: 500,
-            ease: 'Sine.easeOut'
+            ease: "Sine.easeOut",
           });
 
           // Close button handler
@@ -453,46 +630,298 @@ export class MainMenu extends Scene {
               alpha: 0,
               y: HALF_HEIGHT - 20,
               duration: 500,
-              ease: 'Sine.easeIn',
+              ease: "Sine.easeIn",
               onComplete: () => {
                 errorPopup.setVisible(false);
                 errorPopup.setAlpha(1); // reset for next time
                 errorPopup.setY(HALF_HEIGHT); // reset position
-              }
+              },
             });
           };
+        } else {
+          this.registry.set(PLAYER_ID_DATA_KEY, playerId);
+          this.registry.set("giftsSaved", 0);
+          startNewScore(playerId, playerAge, playerLocation);
+          AudioManager.I.playSfx(this, "game_start");
+
+          for (let i = 1; i <= 6; i++) {
+            this.registry.set(`levelCleared_${i}`, false);
+          }
+          if (uiScene) {
+            this.scene.setVisible(false, "UIScene");
+            this.scene.start("UIScene");
+          }
+
+          this.scene.start("Level1Drop");
         }
-
-       else {
-        this.registry.set(PLAYER_ID_DATA_KEY, playerId); 
-        this.registry.set("giftsSaved", 0);
-        startNewScore(playerId, playerAge, playerLocation);
-        AudioManager.I.playSfx(this, "game_start");
-
-        for (let i = 1; i <= 6; i++) {
-          this.registry.set(`levelCleared_${i}`, false);
-        }
-        if (uiScene) {
-        this.scene.setVisible(false, "UIScene");
-        this.scene.start("UIScene");
-      }
-
-        this.scene.start("Level1Drop");
-      }
-
-    })
-    
-    .postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1); //shadow effect
+      })
+      .postFX.addShadow(0, 10, 0.004, 1, 0x333333, 30, 1); //shadow effect
 
     //hover effects
     startButton.on("pointerover", () => {
-
       startButton.setDisplaySize(150, 150);
     });
     startButton.on("pointerout", () => {
       startButton.setDisplaySize(130, 130);
     });
+  }
 
-}
-}
+  /**
+   * Collect all block movement segments from the scoring JSON.
+   * Each segment corresponds to one block drag action:
+   * pickup -> path[] -> placement.
+   */
+  private collectMovementSegmentsFromScoreJSON(): MovementSegment[] {
+    const jsonStr = getScoreDataJSONString();
+    if (!jsonStr || jsonStr === "{}") {
+      return [];
+    }
 
+    let allData: any;
+    try {
+      allData = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("Failed to parse score JSON:", e);
+      return [];
+    }
+
+    const segments: MovementSegment[] = [];
+
+    // allData: { [playerId: string]: PLAYER_INSTANCE_SCORING_DATA[] }
+    Object.entries(allData).forEach(([playerId, sessions]) => {
+      if (!Array.isArray(sessions)) return;
+
+      (sessions as any[]).forEach((session, sessionIndex) => {
+        const scores = (session as any)?.scores;
+        if (!scores) return;
+
+        // Each level key: "Level1", "Level2", ...
+        Object.entries(scores).forEach(([levelKey, levelData]) => {
+          const tryDataArr = (levelData as any)?.tryData;
+          if (!Array.isArray(tryDataArr)) return;
+
+          // tryData is a 2D array: BlockGameScoringData[][]
+          tryDataArr.forEach(
+            (attemptGroup: any[], outerAttemptIndex: number) => {
+              if (!Array.isArray(attemptGroup)) return;
+
+              attemptGroup.forEach(
+                (attemptData: any, innerIndex: number) => {
+                  if (!attemptData) return;
+
+                  const attemptId = String(attemptData.attemptId ?? "");
+
+                  const blockEvents: any[] = attemptData.blockEvents ?? [];
+                  if (!Array.isArray(blockEvents)) return;
+
+                  blockEvents.forEach((ev, eventIndex) => {
+                    const blockName: string = ev?.blockName ?? "";
+
+                    // Build a full path: pickup -> path[] -> placement
+                    const rawPoints: any[] = [];
+
+                    if (ev?.pickup) {
+                      rawPoints.push(ev.pickup);
+                    }
+
+                    if (Array.isArray(ev?.path)) {
+                      rawPoints.push(...ev.path);
+                    }
+
+                    if (ev?.placement) {
+                      rawPoints.push(ev.placement);
+                    }
+
+                    if (rawPoints.length === 0) {
+                      return;
+                    }
+
+                    const points: MovementPoint[] = rawPoints.map((p: any) => ({
+                      x: p.x,
+                      y: p.y,
+                      time: p.time,
+                    }));
+
+                    segments.push({
+                      playerId,
+                      sessionIndex,
+                      level: levelKey,
+                      attemptId,
+                      blockName,
+                      eventIndex: eventIndex + 1,
+                      points,
+                    });
+                  });
+                },
+              );
+            },
+          );
+        });
+      });
+    });
+
+    return segments;
+  }
+
+  /**
+   * Export all movement segments to a CSV file.
+   * Each row is one point: (x, y, time) plus context (player, level, block, etc.).
+   */
+  private exportMouseCSVFromScoreJSON(): boolean {
+    const segments = this.collectMovementSegmentsFromScoreJSON();
+    if (segments.length === 0) {
+      window.alert("No block path data to export!");
+      return false;
+    }
+
+    const header =
+      "playerId,session,level,attemptId,blockName,eventIndex,x,y,time\n";
+    const rows: string[] = [];
+
+    for (const seg of segments) {
+      for (const p of seg.points) {
+        rows.push(
+          [
+            seg.playerId,
+            seg.sessionIndex,
+            seg.level,
+            seg.attemptId,
+            seg.blockName,
+            seg.eventIndex,
+            p.x,
+            p.y,
+            Math.round(p.time),
+          ].join(","),
+        );
+      }
+    }
+
+    const csv = header + rows.join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fix_it_paths.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    return true;
+  }
+
+  /**
+   * Visualise all movement segments on an off-screen canvas and export as PNG.
+   * Start point = pickup, end point = placement.
+   */
+  private exportMousePathPNGFromScoreJSON(
+    width = 1280,
+    height = 720,
+  ): boolean {
+    const segments = this.collectMovementSegmentsFromScoreJSON();
+    if (segments.length === 0) {
+      window.alert("No block path data to export!");
+      return false;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      console.error("Could not get 2D context for canvas");
+      return false;
+    }
+
+    // White background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Legend (top-left corner)
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("Legend:", 20, 40);
+
+    // Start point (green circle)
+    ctx.fillStyle = "green";
+    ctx.beginPath();
+    ctx.arc(40, 70, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "black";
+    ctx.fillText("Start point", 60, 75);
+
+    // End point (blue triangle)
+    ctx.fillStyle = "blue";
+    ctx.beginPath();
+    ctx.moveTo(35, 100 - 8);
+    ctx.lineTo(29, 100 + 6);
+    ctx.lineTo(41, 100 + 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "black";
+    ctx.fillText("End point", 60, 105);
+
+    // One colour per level
+    const levelKeys = Array.from(new Set(segments.map((s) => s.level)));
+    const levelColors: Record<string, string> = {};
+    levelKeys.forEach((lvl, i) => {
+      const hue = (i / Math.max(levelKeys.length, 1)) * 360;
+      levelColors[lvl] = `hsl(${hue}, 80%, 60%)`;
+    });
+
+    ctx.lineWidth = 2;
+
+    // Draw each movement segment
+    segments.forEach((seg) => {
+      const pts = seg.points;
+      if (pts.length === 0) return;
+
+      ctx.strokeStyle = levelColors[seg.level] || "#000000";
+
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i].x, pts[i].y);
+      }
+      ctx.stroke();
+
+      // Start point marker (green circle)
+      const start = pts[0];
+      ctx.fillStyle = "green";
+      ctx.beginPath();
+      ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // End point marker (blue triangle)
+      const end = pts[pts.length - 1];
+      ctx.fillStyle = "blue";
+      ctx.beginPath();
+      ctx.moveTo(end.x, end.y - 7);
+      ctx.lineTo(end.x - 5, end.y + 5);
+      ctx.lineTo(end.x + 5, end.y + 5);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    // Level colour legend
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText("Level colours:", 20, 140);
+    levelKeys.forEach((lvl, i) => {
+      const y = 160 + i * 25;
+      ctx.fillStyle = levelColors[lvl];
+      ctx.fillRect(40, y - 10, 30, 10);
+      ctx.fillStyle = "black";
+      ctx.fillText(lvl, 80, y);
+    });
+
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fix_it_paths.png";
+    a.click();
+
+    return true;
+  }
+}

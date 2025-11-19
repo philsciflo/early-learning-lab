@@ -209,15 +209,15 @@ export class Level1 extends FixItScene<BlockGameScoringData> {
 
     //Movable Blocks Data Tracking
     this.movableBlockOne.on("dragstart", () => { 
-      this.startPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.startPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1)});
       this.blockNameList.push("BlockOne")
       this.numberOfBlocksMoved += 1;
       this.movableBlockOne.setScale(0.21);//larger when dragging
 
       this.dragInterval = this.time.addEvent({
-        delay: 1000,
+        delay: 100,
         callback: () => {
-          this.currentPathList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000}) //Pushes location + time to list every (delay)ms. 
+          this.currentPathList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1)}) //Pushes location + time to list every (delay)ms. 
         },
         callbackScope: this,
         loop: true
@@ -227,7 +227,7 @@ export class Level1 extends FixItScene<BlockGameScoringData> {
     });;
     
     this.movableBlockOne.on("dragend", () => { 
-      this.endPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.endPositionList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1)});
       this.middlePositionList.push(this.currentPathList); 
       this.currentPathList = [];
       this.movableBlockOne.setScale(0.2);//goes back to correct size
@@ -239,15 +239,15 @@ export class Level1 extends FixItScene<BlockGameScoringData> {
 
 
     this.movableBlockTwo.on("dragstart", () => { 
-      this.startPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.startPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1)});
       this.blockNameList.push("BlockTwo")
       this.numberOfBlocksMoved += 1;
       this.movableBlockTwo.setScale(0.21);//larger when dragging
 
       this.dragInterval = this.time.addEvent({
-        delay: 1000,
+        delay: 100,
         callback: () => {
-          this.currentPathList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000})
+          this.currentPathList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1)})
         },
         callbackScope: this,
         loop: true
@@ -258,7 +258,7 @@ export class Level1 extends FixItScene<BlockGameScoringData> {
     
 
     this.movableBlockTwo.on("dragend", () => { 
-      this.endPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000});
+      this.endPositionList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1)});
       this.middlePositionList.push(this.currentPathList);
       this.currentPathList = [];
       this.movableBlockTwo.setScale(0.2);//goes back to correct size
@@ -328,7 +328,7 @@ export class Level1 extends FixItScene<BlockGameScoringData> {
     stageId: this.key,
     blockEvents: blockEvents,
     amountOfBlocksMoved: this.numberOfBlocksMoved,
-    timeToEnd: Math.round((this.time.now - this.time.startTime) / 1) / 1000,
+    timeToEnd: Math.round((this.time.now - this.time.startTime) / 1),
     structureCollapsed: this.didStructureCollapse(),
   };
 }
