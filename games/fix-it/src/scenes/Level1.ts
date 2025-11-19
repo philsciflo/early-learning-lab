@@ -215,7 +215,7 @@ export class Level1 extends FixItScene<BlockGameScoringData> {
       this.movableBlockOne.setScale(0.21);//larger when dragging
 
       this.dragInterval = this.time.addEvent({
-        delay: 1000,
+        delay: 100,
         callback: () => {
           this.currentPathList.push({x: Math.round(this.movableBlockOne.x), y: Math.round(this.movableBlockOne.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000}) //Pushes location + time to list every (delay)ms. 
         },
@@ -245,7 +245,7 @@ export class Level1 extends FixItScene<BlockGameScoringData> {
       this.movableBlockTwo.setScale(0.21);//larger when dragging
 
       this.dragInterval = this.time.addEvent({
-        delay: 1000,
+        delay: 100,
         callback: () => {
           this.currentPathList.push({x: Math.round(this.movableBlockTwo.x), y: Math.round(this.movableBlockTwo.y), time: Math.round((this.time.now - this.time.startTime) / 1) / 1000})
         },
