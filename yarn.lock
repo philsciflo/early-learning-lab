@@ -1917,6 +1917,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"mahi-tahi@workspace:games/mahi-tahi":
+  version: 0.0.0-use.local
+  resolution: "mahi-tahi@workspace:games/mahi-tahi"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
+
 "make-fetch-happen@npm:^14.0.3":
   version: 14.0.3
   resolution: "make-fetch-happen@npm:14.0.3"
