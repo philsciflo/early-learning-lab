@@ -1,0 +1,60 @@
+
+<div class="dropdown-container">
+        <select id="dropDown">
+            <option value="Select">Select One</option>
+            <option value="Home">Home</option>
+            <option value="School">School</option>
+            <option value="Science Lab">Lab</option>
+            <option value="Early Childhood Centre">Early Childhood Centre</option>
+        </select>
+    </div>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap');
+
+  select {
+    width: 600px;   /* makes it wider */
+    height: 80px;   /* makes it taller */
+    font-size: 40px; /* makes the text larger */
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 35px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    font-family: 'Unbounded';
+    background-color: #f2f2f2;
+    border: 4px solid #5D576B;
+    color: #5D576B;
+
+    /* gets rid of the original arrow*/
+    margin: 0;      
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+  }
+
+  /* redraw arrow  */
+  .dropdown-container{
+    width: 600px;  
+  }
+
+  .dropdown-container:after {
+    content: "";
+    position: absolute;
+    top: 45px;
+    left: 550px;
+    width: 0;
+    height: 0;
+    margin-top: -2px;
+    border-top: 10px solid #aaa;
+    border-right: 10px solid transparent;
+    border-left: 10px solid transparent;
+  }
+
+  select option {
+  background-color: #f2f2f2;
+  color: #5D576B;
+  font-family: 'Unbounded', sans-serif;
+  }
+
+</style>

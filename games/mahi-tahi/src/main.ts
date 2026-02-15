@@ -1,23 +1,31 @@
-import { Level } from "./scenes/Level.ts";
+import { HEIGHT, WIDTH} from "./constants";
+import Phaser from "phaser";
 import { GameOver } from "./scenes/GameOver";
 import { MainMenu } from "./scenes/MainMenu";
+import  UIScene from "./scenes/UIScene";
+import { Level1 } from "./scenes/Level1";
 
-import { Game, Types } from "phaser";
-
-const config: Types.Core.GameConfig = {
+const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 1920,
-  height: 1200,
+  width: WIDTH,
+  height: HEIGHT,
   parent: "game-container",
-  backgroundColor: "#028af8",
+  backgroundColor: "#9BC1BC",
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: Phaser.Scale.FIT,  
+    autoCenter: Phaser.Scale.CENTER_BOTH, 
   },
   dom: {
     createContainer: true, // Allow inclusion of HTML
   },
-  scene: [MainMenu, Level, GameOver],
+  physics: {
+    default: "matter",
+    matter: {
+      gravity: { y: 1 },
+      debug: false,
+    },
+  },
+  scene: [MainMenu, Level1, GameOver], 
 };
 
-export default new Game(config);
+const game = new Phaser.Game(config);
