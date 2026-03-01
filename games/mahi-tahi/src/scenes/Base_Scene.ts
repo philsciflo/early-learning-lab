@@ -2,15 +2,12 @@ import { Scene } from "phaser";
 import { renderBanner, renderText, renderTextBanner } from "../banners.ts";
 import {
   GAME_AREA_TOP,
-  BLACK,
   GAME_AREA_HEIGHT,
   GAME_AREA_WIDTH,
   GUTTER_WIDTH,
   HALF_WIDTH,
   ORANGE,
   PLAYER_ID_PAIR_DATA_KEY,
-  TARGET_LEFT,
-  TARGET_TOP,
   WIDTH,
 } from "../constants.ts";
 import {
@@ -60,64 +57,14 @@ export abstract class BaseScene extends Scene {
   }
 
   create() {
-    this.renderStaticBackgroundItems();
-    this.renderNavigationButtons();
-
-    renderText(this, TARGET_LEFT + 50, TARGET_TOP - 40, "Target");
-
-    const resetButton = this.add.graphics();
-    resetButton.lineStyle(2, BLACK);
-    resetButton.fillStyle(ORANGE);
-
-    const resetLeft = TARGET_LEFT;
-    const resetTop = TARGET_TOP + 150;
-    resetButton.fillRoundedRect(resetLeft, resetTop, 100, 50, 5);
-    resetButton.strokeRoundedRect(resetLeft, resetTop, 100, 50, 5);
-    renderText(this, resetLeft + 50, resetTop + 8, "Reset");
-
-    resetButton.setInteractive(
-      new Phaser.Geom.Rectangle(resetLeft, resetTop, 100, 50),
-      Phaser.Geom.Rectangle.Contains,
-    );
-
-    resetButton.on("pointerdown", () => {
-    //   this.startTime = window.performance.now();
-      this.doReset();
-    });
-
-    // this.startTime = window.performance.now();
-
-    const timeText = renderText(
-      this,
-      TARGET_LEFT,
-      TARGET_TOP + 250,
-      "Time: 0s",
-      0,
-    );
-
-    // const timerUpdateFunction = (currentTime: number) => {
-    // //   timeText.setText(
-    //     // `Time: ${((currentTime - this.startTime) / 1000).toFixed(0)}s`,
-    //   );
-    // };
-    // this.events.on("update", timerUpdateFunction);
-
-    // this.events.once("shutdown", () => {
-    //   this.events.removeListener("update", timerUpdateFunction);
-    // });
-  }
-
-  private renderStaticBackgroundItems() {
+    // Title banner
     renderTextBanner(
       this,
-      {
-        y: 10,
-        height: 45,
-        backgroundColour: ORANGE,
-      },
+      { y: 10, height: 45, backgroundColour: ORANGE },
       { text: this.levelTitle, yOffset: 5 },
     );
 
+    // Instructions
     renderText(this, HALF_WIDTH, 70, this.instructions);
 
     // White background box
@@ -127,6 +74,8 @@ export abstract class BaseScene extends Scene {
       width: GAME_AREA_WIDTH,
       height: GAME_AREA_HEIGHT,
     });
+
+    this.renderNavigationButtons();
   }
 
   private renderNavigationButtons() {

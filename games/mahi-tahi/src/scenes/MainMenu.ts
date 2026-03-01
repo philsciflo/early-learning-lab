@@ -127,7 +127,7 @@ export class MainMenu extends Scene {
 
     this.title = this.add
       .text(HALF_WIDTH, 100, "Mahi Tahi :)", {
-        fontFamily: "Unbounded-Black",
+        fontFamily: "body",
         fontSize: 100,
         color: "#705aed",
         align: "center",
@@ -147,7 +147,7 @@ export class MainMenu extends Scene {
     //'Enter your Player ID:' Text
     this.playerIDText = this.add
       .text(HALF_WIDTH - 350, HALF_HEIGHT - 130, "Player ID:", {
-        fontFamily: "Unbounded",
+        fontFamily: "body",
         fontSize: 64,
         color: "#5D576B",
         align: "center",
@@ -157,7 +157,7 @@ export class MainMenu extends Scene {
     //'Enter your Age:' Text
     this.playerIDText = this.add
       .text(HALF_WIDTH - 350, HALF_HEIGHT, "Your Age:", {
-        fontFamily: "Unbounded",
+        fontFamily: "body",
         fontSize: 64,
         color: "#5D576B",
 
@@ -168,7 +168,7 @@ export class MainMenu extends Scene {
     //'Enter your Location:' Text
     this.playerIDText = this.add
       .text(HALF_WIDTH - 350, HALF_HEIGHT + 130, "Location:", {
-        fontFamily: "Unbounded",
+        fontFamily: "body",
         fontSize: 64,
         color: "#5D576B",
 
@@ -178,8 +178,8 @@ export class MainMenu extends Scene {
 
     //'Coordinates:' Text
     this.playerIDText = this.add
-      .text(HALF_WIDTH - 420, HALF_HEIGHT + 260, "Coordinates:", {
-        fontFamily: "Unbounded",
+      .text(HALF_WIDTH - 420, HALF_HEIGHT + 240, "Coordinates:", {
+        fontFamily: "body",
         fontSize: 64,
         color: "#5D576B",
 
@@ -204,7 +204,7 @@ export class MainMenu extends Scene {
 
     //Toggle coordinates + block name hover button
     const toggleButton = this.add
-      .sprite(HALF_WIDTH - 52, HALF_HEIGHT + 260, "toggle_off")
+      .sprite(HALF_WIDTH - 52, HALF_HEIGHT + 240, "toggle_off")
       .setInteractive()
       .setDisplaySize(140, 70)
       .setOrigin(0.5)
@@ -225,7 +225,52 @@ export class MainMenu extends Scene {
 
     toggleButton.postFX.addShadow(0, 10, 0.002, 1, 0x333333, 30, 1); //shadow effect
 
-    // - - - Delete Data Button - - -
+    // - - - Probability CPU Selector - - -
+    this.registry.set("cpu_probability", "fifty_fifty"); // default
+
+    const cpuRowY = HALF_HEIGHT + 330; // between Coordinates (y=800) and downloads (y=930)
+
+    this.add
+      .text(HALF_WIDTH - 700, cpuRowY, "CPU Mode:", {
+        fontFamily: "body",
+        fontSize: 46,
+        color: "#5D576B",
+      })
+      .setOrigin(0, 0.5);
+
+    const cpuOptions: { key: string; label: string }[] = [
+      { key: "always_win",  label: "Always Wins"  },
+      { key: "fifty_fifty", label: "50% Chance"   },
+      { key: "always_lose", label: "Always Loses" },
+    ];
+
+    const activeBg   = "#705aed";
+    const inactiveBg = "#aaaaaa";
+    const cpuButtons: Phaser.GameObjects.Text[] = [];
+
+    const cpuButtonXStart = HALF_WIDTH - 150;
+    const cpuButtonSpacing = 320;
+
+    cpuOptions.forEach((opt, i) => {
+      const btn = this.add
+        .text(cpuButtonXStart + i * cpuButtonSpacing, cpuRowY, opt.label, {
+          fontFamily: "body",
+          fontSize: 28,
+          color: "#ffffff",
+          backgroundColor: i === 1 ? activeBg : inactiveBg,
+          padding: { x: 18, y: 12 },
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true })
+        .on("pointerdown", () => {
+          AudioManager.I.playSfx(this, "button_press");
+          this.registry.set("cpu_probability", opt.key);
+          cpuButtons.forEach((b, j) =>
+            b.setBackgroundColor(j === i ? activeBg : inactiveBg)
+          );
+        });
+      cpuButtons.push(btn);
+    });
     // Confirm popup (hidden by default)
     const confirmPopup = this.add
       .dom(HALF_WIDTH, HALF_HEIGHT)
@@ -243,7 +288,7 @@ export class MainMenu extends Scene {
       .setVisible(false);
 
     const deleteButton = this.add
-      .sprite(HALF_WIDTH - 500, HEIGHT - 150, "delete-data")
+      .sprite(HALF_WIDTH - 500, HEIGHT - 90, "delete-data")
       .setDisplaySize(130, 130)
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => {
@@ -373,7 +418,7 @@ export class MainMenu extends Scene {
 
     // JSON download button (original behaviour, unchanged)
     const downloadJsonButton = this.add
-      .sprite(HALF_WIDTH - 250, HEIGHT - 150, "download-json")
+      .sprite(HALF_WIDTH - 250, HEIGHT - 90, "download-json")
       .setDisplaySize(130, 130)
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => {
@@ -444,7 +489,7 @@ export class MainMenu extends Scene {
 
     // CSV download button (new, same style + popup as JSON)
     const downloadCsvButton = this.add
-      .sprite(HALF_WIDTH + 250, HEIGHT - 150, "download-csv")
+      .sprite(HALF_WIDTH + 250, HEIGHT - 90, "download-csv")
       .setDisplaySize(130, 130)
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => {
@@ -500,7 +545,7 @@ export class MainMenu extends Scene {
 
     // PNG download button (new, same style + popup as JSON)
     const downloadPngButton = this.add
-      .sprite(HALF_WIDTH + 500, HEIGHT - 150, "download-png")
+      .sprite(HALF_WIDTH + 500, HEIGHT - 90, "download-png")
       .setDisplaySize(130, 130)
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => {
@@ -560,7 +605,7 @@ export class MainMenu extends Scene {
 
     //Start Button
     const startButton = this.add
-      .sprite(HALF_WIDTH, HEIGHT - 150, "start")
+      .sprite(HALF_WIDTH, HEIGHT - 90, "start")
       .setDisplaySize(130, 130)
       .setInteractive({ useHandCursor: true });
 
