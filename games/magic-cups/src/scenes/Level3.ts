@@ -316,115 +316,90 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
             });
         };
 
+        const dropGemToCup = async (
+            gem: GameObjects.Sprite,
+            cupImage: GameObjects.Image,
+            useTargetPairCloudMidpoint: boolean,
+        ) => {
+            const pairCupA = useTargetPairCloudMidpoint ? this.targetCup1 : this.distractorCup1;
+            const pairCupB = useTargetPairCloudMidpoint ? this.targetCup2 : this.distractorCup2;
+
+            const middleX = (pairCupA.getWorldTransformMatrix().tx + pairCupB.getWorldTransformMatrix().tx) / 2;
+            const middleY = pairCupA.getWorldTransformMatrix().ty - 130;
+
+            await Promise.all([
+                AudioManager.I.playSfx(this, "cloud_sound"),
+                tweenTo(this.cloud, {
+                    x: middleX,
+                    y: middleY,
+                    ease: "Quad.easeIn"
+                }),
+                tweenTo(gem, {
+                    x: cupImage.x,
+                    y: cupImage.y - 20,
+                    ease: "Quad.easeIn"
+                })
+            ]);
+
+            const cup = cupImage as any;
+            const cupContainer = cup.cupContainer as Phaser.GameObjects.Container | undefined;
+            if (cupContainer) {
+                gem.removeFromDisplayList();
+                cupContainer.addAt(gem, 1);
+                gem.setPosition(0, 0);
+                this.gem_cups.push(cup.name);
+            } else {
+                console.warn("cup missing .cupContainer");
+            }
+
+            gem.setVisible(true);
+            cup.gem = gem;
+        };
+
+        const targetCups = [this.targetCup1, this.targetCup2];
+        const randomTargetCup = this.chooseCup(targetCups, this.lastTwoTargetCupDrops);
+
+        const distractorCups = [this.distractorCup1, this.distractorCup2];
+        const randomDistractorCup = this.chooseCup(distractorCups, this.lastTwoDistractorCupDrops);
+
+        const targetFirst = Math.random() > 0.5;
+
+        const firstDrop = targetFirst
+            ? { gem: this.gem1, cup: randomTargetCup, targetPair: true }
+            : { gem: this.gem1, cup: randomDistractorCup, targetPair: false };
+
+        const secondDrop = targetFirst
+            ? { gem: this.gem2, cup: randomDistractorCup, targetPair: false }
+            : { gem: this.gem2, cup: randomTargetCup, targetPair: true };
+
 
         // --- Drop first gem ---
         await delay(200);
         // Cloud appears
         this.cloud.setVisible(true);
         // Gem disappears
-        this.gem1.setVisible(false);
-
-        // pick a random cup for gem1
-        const targetCups = [this.targetCup1, this.targetCup2];
-        const randomTargetCup = this.chooseCup(targetCups, this.lastTwoTargetCupDrops);
-
-        // middle point for cloud
-        const middleX1 = (this.targetCup1.getWorldTransformMatrix().tx + this.targetCup2.getWorldTransformMatrix().tx) / 2;
-        const middleY1 = (this.targetCup1.getWorldTransformMatrix().ty) - 130;
-
-       // tween cloud and gem1 simultaneously
-        await Promise.all([
-            AudioManager.I.playSfx(this, "cloud_sound"),
-            tweenTo(this.cloud, { 
-                x: middleX1, 
-                y: middleY1, 
-                ease: "Quad.easeIn" 
-            }),
-            tweenTo(this.gem1, { 
-                x: randomTargetCup.x, 
-                y: randomTargetCup.y - 20, 
-                ease: "Quad.easeIn" 
-            })
-        ]);
-
-        // Gem 1 placement in container
-        {
-            const cup = randomTargetCup as any;
-            const cupContainer = cup.cupContainer as Phaser.GameObjects.Container | undefined;
-            if (cupContainer) {
-                // move gem from world display list into the cup container between bottom/top
-                this.gem1.removeFromDisplayList();
-                cupContainer.addAt(this.gem1, 1);
-                // center between sprites (local space)
-                this.gem1.setPosition(0, 0);
-                this.gem_cups.push(cup.name);
-            } else {
-                console.warn("target cup missing .cupContainer");
-            }
-        }
-
-        this.gem1.setVisible(true);
-
-        (randomTargetCup as any).gem = this.gem1;
-    
-        this.guaranteedCup    = (this.targetCup1 as any).gem ? this.targetCup1 : this.targetCup2; // with gem
-        this.flipCandidateCup = (this.targetCup1 as any).gem ? this.targetCup2 : this.targetCup1; // empty
+        firstDrop.gem.setVisible(false);
+        await dropGemToCup(firstDrop.gem, firstDrop.cup, firstDrop.targetPair);
 
         await delay(500);
         this.cloud.setVisible(false);
-        //move cloud to gem2 position
-        this.cloud.setPosition(this.gem2.x, this.gem2.y);
+        // move cloud to second gem position
+        this.cloud.setPosition(secondDrop.gem.x, secondDrop.gem.y);
 
 
         // --- Drop second gem ---
         await delay(500);
-        this.gem2.setVisible(true);
+        secondDrop.gem.setVisible(true);
         await delay(500);
         // Cloud appears
         this.cloud.setVisible(true);
         // Gem disappears
-        this.gem2.setVisible(false);
+        secondDrop.gem.setVisible(false);
+        await dropGemToCup(secondDrop.gem, secondDrop.cup, secondDrop.targetPair);
 
-        // pick a random cup for gem2
-        const distractorCups = [this.distractorCup1, this.distractorCup2];
-        const randomDistractorCup = this.chooseCup(distractorCups, this.lastTwoDistractorCupDrops);
+        this.guaranteedCup = randomTargetCup;
+        this.flipCandidateCup = randomTargetCup === this.targetCup1 ? this.targetCup2 : this.targetCup1;
 
-        // middle point for cloud
-        const middleX2 = (this.distractorCup1.getWorldTransformMatrix().tx + this.distractorCup2.getWorldTransformMatrix().tx) / 2;
-        const middleY2 = (this.distractorCup1.getWorldTransformMatrix().ty) - 130;
-
-        // tween cloud and gem2 simultaneously
-        await Promise.all([
-            AudioManager.I.playSfx(this, "cloud_sound"),
-            tweenTo(this.cloud, { 
-                x: middleX2, 
-                y: middleY2, 
-                ease: "Quad.easeIn" 
-            }),
-            tweenTo(this.gem2, { 
-                x: randomDistractorCup.x, 
-                y: randomDistractorCup.y - 20, 
-                ease: "Quad.easeIn" 
-            })
-        ]);
-
-        // Gem 2 placement in container
-        {
-            const cup = randomDistractorCup as any;
-            const cupContainer = cup.cupContainer as Phaser.GameObjects.Container | undefined;
-            if (cupContainer) {
-                this.gem2.removeFromDisplayList();
-                cupContainer.addAt(this.gem2, 1);
-                this.gem2.setPosition(0, 0);
-                this.gem_cups.push(cup.name);
-            } else {
-                console.warn("distractor cup missing .cupContainer");
-            }
-        }
-
-        this.gem2.setVisible(true);
-
-        (randomDistractorCup as any).gem = this.gem2;
         await delay(500);
         this.cloud.setVisible(false);
 

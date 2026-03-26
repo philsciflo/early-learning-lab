@@ -53,6 +53,10 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
 
     private gem_cups: string[] = [];
 
+    private cupPositions: number[] = []; // Store shuffled cup positions
+    private lastCupArrangement: boolean | null = null; // true = targetOnLeft (option 1), false = targetOnRight (option 2)
+    private arrangementConsecutiveCount: number = 0; // How many times the last arrangement appeared in a row
+
     private choiceWindowStart: number = 0;
     private recordedFirstClick: boolean = false;
     private firstClick: number = 0;
@@ -218,98 +222,75 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
             });
         };
 
+        const getCloudTargetX = (cupImage: GameObjects.Image): number => {
+            const baseX = cupImage.getWorldTransformMatrix().tx;
+            const isDistractorCup = cupImage === this.distractorCup1 || cupImage === this.distractorCup2;
+            if (!isDistractorCup) return baseX;
+
+            const d1x = this.distractorCup1.getWorldTransformMatrix().tx;
+            const d2x = this.distractorCup2.getWorldTransformMatrix().tx;
+            return (d1x + d2x) / 2;
+        };
+
+        const attachGemToCup = (gem: GameObjects.Sprite, cupImage: GameObjects.Image) => {
+            const cup = cupImage as any;
+            const cupContainer = cup.cupContainer as Phaser.GameObjects.Container;
+            if (cupContainer) {
+                gem.removeFromDisplayList();
+                cupContainer.addAt(gem, 1);
+                gem.setPosition(0, 0);
+                this.gem_cups.push(cup.name);
+                cup.gem = gem;
+            } else {
+                console.warn("cup missing cupContainer");
+            }
+        };
+
+        const dropGemToCup = async (gem: GameObjects.Sprite, cupImage: GameObjects.Image) => {
+            await Promise.all([
+                AudioManager.I.playSfx(this, "cloud_sound"),
+                tweenTo(gem, {
+                    x: cupImage.x,
+                    y: cupImage.y - 20,
+                    ease: "Quad.easeIn"
+                }),
+                tweenTo(this.cloud, {
+                    x: getCloudTargetX(cupImage),
+                    y: cupImage.getWorldTransformMatrix().ty - 130,
+                    ease: "Quad.easeIn"
+                })
+            ]);
+
+            attachGemToCup(gem, cupImage);
+            gem.setVisible(true);
+        };
+
+        const randomDistractorCup = this.chooseCup([this.distractorCup1, this.distractorCup2]);
+        const targetFirst = Math.random() > 0.5;
+
+        const firstCup = targetFirst ? this.targetCup : randomDistractorCup;
+        const secondCup = targetFirst ? randomDistractorCup : this.targetCup;
+
         await delay(200);
         this.cloud.setVisible(true);
         this.gem1.setVisible(false);
 
-
-        // Move gem1 and cloud to targetCup
+        // First drop: randomly target cup or distractor cup
         await delay(1000);
-        await Promise.all([
-            AudioManager.I.playSfx(this, "cloud_sound"),
-
-            tweenTo(this.gem1, {
-                x: this.targetCup.x,
-                y: this.targetCup.y - 20,
-                ease: "Quad.easeIn"
-            }),
-            tweenTo(this.cloud, {
-                x: this.targetCup.getWorldTransformMatrix().tx,
-                y: this.distractorCup1.getWorldTransformMatrix().ty - 130, // cloud position
-                ease: "Quad.easeIn"
-            })
-        ]);
-
-        {
-            const cup = this.targetCup as any;
-            const cupContainer = cup.cupContainer as Phaser.GameObjects.Container;
-            if (cupContainer) {
-                this.gem1.removeFromDisplayList();
-                cupContainer.addAt(this.gem1, 1);
-                this.gem1.setPosition(0, 0);
-                this.gem_cups.push(cup.name);
-            } else {
-                console.warn("targetCup missing cupContainer");
-            }
-        }
-
-        this.gem1.setVisible(true);
-
-        (this.targetCup as any).gem = this.gem1;
+        await dropGemToCup(this.gem1, firstCup);
         await delay(500);
         this.cloud.setVisible(false);
         this.cloud.setPosition(this.gem2.x, this.gem2.y);
 
-
-        // Second gem
+        // Second drop goes to the other cup type so final state remains:
+        // one gem in target cup and one gem in a distractor cup
         await delay(500);
         this.gem2.setVisible(true);
-        await delay(500);
+        await delay(1000);
         
         this.cloud.setVisible(true);
         this.gem2.setVisible(false);
-
-        // Pick a random cup for gem2
-        const cups = [this.distractorCup1, this.distractorCup2];
-        const randomCup = this.chooseCup(cups);
-
-        // Middle point for cloud
-        const middleX = (this.distractorCup1.getWorldTransformMatrix().tx + this.distractorCup2.getWorldTransformMatrix().tx) / 2;
-        const middleY = (this.distractorCup1.getWorldTransformMatrix().ty) - 130;
-
-        // Tween cloud and gem2 simultaneously
-        await Promise.all([
-            AudioManager.I.playSfx(this, "cloud_sound"),
-            tweenTo(this.gem2, { 
-                x: randomCup.x, 
-                y: randomCup.y - 20, 
-                ease: "Quad.easeIn" 
-            }),
-
-            tweenTo(this.cloud, {
-                x: middleX, 
-                y: middleY, 
-                ease: "Quad.easeIn" 
-            })
-
-        ]);
-
-        {
-            const cup = randomCup as any;
-            const cupContainer = cup.cupContainer as Phaser.GameObjects.Container;
-            if (cupContainer) {
-                this.gem2.removeFromDisplayList();
-                cupContainer.addAt(this.gem2, 1);
-                this.gem2.setPosition(0, 0);
-                this.gem_cups.push(cup.name);
-            } else {
-                console.warn("randomCup missing cupContainer; ensure Level1-style containers are set.");
-            }
-        }
-
-        this.gem2.setVisible(true);
-
-        (randomCup as any).gem = this.gem2;
+        await dropGemToCup(this.gem2, secondCup);
         await delay(500);
         this.cloud.setVisible(false);
 
@@ -335,7 +316,6 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
     protected doReset(): void {
         console.log("Reset pressed");
         this.resetScene();
-    
     }
 
     protected recordScoreDataForCurrentTry(): tryData_advanced {
@@ -375,34 +355,91 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
             .play('gemSpin');
     }
 
-    private setupCups() {
+    private generateCupArrangement(): void {
         const spacing = WIDTH / 6;
+        let targetOnLeft: boolean;
+
+        // If last arrangement repeated twice, force switch to the other option
+        if (this.arrangementConsecutiveCount >= 2) {
+            targetOnLeft = !this.lastCupArrangement!;
+            this.arrangementConsecutiveCount = 1; // Reset count with new arrangement
+            this.lastCupArrangement = targetOnLeft;
+        } else if (this.lastCupArrangement === null) {
+            // First time, randomly pick
+            targetOnLeft = Math.random() > 0.5;
+            this.lastCupArrangement = targetOnLeft;
+            this.arrangementConsecutiveCount = 1;
+        } else {
+            // Randomly pick, but track consecutives
+            targetOnLeft = Math.random() > 0.5;
+            if (targetOnLeft === this.lastCupArrangement) {
+                this.arrangementConsecutiveCount++;
+            } else {
+                this.arrangementConsecutiveCount = 1;
+                this.lastCupArrangement = targetOnLeft;
+            }
+        }
+
+        let targetX: number, distractor1X: number, distractor2X: number;
+
+        const option1Target = QUARTER_WIDTH + 110;
+        const option1Distractor1 = spacing * 3.5;
+        const option1Distractor2 = spacing * 4.2;
+
+        const option2Target = WIDTH - option1Target;
+        const option2Distractor1 = WIDTH - option1Distractor2;
+        const option2Distractor2 = WIDTH - option1Distractor1;
+
+        if (targetOnLeft) {
+            // Target on left, distractors on right
+            targetX = option1Target;
+            distractor1X = option1Distractor1;
+            distractor2X = option1Distractor2;
+        } else {
+            // Distractors on left, target on right
+            targetX = option2Target;
+            distractor1X = option2Distractor1;
+            distractor2X = option2Distractor2;
+        }
+
+        // Store positions for use in reset
+        this.cupPositions = [targetX, distractor1X, distractor2X];
+    }
+
+    private setupCups() {
         const cupBases = Phaser.Utils.Array.Shuffle([...this.cupTextures]);
 
-        // Target Cup
+        // Generate initial cup arrangement
+        this.generateCupArrangement();
+        
+        const targetX = this.cupPositions[0];
+        const distractor1X = this.cupPositions[1];
+        const distractor2X = this.cupPositions[2];
+
+        // Target Cup at assigned position
         const cupBottom1 = this.add.image(0, 0, `${cupBases[0]}_bottom`).setOrigin(0.5).setScale(0.34);
         const cupTop1    = this.add.image(0, 0, `${cupBases[0]}_top`).setOrigin(0.5).setScale(0.34);
-        const container1 = this.add.container(QUARTER_WIDTH + 110, cupY, [cupTop1, cupBottom1]);
+        const container1 = this.add.container(targetX, cupY, [cupTop1, cupBottom1]);
         (cupBottom1 as any).cupContainer = container1;
         (cupBottom1 as any).cupBottom = cupBottom1;
         (cupBottom1 as any).cupTop = cupTop1;
         this.targetCup = cupBottom1;
         this.targetCup.name = "TargetCup";
 
-        // Left Distractor Cup
+        // Distractor Cup 1 at assigned position
         const cupBottom2 = this.add.image(0, 0, `${cupBases[1]}_bottom`).setOrigin(0.5).setScale(0.34);
         const cupTop2    = this.add.image(0, 0, `${cupBases[1]}_top`).setOrigin(0.5).setScale(0.34);
-        const container2 = this.add.container(spacing * 3.5, cupY, [cupTop2, cupBottom2]);
+        const container2 = this.add.container(distractor1X, cupY, [cupTop2, cupBottom2]);
         (cupBottom2 as any).cupContainer = container2;
         (cupBottom2 as any).cupBottom = cupBottom2;
         (cupBottom2 as any).cupTop = cupTop2;
         this.distractorCup1 = cupBottom2;
         this.distractorCup1.name = "LeftDistractorCup";
 
-        // Right Distractor Cup
+        // Distractor Cup 2 at assigned position
         const cupBottom3 = this.add.image(0, 0, `${cupBases[2]}_bottom`).setOrigin(0.5).setScale(0.34);
         const cupTop3    = this.add.image(0, 0, `${cupBases[2]}_top`).setOrigin(0.5).setScale(0.34);
-        const container3 = this.add.container(spacing * 4.2, cupY, [cupTop3, cupBottom3]);
+        const container3 = this.add.container(distractor2X, cupY, [cupTop3, cupBottom3]);
         (cupBottom3 as any).cupContainer = container3;
         (cupBottom3 as any).cupBottom = cupBottom3;
         (cupBottom3 as any).cupTop = cupTop3;
@@ -733,24 +770,25 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
         ]);
         this.time.removeAllEvents();
 
-        // Reset cups positions
-        const spacing = WIDTH / 6;
-        const homeXs = [QUARTER_WIDTH + 100, spacing * 3.5, spacing * 4.2];
-
         const p1 = (this.gem1 as any).parentContainer as Phaser.GameObjects.Container | null;
         if (p1) { p1.remove(this.gem1, false); this.children.add(this.gem1); }
 
         const p2 = (this.gem2 as any).parentContainer as Phaser.GameObjects.Container | null;
         if (p2) { p2.remove(this.gem2, false); this.children.add(this.gem2); }
 
+        // Generate a new cup arrangement for the next round
+        this.generateCupArrangement();
+        
         const cupImages = Phaser.Utils.Array.Shuffle([...this.cupTextures]);
 
+        // Reset cups to their positions (using newly generated positions)
         const cups = [
-            { cup: this.targetCup, base: cupImages[0], x: QUARTER_WIDTH + 110},
-            { cup: this.distractorCup1, base: cupImages[1], x: spacing * 3.5 },
-            { cup: this.distractorCup2, base: cupImages[2], x: spacing * 4.2 }
+            { cup: this.targetCup, base: cupImages[0], x: this.cupPositions[0]},
+            { cup: this.distractorCup1, base: cupImages[1], x: this.cupPositions[1] },
+            { cup: this.distractorCup2, base: cupImages[2], x: this.cupPositions[2] }
         ];
-        cups.forEach((c, i) => {
+        
+        cups.forEach((c) => {
             const cup = c.cup as any;
             
             if (!cup) return;
