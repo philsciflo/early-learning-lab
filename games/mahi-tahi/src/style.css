@@ -1,0 +1,113 @@
+/* Colour variables for the theme, please change later, its sucks right now*/
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --dkClr: #745e36;
+  --liClr: rgb(30, 190, 51);
+  --accClr: #e1e299;
+}
+
+/* just removing default browser spacing*/
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Full page height */
+html,
+body {
+  height: 100%;
+  touch-action: auto;          /* lets the browser handle pinch-zoom & scroll */
+  -webkit-overflow-scrolling: touch; /* smooth momentum scrolling on iOS */
+  overflow: auto;   
+}
+
+/* page styling */
+body {
+  background-color: var(--dkClr);
+  color: var(--liClr);
+  display: flex ;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* the main container fills the page */
+main {
+  flex: 1;
+  display: flex;
+}
+
+/* for the background mainly, centers it */
+#homeCanvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  z-index: 1;
+}
+
+/* Overlays the input in the center of the screen and stacks them vertically*/
+#homePageDiv {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  z-index: 2;
+}
+
+#gameStartButton {
+  display: inline-block;
+  width: 100px;
+  padding: 8px, 15px;
+  margin: 20px 0;
+  text-align: center;
+  font-family: inherit;
+  border-radius: 10px;
+}
+
+/* test for the button */
+#gameStartButton p {
+  margin-top: 0;
+}
+
+
+#gameStartButton:hover {
+  background-color: var(--dkClr);
+  border: 0.5px solid var(--liClr);
+  color: var(--liClr);
+  cursor: pointer;
+}
+
+/* for the input boxes */
+input {
+  margin: 5px;
+  padding: 8px;
+  font-size: 16px;
+}
+
+#gamePageDiv {
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -82%);
+  display: flex;
+  z-index: 1;
+  font-size: 300%;
+}
+
+
+.phaser-dom-element {
+    display: block !important;
+}
+
+#app, #game-container {
+  touch-action: auto;
+}
