@@ -22,7 +22,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: true,
-    outDir: "../../docs/games/template",
+    outDir: "../../docs/games/mahi-tahi",
   },
   server: {
     port: 8080,
