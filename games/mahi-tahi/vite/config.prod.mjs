@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "./",
+  base: "/capstone-project-s1-2026-team-2/",
   logLevel: "warning",
   build: {
     rollupOptions: {
@@ -22,7 +22,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: true,
-    outDir: "../../docs/games/template",
+    outDir: "docs",
   },
   server: {
     port: 8080,
