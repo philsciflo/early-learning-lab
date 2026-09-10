@@ -46,6 +46,7 @@ export abstract class MagicCupsScene<T> extends Scene {
   private scoreForThisTry = 0;
   public duration: number;
   protected lastClickedAsset: string = "none";
+  protected lastClickedPosition: string = "none";
   
   protected assetDisplayNames: Record<string, string> = {
     heart_cup_bottom: "Yellow Heart Cup",
