@@ -68,6 +68,7 @@ export type tryData_basic = { //try data
       timestamp: string;
       timestampUnix: number;
       assetClicked: string;
+      assetPosition: string;
     }[];
     totalClicks: number;
     gem_location: string;
@@ -100,6 +101,7 @@ export type tryData_advanced = { //try data
       timestamp: string;
       timestampUnix: number;
       assetClicked: string;
+      assetPosition: string;
     }[];
     totalClicks: number;
     cupChoices: string; // e.g. left, right
