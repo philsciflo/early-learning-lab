@@ -127,7 +127,7 @@ export class Level0 extends MagicCupsScene<tryData_basic> {
         this.targetCup.removeAllListeners("pointerdown")
           .setInteractive({ useHandCursor: true })
           .on("pointerdown", () => {
-            this.lastClickedAsset = "Cup"
+            this.lastClickedAsset = this.cupBottom.texture.key;
             this.onCupClick(this.targetCup),
             AudioManager.I.playSfx(this, "cup_sound");
           });
