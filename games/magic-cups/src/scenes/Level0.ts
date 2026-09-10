@@ -98,8 +98,8 @@ export class Level0 extends MagicCupsScene<tryData_basic> {
         assetClicked: this.lastClickedAsset,
         assetPosition: this.lastClickedPosition,
       });
-      this.lastClickedAsset = "none";
-      this.lastClickedPosition = "none";
+      this.lastClickedAsset = "null";
+      this.lastClickedPosition = "null";
     };
     this.input.on("pointerdown", onAnyPointerDown);
     this.setupGem();
