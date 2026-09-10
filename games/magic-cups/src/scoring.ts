@@ -67,6 +67,7 @@ export type tryData_basic = { //try data
       y: number;
       timestamp: string;
       timestampUnix: number;
+      assetClicked: string;
     }[];
     totalClicks: number;
     gem_location: string;
@@ -98,6 +99,7 @@ export type tryData_advanced = { //try data
       y: number;
       timestamp: string;
       timestampUnix: number;
+      assetClicked: string;
     }[];
     totalClicks: number;
     cupChoices: string; // e.g. left, right
