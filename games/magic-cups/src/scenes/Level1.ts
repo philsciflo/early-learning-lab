@@ -212,7 +212,7 @@ export class Level1 extends MagicCupsScene<tryData_basic> {
             cup.removeAllListeners("pointerdown");
             cup.setInteractive({ useHandCursor: true })
             .on("pointerdown", () => {
-            this.lastClickedAsset = cup.texture.key;
+            this.lastClickedAsset = this.getAssetDisplayName(cup.texture.key);
             this.onCupClick(cup),
             AudioManager.I.playSfx(this, "cup_sound");
             });
