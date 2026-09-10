@@ -39,7 +39,6 @@ export class Level1 extends MagicCupsScene<tryData_basic> {
         timestampUnix: number;
         assetClicked: string;
       }[] = [];
-    private lastClickedAsset: string = "none";
     private startTimeUnix: string = "";
     private startTime: string = "";
     private endTimeUnix: string = "";
