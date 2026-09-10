@@ -47,6 +47,16 @@ export abstract class MagicCupsScene<T> extends Scene {
   public duration: number;
   protected lastClickedAsset: string = "none";
   
+  protected assetDisplayNames: Record<string, string> = {
+    heart_cup_bottom: "Yellow Heart Cup",
+    star_cup_bottom: "Red Star Cup",
+    circle_cup_bottom: "Blue Circle Cup",
+    dog_cup_bottom: "Green Dog Cup",
+  };
+
+  protected getAssetDisplayName(key: string): string {
+    return this.assetDisplayNames[key] ?? key;
+  }
 
   protected currentScore = -1;
   protected levelStartTime = 0;
