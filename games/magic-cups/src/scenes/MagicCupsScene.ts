@@ -45,6 +45,7 @@ export abstract class MagicCupsScene<T> extends Scene {
   protected isAttempted = false;
   private scoreForThisTry = 0;
   public duration: number;
+  protected lastClickedAsset: string = "none";
   
 
   protected currentScore = -1;
@@ -571,6 +572,7 @@ export abstract class MagicCupsScene<T> extends Scene {
       .setInteractive({ useHandCursor: true })
 
     this.backButton.on("pointerdown", async () => {
+      this.lastClickedAsset = "Back Button";
         AudioManager.I.playSfx(this, "button_sound");
         this.backButton.setTexture("backPressed");
 
@@ -652,6 +654,7 @@ export abstract class MagicCupsScene<T> extends Scene {
 
 
     this.nextButton.on("pointerdown", async () => {
+      this.lastClickedAsset = "Next Button";
       AudioManager.I.playSfx(this, "button_sound");
       this.nextButton.setTexture("nextPressed");
 
@@ -735,6 +738,7 @@ export abstract class MagicCupsScene<T> extends Scene {
     .setScale(0.7)
     .setInteractive({ useHandCursor: true })
     .on("pointerdown", () => {
+      this.lastClickedAsset = "Home Button";
       AudioManager.I.playSfx(this, "button_sound");
       // change texture
       this.homeButton.setTexture("homePressed");
@@ -752,6 +756,7 @@ export abstract class MagicCupsScene<T> extends Scene {
     .setScale(0.7)
     .setInteractive({ useHandCursor: true })
     .on("pointerdown", () => {
+      this.lastClickedAsset = "Level-Select Button";
       AudioManager.I.playSfx(this, "button_sound");
       // change texture
       this.levelSelectButton.setTexture("level_selectPressed");
@@ -780,7 +785,8 @@ export abstract class MagicCupsScene<T> extends Scene {
     this.dropButton.on("pointerdown", () => {
       if (dropUsed) return;
 
-      if (dropUsed == false){ 
+      if (dropUsed == false){
+        this.lastClickedAsset = "Drop Button"; 
         AudioManager.I.playSfx(this, "button_sound");
 
         // Stop the pulsing animation AND the timer
@@ -823,6 +829,7 @@ export abstract class MagicCupsScene<T> extends Scene {
 
     // reset button action
     this.resetButton.on("pointerdown", () => {
+      this.lastClickedAsset = "Reset Button";
       AudioManager.I.playSfx(this, "button_sound");
 
       // Stop current pulse and restart the timer
@@ -861,6 +868,7 @@ export abstract class MagicCupsScene<T> extends Scene {
       .setDepth(2)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
+        this.lastClickedAsset = "Download Button"
         const jsonStr = JSON.stringify(
           JSON.parse(getScoreDataJSONString()),
           null,
