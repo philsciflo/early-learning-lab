@@ -36,7 +36,9 @@ export class Level0 extends MagicCupsScene<tryData_basic> {
         y: number;
         timestamp: string;
         timestampUnix: number;
+        assetClicked: string;
       }[] = [];
+  private lastClickedAsset: string = "none";
   private startTimeUnix: string = "";
   private startTime: string = "";
   private endTimeUnix: string = "";
@@ -86,13 +88,19 @@ export class Level0 extends MagicCupsScene<tryData_basic> {
     }
     
     const onAnyPointerDown = (pointer: Phaser.Input.Pointer) => {
+
+      console.log("onAnyPointerDown FIRED");
+
       const now = new Date();
       this.clickLocations.push({
         x: Math.round(pointer.x * 100) / 100,
         y: Math.round(pointer.y * 100) / 100,
         timestamp: this.getTimestamp(),
         timestampUnix: now.getTime(),
+        assetClicked: this.lastClickedAsset,
       });
+      console.log("Latest click entry:", this.clickLocations[this.clickLocations.length - 1]); 
+      this.lastClickedAsset = "none";
     };
     this.input.on("pointerdown", onAnyPointerDown);
     this.setupGem();
@@ -122,6 +130,8 @@ export class Level0 extends MagicCupsScene<tryData_basic> {
         this.targetCup.removeAllListeners("pointerdown")
           .setInteractive({ useHandCursor: true })
           .on("pointerdown", () => {
+            console.log("Cup listener in doDrop fired");
+            this.lastClickedAsset = "Cup"
             this.onCupClick(this.targetCup),
             AudioManager.I.playSfx(this, "cup_sound");
           });
@@ -203,6 +213,8 @@ export class Level0 extends MagicCupsScene<tryData_basic> {
     (this.cupBottom as any).cupTop = this.cupTop;
 
     this.targetCup = this.cupBottom;
+
+    this.cupBottom.setName("CupBottom_DEBUG");
 
     this.targetCup.removeAllListeners("pointerdown");
     this.targetCup.disableInteractive();
