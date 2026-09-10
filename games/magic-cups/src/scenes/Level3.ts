@@ -66,6 +66,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
         timestamp: string;
         timestampUnix: number;
         assetClicked: string;
+        assetPosition: string;
       }[] = [];
     private startTimeUnix: string = "";
     private startTime: string = "";
@@ -182,8 +183,10 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
                 timestamp: this.getTimestamp(),
                 timestampUnix: now.getTime(),
                 assetClicked: this.lastClickedAsset,
+                assetPosition: this.lastClickedPosition,
             });
             this.lastClickedAsset = "none";
+            this.lastClickedPosition = "none";
         };
         this.input.on("pointerdown", onAnyPointerDown);
 
@@ -413,6 +416,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
             cup.setInteractive({ useHandCursor: true })
             .on("pointerdown", () => {
                 this.lastClickedAsset = this.getAssetDisplayName(cup.texture.key);
+                this.lastClickedPosition = cup.name;
                 this.cupChoices.push(cup.name),
                 this.onCupClick(cup),
                 AudioManager.I.playSfx(this, "cup_sound");
