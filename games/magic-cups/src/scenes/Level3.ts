@@ -521,6 +521,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
             if ((cup as any).__locked) return; // skip locked cups
             cup.setInteractive({ useHandCursor: true })
             .on("pointerdown", () => {
+                if (this.roundOver) return;
                 this.lastClickedAsset = this.getAssetDisplayName(cup.texture.key);
                 this.lastClickedPosition = cup.name;
                 this.cupChoices.push(cup.name);
