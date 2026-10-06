@@ -672,13 +672,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
                                 this.roundOver = true;
                                 this.createSuccessScene();
                                 this.resetButton.setInteractive({ useHandCursor: true });
-                                [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach(c => {
-                                    const cont = (c as any).cupContainer as Phaser.GameObjects.Container | undefined;
-                                    const alreadyTipped = cont && (cont.list as Phaser.GameObjects.Image[]).some(part => part.angle !== 0);
-                                    if (!(c as any).__locked && !alreadyTipped) {
-                                        c.setInteractive({ useHandCursor: true });
-                                    }
-                                });
+
                                 this.isAnimating = false;
                                 return; // prevent further logic running
 
@@ -692,10 +686,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
                                     this.createSuccessScene();
                                 }
                                 this.resetButton.setInteractive({ useHandCursor: true });
-                                [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach(c => 
-                                    {
-                                        if (!(c as any).__locked) c.setInteractive({ useHandCursor: true });
-                                    });
+
                                 this.roundOver = true;
                                 this.isAnimating = false;
 
@@ -709,10 +700,6 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
                                 this.createFailScene();
                                 this.roundOver = true;
 
-                                // keep cups clickable after out of clicks
-                                [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach
-                                (c => { if (!(c as any).__locked) c.setInteractive({ useHandCursor: true });
-                                });
                                 this.isAnimating = false;
                             } else {
                                 // still playing
@@ -738,11 +725,13 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
                         this.roundOver = true;
                     }
 
-                    // allow tipping after clicks run out
-                    [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach(c => c.setInteractive({ useHandCursor: true }));
-                    this.isAnimating = false;
+                    if (!this.roundOver) {
+                        this.setCupsInteractive(true);
                     }
-                }  
+                    
+                    this.isAnimating = false;
+                }
+            }  
         });
     }
 
