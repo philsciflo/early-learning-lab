@@ -467,9 +467,11 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
                 c.setInteractive({ useHandCursor: true });
             } else {
                 c.disableInteractive();
-                this.input.setDefaultCursor("default");
             }
         });
+        if (!enabled || this.roundOver) {
+            this.input.setDefaultCursor("default");
+        }
     }
 
     private setupCloud(){
