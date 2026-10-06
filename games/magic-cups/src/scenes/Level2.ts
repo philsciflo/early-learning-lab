@@ -609,9 +609,6 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
                                 this.createFailScene();
                                 this.roundOver = true;
 
-                                if (!this.roundOver) {
-                                    this.setCupsInteractive(true);
-                                }
                                 this.isAnimating = false;
                                 return;
                             } 
