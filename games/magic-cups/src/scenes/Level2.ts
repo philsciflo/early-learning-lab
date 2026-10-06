@@ -595,7 +595,6 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
                                     this.createSuccessScene();
                                 }
                                 this.resetButton.setInteractive({ useHandCursor: true });
-                                // [this.targetCup, this.distractorCup1, this.distractorCup2].forEach(c => c.setInteractive({ useHandCursor: true }));
                                 this.roundOver = true;
                                 this.isAnimating = false;
                                 return; // prevents falling through to the rest
@@ -610,8 +609,6 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
                                 this.createFailScene();
                                 this.roundOver = true;
 
-                                // keep cups clickable after out of clicks
-                                // [this.targetCup, this.distractorCup1, this.distractorCup2].forEach(c => c.setInteractive({ useHandCursor: true }));
                                 if (!this.roundOver) {
                                     this.setCupsInteractive(true);
                                 }
@@ -636,8 +633,7 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
                         this.roundOver = true;
                     }
 
-                    // allow tipping after clicks run out
-                    // [this.targetCup, this.distractorCup1, this.distractorCup2].forEach(c => c.setInteractive({ useHandCursor: true }));
+                    // if the round is not over, persist cup interactivity
                     if (!this.roundOver) {
                         this.setCupsInteractive(true);
                     }
