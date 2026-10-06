@@ -610,6 +610,9 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
 
                                 // keep cups clickable after out of clicks
                                 // [this.targetCup, this.distractorCup1, this.distractorCup2].forEach(c => c.setInteractive({ useHandCursor: true }));
+                                if (!this.roundOver) {
+                                    this.setCupsInteractive(true);
+                                }
                                 this.isAnimating = false;
                                 return;
                             } 
@@ -633,8 +636,12 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
 
                     // allow tipping after clicks run out
                     // [this.targetCup, this.distractorCup1, this.distractorCup2].forEach(c => c.setInteractive({ useHandCursor: true }));
+                    if (!this.roundOver) {
+                        this.setCupsInteractive(true);
                     }
+                    this.isAnimating = false;
                 }  
+            }
         });
     }
 
