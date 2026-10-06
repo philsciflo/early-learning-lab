@@ -309,6 +309,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
         [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach(cup => {
             cup.disableInteractive();
         });
+        this.input.setDefaultCursor("default");
 
         // tween and delay methods
         const delay = (ms: number) => new Promise(resolve => this.time.delayedCall(ms, resolve));
@@ -535,12 +536,15 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
         [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach(c => {
             if (!c) return;
             const locked = (c as any).__locked === true;
-            if (enabled && !locked) {
+            if (enabled && !locked && !this.roundOver) {
                 c.setInteractive({ useHandCursor: true });
             } else {
                 c.disableInteractive();
             }
         });
+        if (!enabled || this.roundOver) {
+            this.input.setDefaultCursor("default");
+        }
     }
 
     private setupCloud(){
@@ -799,6 +803,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
             cupContainerToFlip = cupImageToLock.parentContainer as Phaser.GameObjects.Container;
             (cupImageToLock as any).__locked = true;
             cupImageToLock.disableInteractive();
+            this.input.setDefaultCursor("default");
             cupImageToLock.removeAllListeners("pointerdown"); 
             cupImageToLock.setAlpha(0.9);
             if (cupContainerToFlip) {
