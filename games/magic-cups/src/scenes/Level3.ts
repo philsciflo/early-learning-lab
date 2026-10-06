@@ -241,6 +241,8 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
         this.flipButton.on("pointerdown", () => {
             // Stop the pulsing animation AND the timer when flip button is pressed
             this.stopFlipButtonPulse();
+            this.cupFlip();
+            this.enableCupClicks();
             AudioManager.I.playSfx(this, "button_sound");
             AudioManager.I.playSfx(this, "cup_sound");
 
