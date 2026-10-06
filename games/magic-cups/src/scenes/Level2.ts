@@ -462,10 +462,11 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
     private setCupsInteractive(enabled: boolean) {
         [this.targetCup, this.distractorCup1, this.distractorCup2].forEach(c => {
             if (!c) return;
-            if (enabled) {
+            if (enabled && !this.roundOver) {
                 c.setInteractive({ useHandCursor: true });
             } else {
                 c.disableInteractive();
+                this.input.setDefaultCursor("default");
             }
         });
     }
