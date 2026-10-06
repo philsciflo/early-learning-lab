@@ -415,8 +415,8 @@ export class Level1 extends MagicCupsScene<tryData_basic> {
                         this.endTime = this.getTimestamp();
                         this.endTimeUnix = String(_nowEnd.getTime());
                         this.duration = Date.now() - this.dropClickTime;
-                        this.revealCorrectCups(false);  // reveal without awarding points
                         this.createFailScene()
+                        this.time.delayedCall(2500, () => this.revealCorrectCups(false));  // reveal without awarding points
                         this.roundOver = true;
                     } 
 
