@@ -22,6 +22,8 @@ export const gemY = Math.round(HEIGHT * 0.40);
 export const START = 0;
 export const END = 119; 
 
+export const FAIL_REVEAL_DELAY = 2500; 
+
 // Background Colour
 export const BEIGE = "#FFF1CE";
 export const WHITE = "#ffffff";

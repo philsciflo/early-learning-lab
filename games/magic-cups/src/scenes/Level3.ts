@@ -19,6 +19,7 @@ import {
   gemY,
   START,
   END,
+  FAIL_REVEAL_DELAY,
 } from "../constants";
 import { AudioManager } from "../AudioManager";
 
@@ -697,7 +698,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
                                 this.endTimeUnix = String(_nowEnd.getTime());
                                 this.duration = Date.now() - this.dropClickTime;
                                 this.createFailScene();
-                                this.time.delayedCall(2500, () => this.revealCorrectCup(false));
+                                this.time.delayedCall(FAIL_REVEAL_DELAY, () => this.revealCorrectCup(false));
                                 this.roundOver = true;
 
                                 this.isAnimating = false;
@@ -721,7 +722,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
                         this.endTimeUnix = String(_nowEnd.getTime());
                         this.duration = Date.now() - this.dropClickTime;
                         this.createFailScene();
-                        this.time.delayedCall(2500, () => this.revealCorrectCup(false));
+                        this.time.delayedCall(FAIL_REVEAL_DELAY, () => this.revealCorrectCup(false));
                         this.roundOver = true;
                     }
 
