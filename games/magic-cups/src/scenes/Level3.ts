@@ -409,19 +409,7 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
         await delay(500);
         this.cloud.setVisible(false);
 
-        // re-enable cup interaction, reset button and flip button
-        [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach(cup => {
-            cup.removeAllListeners("pointerdown"); 
-            if ((cup as any).__locked) return; // skip locked cups
-            cup.setInteractive({ useHandCursor: true })
-            .on("pointerdown", () => {
-                this.lastClickedAsset = this.getAssetDisplayName(cup.texture.key);
-                this.lastClickedPosition = cup.name;
-                this.cupChoices.push(cup.name),
-                this.onCupClick(cup),
-                AudioManager.I.playSfx(this, "cup_sound");
-            });
-        });
+        // enable reset button and flip button (cups stay disabled until flip is pressed)
         this.resetButton.setInteractive({ useHandCursor: true }).setAlpha(1);
         this.flipButton.setInteractive({ useHandCursor: true }).setAlpha(1);
         
@@ -524,6 +512,21 @@ export class Level3 extends MagicCupsScene<tryData_advanced> {
         this.enableHoverLift(this.targetCup2);
         this.enableHoverLift(this.distractorCup1);
         this.enableHoverLift(this.distractorCup2);
+    }
+
+    private enableCupClicks() {
+        [this.targetCup1, this.targetCup2, this.distractorCup1, this.distractorCup2].forEach(cup => {
+            cup.removeAllListeners("pointerdown");
+            if ((cup as any).__locked) return; // skip locked cups
+            cup.setInteractive({ useHandCursor: true })
+            .on("pointerdown", () => {
+                this.lastClickedAsset = this.getAssetDisplayName(cup.texture.key);
+                this.lastClickedPosition = cup.name;
+                this.cupChoices.push(cup.name);
+                this.onCupClick(cup);
+                AudioManager.I.playSfx(this, "cup_sound");
+            });
+        });
     }
 
     private setCupsInteractive(enabled: boolean) {
