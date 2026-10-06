@@ -11,6 +11,7 @@ import {
     cloudY,
     START,
     END,
+    FAIL_REVEAL_DELAY,
 } from "../constants.ts";
 import { AudioManager } from "../AudioManager";
 
@@ -416,7 +417,7 @@ export class Level1 extends MagicCupsScene<tryData_basic> {
                         this.endTimeUnix = String(_nowEnd.getTime());
                         this.duration = Date.now() - this.dropClickTime;
                         this.createFailScene()
-                        this.time.delayedCall(2500, () => this.revealCorrectCups(false));  // reveal without awarding points
+                        this.time.delayedCall(FAIL_REVEAL_DELAY, () => this.revealCorrectCups(false));  // reveal without awarding points
                         this.roundOver = true;
                     } 
 
