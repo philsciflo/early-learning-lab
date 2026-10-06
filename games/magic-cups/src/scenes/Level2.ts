@@ -607,8 +607,9 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
                                 this.endTime = this.getTimestamp();
                                 this.endTimeUnix = String(_nowEnd.getTime());
                                 this.duration = Date.now() - this.dropClickTime;
-                                this.revealCorrectCup(false);
+                                
                                 this.createFailScene();
+                                this.time.delayedCall(2500, () => this.revealCorrectCup(false));
                                 this.roundOver = true;
 
                                 this.isAnimating = false;
@@ -627,8 +628,9 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
                         this.endTime = this.getTimestamp();
                         this.endTimeUnix = String(_nowEnd.getTime());
                         this.duration = Date.now() - this.dropClickTime;
-                        this.revealCorrectCup(false);
+                        
                         this.createFailScene();
+                        this.time.delayedCall(2500, () => this.revealCorrectCup(false));
                         this.roundOver = true;
                     }
 
