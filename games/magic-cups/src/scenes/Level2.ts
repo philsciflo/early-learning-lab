@@ -307,7 +307,7 @@ export class Level2 extends MagicCupsScene<tryData_advanced> {
             cup.removeAllListeners("pointerdown"); 
             cup.setInteractive({ useHandCursor: true })
             .on("pointerdown", () => {
-                if (this.roundOver) return; // TESTING
+                if (this.roundOver) return;
                 this.lastClickedAsset = this.getAssetDisplayName(cup.texture.key);
                 this.lastClickedPosition = cup.name;
                 this.cupChoices.push(cup.name),
