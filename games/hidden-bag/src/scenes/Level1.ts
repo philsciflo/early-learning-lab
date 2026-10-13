@@ -11,14 +11,17 @@ import {
   NPC_EYE_X,
   NPC_EYE_Y,
   TREE_FEET_Y,
-  TREE_OCCLUDER_X,
-  TREE_OCCLUDER_Y,
-  TREE_OCCLUDER_RADIUS,
+  TREE_CENTER_X,
+  TREE_CENTER_Y,
+  TREE_RADIUS,
+  TREE_TRUNK_HEIGHT,
+  TREE_TRUNK_WIDTH,
   BAG_START_X,
   BAG_START_Y,
   BAG_DRAG_BOUNDS,
 } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
+import { resolveTreeCollision } from "../collision.ts";
 
 export class Level1 extends Scene {
   private npc: GameObjects.Container;
@@ -70,26 +73,29 @@ export class Level1 extends Scene {
           return;
         }
 
-        gameObject.x = Phaser.Math.Clamp(dragX, BAG_DRAG_BOUNDS.minX, BAG_DRAG_BOUNDS.maxX);
-        gameObject.y = Phaser.Math.Clamp(dragY, BAG_DRAG_BOUNDS.minY, BAG_DRAG_BOUNDS.maxY);
+        const clampedX = Phaser.Math.Clamp(dragX, BAG_DRAG_BOUNDS.minX, BAG_DRAG_BOUNDS.maxX);
+        const clampedY = Phaser.Math.Clamp(dragY, BAG_DRAG_BOUNDS.minY, BAG_DRAG_BOUNDS.maxY);
+
+        // The tree is solid: don't let the bag be dragged through it.
+        const resolved = resolveTreeCollision(clampedX, clampedY);
+        gameObject.x = resolved.x;
+        gameObject.y = resolved.y;
 
         this.checkVisibility();
       },
     );
   }
 
-  /** The tree: a trunk plus a canopy. The canopy circle IS the occluder
-   * used by the line-of-sight check below, so the visual and the logic
-   * always agree with each other. */
+  /** The tree: a trunk plus a canopy. TREE_CENTER / TREE_RADIUS are also
+   * used as the solid collider and as the pivot point for the
+   * "which side is the bag on" visibility check, so the visual, the
+   * collision, and the logic always agree with each other. */
   private createTree() {
-    const trunkHeight = 140;
     this.add
-      .rectangle(TREE_OCCLUDER_X, TREE_FEET_Y - trunkHeight / 2, 26, trunkHeight, 0x8a5a2a)
+      .rectangle(TREE_CENTER_X, TREE_FEET_Y - TREE_TRUNK_HEIGHT / 2, TREE_TRUNK_WIDTH, TREE_TRUNK_HEIGHT, 0x8a5a2a)
       .setStrokeStyle(3, 0x5c3a1a);
 
-    this.add
-      .circle(TREE_OCCLUDER_X, TREE_OCCLUDER_Y, TREE_OCCLUDER_RADIUS, 0x4caf50)
-      .setStrokeStyle(4, 0x2e7d32);
+    this.add.circle(TREE_CENTER_X, TREE_CENTER_Y, TREE_RADIUS, 0x4caf50).setStrokeStyle(4, 0x2e7d32);
   }
 
   /** The NPC: fixed in place, facing right toward the tree. */
@@ -122,7 +128,7 @@ export class Level1 extends Scene {
     const visible = canSee(
       { x: NPC_EYE_X, y: NPC_EYE_Y },
       { x: this.bag.x, y: this.bag.y },
-      { x: TREE_OCCLUDER_X, y: TREE_OCCLUDER_Y, radius: TREE_OCCLUDER_RADIUS },
+      { x: TREE_CENTER_X, y: TREE_CENTER_Y },
     );
 
     if (visible) {
