@@ -6,28 +6,33 @@ import {
   SKY_COLOUR,
   GROUND_COLOUR,
   GROUND_Y,
-  NPC_X,
   NPC_FEET_Y,
-  NPC_EYE_X,
   NPC_EYE_Y,
+  NPC_DISTANCE_FROM_TREE,
+  NPC_EYE_DISTANCE_FROM_TREE,
   TREE_FEET_Y,
   TREE_CENTER_X,
   TREE_CENTER_Y,
   TREE_RADIUS,
   TREE_TRUNK_HEIGHT,
   TREE_TRUNK_WIDTH,
-  BAG_START_X,
-  BAG_START_Y,
+  TREE_COLLISION_RADIUS,
+  BAG_HIDDEN_CLEARANCE,
   BAG_DRAG_BOUNDS,
 } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
 import { resolveTreeCollision } from "../collision.ts";
+
+type Side = "left" | "right";
 
 export class Level1 extends Scene {
   private npc: GameObjects.Container;
   private bag: GameObjects.Container;
   private speechBubble: GameObjects.Text;
   private solved = false;
+
+  private npcEyeX: number;
+  private npcEyeY: number = NPC_EYE_Y;
 
   constructor() {
     super("Level1");
@@ -50,11 +55,17 @@ export class Level1 extends Scene {
       .setOrigin(0.5, 0);
 
     this.createTree();
-    this.npc = this.createNpc();
 
-    // Speech bubble, hidden until the puzzle is solved.
+    // Randomly pick which side of the tree the NPC stands on. The bag
+    // always starts hidden on the opposite side, so the puzzle is always
+    // solvable the same way regardless of which side comes up.
+    const npcSide: Side = Math.random() < 0.5 ? "left" : "right";
+    const bagSide: Side = npcSide === "left" ? "right" : "left";
+
+    this.npc = this.createNpc(npcSide);
+
     this.speechBubble = this.add
-      .text(NPC_X, NPC_EYE_Y - 110, "I can see it!", {
+      .text(this.npcEyeX, this.npcEyeY - 110, "Hey, there's my bag!", {
         fontFamily: "Arial Black",
         fontSize: 22,
         color: "#2b2a6b",
@@ -64,7 +75,7 @@ export class Level1 extends Scene {
       .setOrigin(0.5, 1)
       .setAlpha(0);
 
-    this.bag = this.createBag();
+    this.bag = this.createBag(bagSide);
 
     this.input.on(
       "drag",
@@ -98,26 +109,47 @@ export class Level1 extends Scene {
     this.add.circle(TREE_CENTER_X, TREE_CENTER_Y, TREE_RADIUS, 0x4caf50).setStrokeStyle(4, 0x2e7d32);
   }
 
-  /** The NPC: fixed in place, facing right toward the tree. */
-  private createNpc(): GameObjects.Container {
+  /** The NPC: fixed in place for the round, standing on `side` of the
+   * tree and facing toward it. */
+  private createNpc(side: Side): GameObjects.Container {
+    const sign = side === "left" ? -1 : 1;
+    const npcX = TREE_CENTER_X + sign * NPC_DISTANCE_FROM_TREE;
+    this.npcEyeX = TREE_CENTER_X + sign * NPC_EYE_DISTANCE_FROM_TREE;
+
     const body = this.add.rectangle(0, -55, 56, 110, 0x4fb6a8).setStrokeStyle(3, 0x2b2a6b);
     const head = this.add.circle(0, -128, 32, 0xffd9b3).setStrokeStyle(3, 0x2b2a6b);
-    // Eyes offset toward the right side of the head, to show the NPC is
-    // looking right, toward the tree.
+    // Eyes offset toward the tree side of the head, so the NPC visibly
+    // looks toward it. Drawn facing right; flipped below for "left".
     const eyeLeft = this.add.circle(8, -132, 5, 0x2b2a6b);
     const eyeRight = this.add.circle(20, -128, 5, 0x2b2a6b);
 
-    const container = this.add.container(NPC_X, NPC_FEET_Y, [body, head, eyeLeft, eyeRight]);
+    const container = this.add.container(npcX, NPC_FEET_Y, [body, head, eyeLeft, eyeRight]);
+
+    if (side === "left") {
+      // NPC stands to the left of the tree, so it must face right - the
+      // shapes above are already drawn facing right, so no flip needed.
+    } else {
+      // NPC stands to the right of the tree, so it must face left.
+      container.scaleX = -1;
+    }
+
     return container;
   }
 
-  /** The bag: the only thing the player can move. */
-  private createBag(): GameObjects.Container {
+  /** The bag: the only thing the player can move. Starts just outside
+   * the tree's collision radius, on `side` - opposite the NPC - so it
+   * always starts hidden. */
+  private createBag(side: Side): GameObjects.Container {
+    const sign = side === "left" ? -1 : 1;
+    const clearance = TREE_COLLISION_RADIUS + BAG_HIDDEN_CLEARANCE;
+    const bagX = TREE_CENTER_X + sign * clearance;
+    const bagY = TREE_CENTER_Y;
+
     const body = this.add.rectangle(0, 5, 50, 60, 0xffb84d).setStrokeStyle(3, 0x8a5a1a);
     const flap = this.add.rectangle(0, -18, 54, 18, 0xff9f40).setStrokeStyle(3, 0x8a5a1a);
     const buckle = this.add.circle(0, 5, 6, 0x8a5a1a);
 
-    const container = this.add.container(BAG_START_X, BAG_START_Y, [body, flap, buckle]);
+    const container = this.add.container(bagX, bagY, [body, flap, buckle]);
     container.setSize(56, 86);
     container.setInteractive({ draggable: true, useHandCursor: true });
 
@@ -126,7 +158,7 @@ export class Level1 extends Scene {
 
   private checkVisibility() {
     const visible = canSee(
-      { x: NPC_EYE_X, y: NPC_EYE_Y },
+      { x: this.npcEyeX, y: this.npcEyeY },
       { x: this.bag.x, y: this.bag.y },
       { x: TREE_CENTER_X, y: TREE_CENTER_Y },
     );
@@ -152,9 +184,12 @@ export class Level1 extends Scene {
       ease: "Sine.easeOut",
     });
 
+    // Only animate scaleY here, not the "scale" shorthand - the NPC may
+    // be horizontally flipped (scaleX = -1) to face the tree, and a
+    // uniform `scale` tween would overwrite that flip.
     this.tweens.add({
       targets: this.npc,
-      scale: 1.08,
+      scaleY: 1.08,
       duration: 200,
       yoyo: true,
       ease: "Sine.easeOut",
