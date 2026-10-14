@@ -3,6 +3,10 @@ export const HEIGHT = 768;
 export const HALF_WIDTH = WIDTH / 2;
 export const HALF_HEIGHT = HEIGHT / 2;
 
+// Data tracking (see scoring.ts)
+export const GAME_SCORE_DATA_KEY = "hidden-bag-data";
+export const PLAYER_ID_DATA_KEY = "playerId";
+
 // Sky / ground split
 export const SKY_COLOUR = 0x9fd8ff;
 export const GROUND_COLOUR = 0x8fcf6a;

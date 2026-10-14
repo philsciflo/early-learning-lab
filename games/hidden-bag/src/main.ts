@@ -16,6 +16,9 @@ const config: Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+  dom: {
+    createContainer: true, // required for the login screen's HTML inputs
+  },
   scene: [MainMenu, Level0, Level1, GameOver],
 };
 

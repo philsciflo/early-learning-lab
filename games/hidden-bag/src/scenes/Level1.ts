@@ -19,11 +19,11 @@ import {
   TREE_COLLISION_RADIUS,
   BAG_HIDDEN_CLEARANCE,
   BAG_DRAG_BOUNDS,
+  PLAYER_ID_DATA_KEY,
 } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
 import { resolveTreeCollision, segmentHitsTree } from "../collision.ts";
-
-type Side = "left" | "right";
+import { recordTrial, Side, DragPoint } from "../scoring.ts";
 
 export class Level1 extends Scene {
   private npc: GameObjects.Container;
@@ -44,12 +44,26 @@ export class Level1 extends Scene {
   private lastValidBagX: number;
   private lastValidBagY: number;
 
+  // --- Trial data (see scoring.ts) ---
+  private npcSide: Side;
+  private bagStartSide: Side;
+  private trialStartMs: number;
+  private dragPath: DragPoint[] = [];
+  private timeToFirstDragMs: number | null = null;
+  private successPosition: { x: number; y: number } | null = null;
+  private timeToSuccessMs: number | null = null;
+
   constructor() {
     super("Level1");
   }
 
   create() {
     this.isVisibleToNpc = false;
+    this.trialStartMs = Date.now();
+    this.dragPath = [];
+    this.timeToFirstDragMs = null;
+    this.successPosition = null;
+    this.timeToSuccessMs = null;
 
     // Simple sky + ground backdrop.
     this.add.rectangle(0, 0, WIDTH, GROUND_Y, SKY_COLOUR).setOrigin(0, 0);
@@ -72,6 +86,8 @@ export class Level1 extends Scene {
     // solvable the same way regardless of which side comes up.
     const npcSide: Side = Math.random() < 0.5 ? "left" : "right";
     const bagSide: Side = npcSide === "left" ? "right" : "left";
+    this.npcSide = npcSide;
+    this.bagStartSide = bagSide;
 
     this.npc = this.createNpc(npcSide);
 
@@ -113,6 +129,12 @@ export class Level1 extends Scene {
         this.lastValidBagX = resolved.x;
         this.lastValidBagY = resolved.y;
 
+        const tMs = Date.now() - this.trialStartMs;
+        if (this.timeToFirstDragMs === null) {
+          this.timeToFirstDragMs = tMs;
+        }
+        this.dragPath.push({ x: resolved.x, y: resolved.y, tMs });
+
         this.updateVisibilityFeedback();
       },
     );
@@ -132,8 +154,33 @@ export class Level1 extends Scene {
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
+        this.finishTrial();
         this.scene.start("GameOver");
       });
+  }
+
+  /** Writes this trial's full record to storage in one go (see
+   * scoring.ts - recordTrial does a single localStorage write, rather
+   * than one per drag-move event). */
+  private finishTrial() {
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as string | undefined;
+    if (!playerId) {
+      // Scene started directly, skipping the login screen (e.g. during
+      // development) - nothing to attach this trial to.
+      return;
+    }
+
+    recordTrial(playerId, {
+      npcSide: this.npcSide,
+      bagStartSide: this.bagStartSide,
+      startTime: new Date(this.trialStartMs).toISOString(),
+      dragPath: this.dragPath,
+      timeToFirstDragMs: this.timeToFirstDragMs,
+      successPosition: this.successPosition,
+      timeToSuccessMs: this.timeToSuccessMs,
+      endedByFacilitator: true,
+      trialDurationMs: Date.now() - this.trialStartMs,
+    });
   }
 
   /** The tree: a trunk plus a canopy. TREE_CENTER / TREE_RADIUS are also
@@ -210,6 +257,11 @@ export class Level1 extends Scene {
       return;
     }
     this.isVisibleToNpc = visible;
+
+    if (visible && this.successPosition === null) {
+      this.successPosition = { x: this.bag.x, y: this.bag.y };
+      this.timeToSuccessMs = Date.now() - this.trialStartMs;
+    }
 
     if (visible) {
       this.tweens.add({
