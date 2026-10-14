@@ -21,7 +21,7 @@ import {
   BAG_DRAG_BOUNDS,
 } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
-import { resolveTreeCollision } from "../collision.ts";
+import { resolveTreeCollision, segmentHitsTree } from "../collision.ts";
 
 type Side = "left" | "right";
 
@@ -29,17 +29,27 @@ export class Level1 extends Scene {
   private npc: GameObjects.Container;
   private bag: GameObjects.Container;
   private speechBubble: GameObjects.Text;
-  private solved = false;
+
+  // Whether the NPC can currently see the bag. Unlike a one-shot "solved"
+  // flag, this flips back and forth freely as the bag is dragged in and
+  // out of view - the game never stops or locks the bag.
+  private isVisibleToNpc = false;
 
   private npcEyeX: number;
   private npcEyeY: number = NPC_EYE_Y;
+
+  // The bag's last position that was NOT inside the tree. Used to sweep-
+  // test every drag step against the tree, so a fast drag can't jump
+  // straight through it in a single frame (see collision.ts).
+  private lastValidBagX: number;
+  private lastValidBagY: number;
 
   constructor() {
     super("Level1");
   }
 
   create() {
-    this.solved = false;
+    this.isVisibleToNpc = false;
 
     // Simple sky + ground backdrop.
     this.add.rectangle(0, 0, WIDTH, GROUND_Y, SKY_COLOUR).setOrigin(0, 0);
@@ -54,6 +64,7 @@ export class Level1 extends Scene {
       })
       .setOrigin(0.5, 0);
 
+    this.createEndTestButton();
     this.createTree();
 
     // Randomly pick which side of the tree the NPC stands on. The bag
@@ -76,25 +87,53 @@ export class Level1 extends Scene {
       .setAlpha(0);
 
     this.bag = this.createBag(bagSide);
+    this.lastValidBagX = this.bag.x;
+    this.lastValidBagY = this.bag.y;
 
     this.input.on(
       "drag",
       (_pointer: Phaser.Input.Pointer, gameObject: GameObjects.Container, dragX: number, dragY: number) => {
-        if (gameObject !== this.bag || this.solved) {
+        if (gameObject !== this.bag) {
           return;
         }
 
         const clampedX = Phaser.Math.Clamp(dragX, BAG_DRAG_BOUNDS.minX, BAG_DRAG_BOUNDS.maxX);
         const clampedY = Phaser.Math.Clamp(dragY, BAG_DRAG_BOUNDS.minY, BAG_DRAG_BOUNDS.maxY);
 
-        // The tree is solid: don't let the bag be dragged through it.
+        // The tree is solid. Check the whole path travelled this frame -
+        // not just the destination - so a fast drag can't tunnel through
+        // it by jumping from one side to the other in a single step.
+        if (segmentHitsTree(this.lastValidBagX, this.lastValidBagY, clampedX, clampedY)) {
+          return;
+        }
+
         const resolved = resolveTreeCollision(clampedX, clampedY);
         gameObject.x = resolved.x;
         gameObject.y = resolved.y;
+        this.lastValidBagX = resolved.x;
+        this.lastValidBagY = resolved.y;
 
-        this.checkVisibility();
+        this.updateVisibilityFeedback();
       },
     );
+  }
+
+  /** A researcher/facilitator control, not part of the child's task:
+   * ends the session on demand instead of the game auto-completing. */
+  private createEndTestButton() {
+    this.add
+      .text(WIDTH - 24, 24, "End Test", {
+        fontFamily: "Arial Black",
+        fontSize: 20,
+        color: "#ffffff",
+        backgroundColor: "#2b2a6b",
+        padding: { x: 14, y: 10 },
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        this.scene.start("GameOver");
+      });
   }
 
   /** The tree: a trunk plus a canopy. TREE_CENTER / TREE_RADIUS are also
@@ -156,53 +195,45 @@ export class Level1 extends Scene {
     return container;
   }
 
-  private checkVisibility() {
+  /** Re-checks whether the NPC can currently see the bag, and plays the
+   * "noticed it" / "lost sight of it" transitions only when that state
+   * actually changes - not on every single drag frame. The bag stays
+   * draggable throughout; nothing here ever stops the game. */
+  private updateVisibilityFeedback() {
     const visible = canSee(
       { x: this.npcEyeX, y: this.npcEyeY },
       { x: this.bag.x, y: this.bag.y },
       { x: TREE_CENTER_X, y: TREE_CENTER_Y },
     );
 
-    if (visible) {
-      this.onSolved();
-    }
-  }
-
-  private onSolved() {
-    if (this.solved) {
+    if (visible === this.isVisibleToNpc) {
       return;
     }
-    this.solved = true;
+    this.isVisibleToNpc = visible;
 
-    this.bag.disableInteractive();
+    if (visible) {
+      this.tweens.add({
+        targets: this.bag,
+        scale: 1.15,
+        duration: 200,
+        yoyo: true,
+        ease: "Sine.easeOut",
+      });
 
-    this.tweens.add({
-      targets: this.bag,
-      scale: 1.15,
-      duration: 200,
-      yoyo: true,
-      ease: "Sine.easeOut",
-    });
+      // Only animate scaleY here, not the "scale" shorthand - the NPC
+      // may be horizontally flipped (scaleX = -1) to face the tree, and
+      // a uniform `scale` tween would overwrite that flip.
+      this.tweens.add({
+        targets: this.npc,
+        scaleY: 1.08,
+        duration: 200,
+        yoyo: true,
+        ease: "Sine.easeOut",
+      });
 
-    // Only animate scaleY here, not the "scale" shorthand - the NPC may
-    // be horizontally flipped (scaleX = -1) to face the tree, and a
-    // uniform `scale` tween would overwrite that flip.
-    this.tweens.add({
-      targets: this.npc,
-      scaleY: 1.08,
-      duration: 200,
-      yoyo: true,
-      ease: "Sine.easeOut",
-    });
-
-    this.tweens.add({
-      targets: this.speechBubble,
-      alpha: 1,
-      duration: 300,
-    });
-
-    this.time.delayedCall(1800, () => {
-      this.scene.start("GameOver");
-    });
+      this.tweens.add({ targets: this.speechBubble, alpha: 1, duration: 300 });
+    } else {
+      this.tweens.add({ targets: this.speechBubble, alpha: 0, duration: 200 });
+    }
   }
 }
