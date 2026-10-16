@@ -3,7 +3,16 @@ import { Scene, GameObjects } from "phaser";
 import { WIDTH, HEIGHT, PLAYER_ID_DATA_KEY } from "../constants.ts";
 import { playChime, playGentleMiss } from "../audio.ts";
 import { recordTrial, Side } from "../scoring.ts";
-import { CARD_W, CARD_H, CARD_GAP, buildBagSpots, buildPostcard, gridSlotPositions, shuffledIndices } from "../postcardScene.ts";
+import {
+  CARD_W,
+  CARD_H,
+  CARD_GAP,
+  buildBagSpots,
+  buildPostcard,
+  gridSlotPositions,
+  shuffledIndices,
+  makePostcardClickable,
+} from "../postcardScene.ts";
 
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
 const GRID_Y = 150;
@@ -93,8 +102,7 @@ export class Level4 extends Scene {
 
     order.forEach((spotIndex, slot) => {
       const card = buildPostcard(this, slotPositions[slot], this.npcSide, bagSpots[spotIndex]);
-      card.setInteractive({ useHandCursor: true });
-      card.on("pointerdown", () => this.onCardClicked(card));
+      makePostcardClickable(card, () => this.onCardClicked(card));
       this.cards.push(card);
     });
   }
