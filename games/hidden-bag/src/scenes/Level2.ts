@@ -44,17 +44,6 @@ export class Level2 extends Scene {
     this.timeToCommitMs = null;
     this.correct = null;
 
-    this.add
-      .text(WIDTH / 2, 40, "Where do you think Jerry can see the bag?", {
-        fontFamily: "Arial Black",
-        fontSize: 30,
-        color: "#2b2a6b",
-        align: "center",
-      })
-      .setOrigin(0.5, 0);
-
-    this.createFacilitatorButtons();
-
     const gfx = this.add.graphics();
     gfx.fillStyle(0xffe066, 1);
     gfx.fillCircle(6, 6, 6);
@@ -69,7 +58,21 @@ export class Level2 extends Scene {
       emitting: false,
     });
 
+    // createHiddenBagEnvironment() paints the full-screen sky/ground
+    // background - it must run before anything else that should be
+    // visible on top of it (title, buttons), not after.
     this.env = createHiddenBagEnvironment(this, (x, y) => this.onValidDrag(x, y));
+
+    this.add
+      .text(WIDTH / 2, 40, "Where do you think Jerry can see the bag?", {
+        fontFamily: "Arial Black",
+        fontSize: 30,
+        color: "#2b2a6b",
+        align: "center",
+      })
+      .setOrigin(0.5, 0);
+
+    this.createFacilitatorButtons();
 
     this.speechBubble = this.add
       .text(this.env.npcEyeX, this.env.npcEyeY - 110, "", {
