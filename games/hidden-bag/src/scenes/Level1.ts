@@ -1,33 +1,12 @@
 import { Scene, GameObjects } from "phaser";
 
-import {
-  WIDTH,
-  HEIGHT,
-  SKY_COLOUR,
-  GROUND_COLOUR,
-  GROUND_Y,
-  NPC_FEET_Y,
-  NPC_EYE_Y,
-  NPC_DISTANCE_FROM_TREE,
-  NPC_EYE_DISTANCE_FROM_TREE,
-  TREE_FEET_Y,
-  TREE_CENTER_X,
-  TREE_CENTER_Y,
-  TREE_RADIUS,
-  TREE_TRUNK_HEIGHT,
-  TREE_TRUNK_WIDTH,
-  TREE_COLLISION_RADIUS,
-  BAG_HIDDEN_CLEARANCE,
-  BAG_DRAG_BOUNDS,
-  PLAYER_ID_DATA_KEY,
-} from "../constants.ts";
+import { WIDTH, TREE_CENTER_X, TREE_CENTER_Y, PLAYER_ID_DATA_KEY } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
-import { resolveTreeCollision, segmentHitsTree } from "../collision.ts";
-import { recordTrial, Side, DragPoint } from "../scoring.ts";
+import { createHiddenBagEnvironment, HiddenBagEnvironment } from "../hiddenBagScene.ts";
+import { recordTrial, DragPoint } from "../scoring.ts";
 
 export class Level1 extends Scene {
-  private npc: GameObjects.Container;
-  private bag: GameObjects.Container;
+  private env: HiddenBagEnvironment;
   private speechBubble: GameObjects.Text;
 
   // Whether the NPC can currently see the bag. Unlike a one-shot "solved"
@@ -35,18 +14,7 @@ export class Level1 extends Scene {
   // out of view - the game never stops or locks the bag.
   private isVisibleToNpc = false;
 
-  private npcEyeX: number;
-  private npcEyeY: number = NPC_EYE_Y;
-
-  // The bag's last position that was NOT inside the tree. Used to sweep-
-  // test every drag step against the tree, so a fast drag can't jump
-  // straight through it in a single frame (see collision.ts).
-  private lastValidBagX: number;
-  private lastValidBagY: number;
-
   // --- Trial data (see scoring.ts) ---
-  private npcSide: Side;
-  private bagStartSide: Side;
   private trialStartMs: number;
   private dragPath: DragPoint[] = [];
   private timeToFirstDragMs: number | null = null;
@@ -65,10 +33,6 @@ export class Level1 extends Scene {
     this.successPosition = null;
     this.timeToSuccessMs = null;
 
-    // Simple sky + ground backdrop.
-    this.add.rectangle(0, 0, WIDTH, GROUND_Y, SKY_COLOUR).setOrigin(0, 0);
-    this.add.rectangle(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y, GROUND_COLOUR).setOrigin(0, 0);
-
     this.add
       .text(WIDTH / 2, 40, "Help your friend spot the bag!", {
         fontFamily: "Arial Black",
@@ -78,21 +42,12 @@ export class Level1 extends Scene {
       })
       .setOrigin(0.5, 0);
 
-    this.createEndTestButton();
-    this.createTree();
+    this.createFacilitatorButtons();
 
-    // Randomly pick which side of the tree the NPC stands on. The bag
-    // always starts hidden on the opposite side, so the puzzle is always
-    // solvable the same way regardless of which side comes up.
-    const npcSide: Side = Math.random() < 0.5 ? "left" : "right";
-    const bagSide: Side = npcSide === "left" ? "right" : "left";
-    this.npcSide = npcSide;
-    this.bagStartSide = bagSide;
-
-    this.npc = this.createNpc(npcSide);
+    this.env = createHiddenBagEnvironment(this, (x, y) => this.onValidDrag(x, y));
 
     this.speechBubble = this.add
-      .text(this.npcEyeX, this.npcEyeY - 110, "Hey, there's my bag!", {
+      .text(this.env.npcEyeX, this.env.npcEyeY - 110, "Hey, there's my bag!", {
         fontFamily: "Arial Black",
         fontSize: 22,
         color: "#2b2a6b",
@@ -101,55 +56,44 @@ export class Level1 extends Scene {
       })
       .setOrigin(0.5, 1)
       .setAlpha(0);
-
-    this.bag = this.createBag(bagSide);
-    this.lastValidBagX = this.bag.x;
-    this.lastValidBagY = this.bag.y;
-
-    this.input.on(
-      "drag",
-      (_pointer: Phaser.Input.Pointer, gameObject: GameObjects.Container, dragX: number, dragY: number) => {
-        if (gameObject !== this.bag) {
-          return;
-        }
-
-        const clampedX = Phaser.Math.Clamp(dragX, BAG_DRAG_BOUNDS.minX, BAG_DRAG_BOUNDS.maxX);
-        const clampedY = Phaser.Math.Clamp(dragY, BAG_DRAG_BOUNDS.minY, BAG_DRAG_BOUNDS.maxY);
-
-        // The tree is solid. Check the whole path travelled this frame -
-        // not just the destination - so a fast drag can't tunnel through
-        // it by jumping from one side to the other in a single step.
-        if (segmentHitsTree(this.lastValidBagX, this.lastValidBagY, clampedX, clampedY)) {
-          return;
-        }
-
-        const resolved = resolveTreeCollision(clampedX, clampedY);
-        gameObject.x = resolved.x;
-        gameObject.y = resolved.y;
-        this.lastValidBagX = resolved.x;
-        this.lastValidBagY = resolved.y;
-
-        const tMs = Date.now() - this.trialStartMs;
-        if (this.timeToFirstDragMs === null) {
-          this.timeToFirstDragMs = tMs;
-        }
-        this.dragPath.push({ x: resolved.x, y: resolved.y, tMs });
-
-        this.updateVisibilityFeedback();
-      },
-    );
   }
 
-  /** A researcher/facilitator control, not part of the child's task:
-   * ends the session on demand instead of the game auto-completing. */
-  private createEndTestButton() {
+  private onValidDrag(x: number, y: number) {
+    const tMs = Date.now() - this.trialStartMs;
+    if (this.timeToFirstDragMs === null) {
+      this.timeToFirstDragMs = tMs;
+    }
+    this.dragPath.push({ x, y, tMs });
+
+    this.updateVisibilityFeedback();
+  }
+
+  /** Facilitator controls, not part of the child's task: move on to the
+   * next part of the session on demand (rather than any automatic
+   * completion), or end the whole session early from here if needed. */
+  private createFacilitatorButtons() {
     this.add
-      .text(WIDTH - 24, 24, "End Test", {
+      .text(WIDTH - 24, 24, "Next Level →", {
         fontFamily: "Arial Black",
         fontSize: 20,
         color: "#ffffff",
         backgroundColor: "#2b2a6b",
         padding: { x: 14, y: 10 },
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        this.finishTrial();
+        this.scene.start("Level2");
+      });
+
+    this.add
+      .text(WIDTH - 24, 70, "End Test", {
+        fontFamily: "Arial",
+        fontSize: 16,
+        color: "#2b2a6b",
+        backgroundColor: "#f2f4fa",
+        padding: { x: 12, y: 8 },
       })
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
@@ -171,8 +115,9 @@ export class Level1 extends Scene {
     }
 
     recordTrial(playerId, {
-      npcSide: this.npcSide,
-      bagStartSide: this.bagStartSide,
+      level: "Level1",
+      npcSide: this.env.npcSide,
+      bagStartSide: this.env.bagStartSide,
       startTime: new Date(this.trialStartMs).toISOString(),
       dragPath: this.dragPath,
       timeToFirstDragMs: this.timeToFirstDragMs,
@@ -183,73 +128,14 @@ export class Level1 extends Scene {
     });
   }
 
-  /** The tree: a trunk plus a canopy. TREE_CENTER / TREE_RADIUS are also
-   * used as the solid collider and as the pivot point for the
-   * "which side is the bag on" visibility check, so the visual, the
-   * collision, and the logic always agree with each other. */
-  private createTree() {
-    this.add
-      .rectangle(TREE_CENTER_X, TREE_FEET_Y - TREE_TRUNK_HEIGHT / 2, TREE_TRUNK_WIDTH, TREE_TRUNK_HEIGHT, 0x8a5a2a)
-      .setStrokeStyle(3, 0x5c3a1a);
-
-    this.add.circle(TREE_CENTER_X, TREE_CENTER_Y, TREE_RADIUS, 0x4caf50).setStrokeStyle(4, 0x2e7d32);
-  }
-
-  /** The NPC: fixed in place for the round, standing on `side` of the
-   * tree and facing toward it. */
-  private createNpc(side: Side): GameObjects.Container {
-    const sign = side === "left" ? -1 : 1;
-    const npcX = TREE_CENTER_X + sign * NPC_DISTANCE_FROM_TREE;
-    this.npcEyeX = TREE_CENTER_X + sign * NPC_EYE_DISTANCE_FROM_TREE;
-
-    const body = this.add.rectangle(0, -55, 56, 110, 0x4fb6a8).setStrokeStyle(3, 0x2b2a6b);
-    const head = this.add.circle(0, -128, 32, 0xffd9b3).setStrokeStyle(3, 0x2b2a6b);
-    // Eyes offset toward the tree side of the head, so the NPC visibly
-    // looks toward it. Drawn facing right; flipped below for "left".
-    const eyeLeft = this.add.circle(8, -132, 5, 0x2b2a6b);
-    const eyeRight = this.add.circle(20, -128, 5, 0x2b2a6b);
-
-    const container = this.add.container(npcX, NPC_FEET_Y, [body, head, eyeLeft, eyeRight]);
-
-    if (side === "left") {
-      // NPC stands to the left of the tree, so it must face right - the
-      // shapes above are already drawn facing right, so no flip needed.
-    } else {
-      // NPC stands to the right of the tree, so it must face left.
-      container.scaleX = -1;
-    }
-
-    return container;
-  }
-
-  /** The bag: the only thing the player can move. Starts just outside
-   * the tree's collision radius, on `side` - opposite the NPC - so it
-   * always starts hidden. */
-  private createBag(side: Side): GameObjects.Container {
-    const sign = side === "left" ? -1 : 1;
-    const clearance = TREE_COLLISION_RADIUS + BAG_HIDDEN_CLEARANCE;
-    const bagX = TREE_CENTER_X + sign * clearance;
-    const bagY = TREE_CENTER_Y;
-
-    const body = this.add.rectangle(0, 5, 50, 60, 0xffb84d).setStrokeStyle(3, 0x8a5a1a);
-    const flap = this.add.rectangle(0, -18, 54, 18, 0xff9f40).setStrokeStyle(3, 0x8a5a1a);
-    const buckle = this.add.circle(0, 5, 6, 0x8a5a1a);
-
-    const container = this.add.container(bagX, bagY, [body, flap, buckle]);
-    container.setSize(56, 86);
-    container.setInteractive({ draggable: true, useHandCursor: true });
-
-    return container;
-  }
-
   /** Re-checks whether the NPC can currently see the bag, and plays the
    * "noticed it" / "lost sight of it" transitions only when that state
    * actually changes - not on every single drag frame. The bag stays
    * draggable throughout; nothing here ever stops the game. */
   private updateVisibilityFeedback() {
     const visible = canSee(
-      { x: this.npcEyeX, y: this.npcEyeY },
-      { x: this.bag.x, y: this.bag.y },
+      { x: this.env.npcEyeX, y: this.env.npcEyeY },
+      { x: this.env.bag.x, y: this.env.bag.y },
       { x: TREE_CENTER_X, y: TREE_CENTER_Y },
     );
 
@@ -259,13 +145,13 @@ export class Level1 extends Scene {
     this.isVisibleToNpc = visible;
 
     if (visible && this.successPosition === null) {
-      this.successPosition = { x: this.bag.x, y: this.bag.y };
+      this.successPosition = { x: this.env.bag.x, y: this.env.bag.y };
       this.timeToSuccessMs = Date.now() - this.trialStartMs;
     }
 
     if (visible) {
       this.tweens.add({
-        targets: this.bag,
+        targets: this.env.bag,
         scale: 1.15,
         duration: 200,
         yoyo: true,
@@ -276,7 +162,7 @@ export class Level1 extends Scene {
       // may be horizontally flipped (scaleX = -1) to face the tree, and
       // a uniform `scale` tween would overwrite that flip.
       this.tweens.add({
-        targets: this.npc,
+        targets: this.env.npc,
         scaleY: 1.08,
         duration: 200,
         yoyo: true,

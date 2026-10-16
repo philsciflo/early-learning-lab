@@ -1,34 +1,10 @@
 import { Scene, GameObjects } from "phaser";
 
 import { WIDTH, HEIGHT, SKY_COLOUR } from "../constants.ts";
+import { playChime } from "../audio.ts";
 
 const STAR_RADIUS = 36;
 const DRAG_MARGIN = STAR_RADIUS;
-
-/** A short, pleasant three-note chime, synthesised with the Web Audio
- * API so this warm-up doesn't need any audio asset files. Browsers
- * require audio to start from a user gesture, so the AudioContext is
- * created lazily on the first touch/click rather than up front. */
-function playChime(audioContext: AudioContext) {
-  const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 - a bright major triad
-
-  notes.forEach((frequency, index) => {
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.value = frequency;
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-
-    const start = audioContext.currentTime + index * 0.08;
-    gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
-
-    oscillator.start(start);
-    oscillator.stop(start + 0.4);
-  });
-}
 
 /**
  * Level 0: a pure drag warm-up, with no task to fail. One big, friendly
