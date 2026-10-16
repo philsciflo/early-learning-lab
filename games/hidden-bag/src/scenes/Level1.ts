@@ -33,6 +33,11 @@ export class Level1 extends Scene {
     this.successPosition = null;
     this.timeToSuccessMs = null;
 
+    // createHiddenBagEnvironment() paints the full-screen sky/ground
+    // background - it must run before anything else that should be
+    // visible on top of it (title, buttons), not after.
+    this.env = createHiddenBagEnvironment(this, (x, y) => this.onValidDrag(x, y));
+
     this.add
       .text(WIDTH / 2, 40, "Help your friend spot the bag!", {
         fontFamily: "Arial Black",
@@ -43,8 +48,6 @@ export class Level1 extends Scene {
       .setOrigin(0.5, 0);
 
     this.createFacilitatorButtons();
-
-    this.env = createHiddenBagEnvironment(this, (x, y) => this.onValidDrag(x, y));
 
     this.speechBubble = this.add
       .text(this.env.npcEyeX, this.env.npcEyeY - 110, "Hey, there's my bag!", {
