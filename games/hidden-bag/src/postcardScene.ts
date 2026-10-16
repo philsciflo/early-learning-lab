@@ -90,10 +90,17 @@ export function gridSlotPositions(numOptions: 2 | 4, gridX: number, gridY: numbe
   ];
 }
 
-/** Draws one postcard (tree + NPC + bag at `bagPosition`) as a single
- * interactive container at `position`. Does not wire up the click
- * handler - callers attach their own "pointerdown" listener. */
-export function buildPostcard(scene: Scene, position: Point, npcSide: Side, bagPosition: Point): GameObjects.Container {
+export type Postcard = {
+  /** The whole card's visuals, grouped for positioning/tweening/destroy. */
+  container: GameObjects.Container;
+  /** The actual clickable element - see makePostcardClickable(). */
+  hitArea: GameObjects.Rectangle;
+};
+
+/** Draws one postcard (tree + NPC + bag at `bagPosition`) at `position`.
+ * Does not wire up the click handler - callers attach their own
+ * "pointerdown" listener via makePostcardClickable(). */
+export function buildPostcard(scene: Scene, position: Point, npcSide: Side, bagPosition: Point): Postcard {
   const container = scene.add.container(position.x, position.y);
 
   const cardBg = scene.add.rectangle(0, 0, CARD_W, CARD_H, 0xffffff).setOrigin(0, 0).setStrokeStyle(3, 0xcfd6e8);
@@ -128,26 +135,24 @@ export function buildPostcard(scene: Scene, position: Point, npcSide: Side, bagP
   const bagFlap = scene.add.rectangle(bagPos.x, bagPos.y - 14, 22, 8, 0xff9f40).setStrokeStyle(2, 0x8a5a1a);
   container.add([bagBody, bagFlap]);
 
-  container.setSize(CARD_W, CARD_H);
-
-  return container;
+  return { container, hitArea: cardBg };
 }
 
-/** Makes a whole postcard clickable, not just part of it.
+/** Makes a whole postcard clickable, not just part of it, and no more
+ * than that (not the gap between cards, not the space above/below).
  *
- * `Container.setInteractive()` with no arguments doesn't reliably pick
- * up the container's `setSize()` bounds the way a Sprite's texture size
- * does - without an explicit hit area, only part of the card (often
- * just a corner) ends up clickable. Passing an explicit Rectangle
- * matching the card's actual drawn bounds (local 0,0 to CARD_W,CARD_H,
- * matching how its background rectangles are positioned above) fixes
- * that, covering the full card including the inner blue scene area. */
-export function makePostcardClickable(card: GameObjects.Container, onClick: () => void): void {
-  card.setInteractive(new Phaser.Geom.Rectangle(0, 0, CARD_W, CARD_H), Phaser.Geom.Rectangle.Contains);
-  if (card.input) {
-    card.input.cursor = "pointer";
-  }
-  card.on("pointerdown", onClick);
+ * Earlier versions tried `container.setInteractive(customRectangle)`.
+ * That turned out to be unreliable in practice - clicks well outside
+ * a card's drawn bounds (in the gap between cards, or well above/left
+ * of them) were registering as hits. Rectangles have real, intrinsic
+ * width/height/origin, so letting Phaser compute the hit area itself
+ * from the card's own background rectangle - the same technique used
+ * for every other clickable thing in this codebase - is the reliable
+ * path, rather than fighting a custom hit area on a Container (which
+ * has no intrinsic size of its own). */
+export function makePostcardClickable(postcard: Postcard, onClick: () => void): void {
+  postcard.hitArea.setInteractive({ useHandCursor: true });
+  postcard.hitArea.on("pointerdown", onClick);
 }
 
 /** Fisher-Yates shuffle of [0, 1, ..., n-1]. */
