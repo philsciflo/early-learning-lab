@@ -38,13 +38,17 @@ export function buildBagSpots(npcSide: Side): Point[] {
   const treeCenter = { x: TREE_LOCAL_X, y: TREE_LOCAL_Y };
 
   // Authored for "npc on the left"; mirrored below if npc is on the
-  // right. Picked to spread across different heights/distances so the
-  // cards look visually distinct, not just left/right twins.
+  // right. All four sit at the same ground height as the tree/NPC and
+  // differ only in which side (and how far) - earlier versions varied
+  // height too, but a bag floating above/below the tree doesn't *look*
+  // blocked by anything in a small thumbnail, even when the "opposite
+  // side" rule says it should be hidden. Same-height, same-side-vs-not
+  // is what actually reads clearly at this size.
   const left = {
     visible: { x: TREE_LOCAL_X - 85, y: TREE_LOCAL_Y },
-    hiddenA: { x: TREE_LOCAL_X + 85, y: TREE_LOCAL_Y },
-    hiddenB: { x: TREE_LOCAL_X + 45, y: TREE_LOCAL_Y - 70 },
-    hiddenC: { x: TREE_LOCAL_X + 55, y: TREE_LOCAL_Y + 45 },
+    hiddenA: { x: TREE_LOCAL_X + 40, y: TREE_LOCAL_Y }, // tucked right behind the trunk
+    hiddenB: { x: TREE_LOCAL_X + 85, y: TREE_LOCAL_Y }, // mirrors "visible", opposite side
+    hiddenC: { x: TREE_LOCAL_X + 135, y: TREE_LOCAL_Y }, // further past the tree
   };
 
   const mirror = (p: Point): Point => ({ x: 2 * TREE_LOCAL_X - p.x, y: p.y });
@@ -126,6 +130,23 @@ export function buildPostcard(scene: Scene, position: Point, npcSide: Side, bagP
   container.setSize(CARD_W, CARD_H);
 
   return container;
+}
+
+/** Makes a whole postcard clickable, not just part of it.
+ *
+ * `Container.setInteractive()` with no arguments doesn't reliably pick
+ * up the container's `setSize()` bounds the way a Sprite's texture size
+ * does - without an explicit hit area, only part of the card (often
+ * just a corner) ends up clickable. Passing an explicit Rectangle
+ * matching the card's actual drawn bounds (local 0,0 to CARD_W,CARD_H,
+ * matching how its background rectangles are positioned above) fixes
+ * that, covering the full card including the inner blue scene area. */
+export function makePostcardClickable(card: GameObjects.Container, onClick: () => void): void {
+  card.setInteractive(new Phaser.Geom.Rectangle(0, 0, CARD_W, CARD_H), Phaser.Geom.Rectangle.Contains);
+  if (card.input) {
+    card.input.cursor = "pointer";
+  }
+  card.on("pointerdown", onClick);
 }
 
 /** Fisher-Yates shuffle of [0, 1, ..., n-1]. */

@@ -3,9 +3,22 @@ import { Scene, GameObjects } from "phaser";
 import { WIDTH, HEIGHT, PLAYER_ID_DATA_KEY } from "../constants.ts";
 import { playChime, playGentleMiss } from "../audio.ts";
 import { recordTrial, Side } from "../scoring.ts";
-import { CARD_W, CARD_H, buildBagSpots, buildPostcard, gridSlotPositions, shuffledIndices } from "../postcardScene.ts";
+import {
+  CARD_W,
+  CARD_H,
+  CARD_GAP,
+  buildBagSpots,
+  buildPostcard,
+  gridSlotPositions,
+  shuffledIndices,
+  makePostcardClickable,
+} from "../postcardScene.ts";
 
-const GRID_X = (WIDTH - CARD_W) / 2;
+// Centers the PAIR of cards (2 * CARD_W + the gap between them), not
+// just a single card width - that was the bug: using (WIDTH - CARD_W) / 2
+// only centers one card, so the second card (placed CARD_W + CARD_GAP to
+// its right) ran off the right edge of the canvas.
+const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
 const GRID_Y = 220;
 
 /**
@@ -91,8 +104,7 @@ export class Level3 extends Scene {
 
     order.forEach((spotIndex, slot) => {
       const card = buildPostcard(this, slotPositions[slot], this.npcSide, bagSpots[spotIndex]);
-      card.setInteractive({ useHandCursor: true });
-      card.on("pointerdown", () => this.onCardClicked(card));
+      makePostcardClickable(card, () => this.onCardClicked(card));
       this.cards.push(card);
     });
   }
