@@ -30,6 +30,10 @@ const GRID_Y = 220;
  */
 export class Level3 extends Scene {
   private cards: GameObjects.Container[] = [];
+  // The interactive element for each card is its background rectangle,
+  // not the container itself (see makePostcardClickable) - tracked in
+  // the same order as `cards` so disabling input after a click is easy.
+  private hitAreas: GameObjects.Rectangle[] = [];
   private correctCardIndex: number;
   private npcSide: Side;
   private answered = false;
@@ -90,8 +94,9 @@ export class Level3 extends Scene {
     this.answered = false;
     this.roundStartMs = Date.now();
     this.feedbackText.setText("");
-    this.cards.forEach((card) => card.destroy());
+    this.cards.forEach((card) => card.destroy()); // also destroys each hitArea, as a child
     this.cards = [];
+    this.hitAreas = [];
     this.marks.forEach((mark) => mark.destroy());
     this.marks = [];
     this.tryAgainButton?.destroy();
@@ -107,9 +112,10 @@ export class Level3 extends Scene {
     const slotPositions = gridSlotPositions(2, GRID_X, GRID_Y);
 
     order.forEach((spotIndex, slot) => {
-      const card = buildPostcard(this, slotPositions[slot], this.npcSide, bagSpots[spotIndex]);
-      makePostcardClickable(card, () => this.onCardClicked(card));
-      this.cards.push(card);
+      const postcard = buildPostcard(this, slotPositions[slot], this.npcSide, bagSpots[spotIndex]);
+      makePostcardClickable(postcard, () => this.onCardClicked(postcard.container));
+      this.cards.push(postcard.container);
+      this.hitAreas.push(postcard.hitArea);
     });
   }
 
@@ -123,7 +129,7 @@ export class Level3 extends Scene {
     const correct = clickedIndex === this.correctCardIndex;
     const timeToChoiceMs = Date.now() - this.roundStartMs;
 
-    this.cards.forEach((c) => c.disableInteractive());
+    this.hitAreas.forEach((h) => h.disableInteractive());
 
     const feedbackCtx: FeedbackContext = {
       scene: this,
