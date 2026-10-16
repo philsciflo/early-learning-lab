@@ -1,17 +1,18 @@
 import { Scene, GameObjects } from "phaser";
 
 import { WIDTH, HEIGHT, PLAYER_ID_DATA_KEY } from "../constants.ts";
-import { playChime, playGentleMiss } from "../audio.ts";
 import { recordTrial, Side } from "../scoring.ts";
 import {
   CARD_W,
-  CARD_H,
   CARD_GAP,
   buildBagSpots,
   buildPostcard,
   gridSlotPositions,
   shuffledIndices,
   makePostcardClickable,
+  celebrateCard,
+  commiserateCard,
+  FeedbackContext,
 } from "../postcardScene.ts";
 
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
@@ -34,6 +35,7 @@ export class Level4 extends Scene {
   private sparkles: GameObjects.Particles.ParticleEmitter;
   private audioContext?: AudioContext;
   private tryAgainButton?: GameObjects.Text;
+  private marks: GameObjects.Text[] = [];
 
   constructor() {
     super("Level4");
@@ -87,6 +89,8 @@ export class Level4 extends Scene {
     this.feedbackText.setText("");
     this.cards.forEach((card) => card.destroy());
     this.cards = [];
+    this.marks.forEach((mark) => mark.destroy());
+    this.marks = [];
     this.tryAgainButton?.destroy();
     this.tryAgainButton = undefined;
 
@@ -119,59 +123,22 @@ export class Level4 extends Scene {
 
     this.cards.forEach((c) => c.disableInteractive());
 
+    const feedbackCtx: FeedbackContext = {
+      scene: this,
+      feedbackText: this.feedbackText,
+      sparkles: this.sparkles,
+      marks: this.marks,
+      playSound: (fn) => this.playSound(fn),
+    };
+
     if (correct) {
-      this.celebrate(card);
+      celebrateCard(feedbackCtx, card);
     } else {
-      this.commiserate(card);
+      commiserateCard(feedbackCtx, card, this.cards[this.correctCardIndex]);
     }
 
     this.recordChoice(clickedIndex, correct, timeToChoiceMs, false);
     this.createTryAgainButton();
-  }
-
-  private celebrate(card: GameObjects.Container) {
-    this.feedbackText.setText("🎉 Yes! Jerry can see the bag there!").setColor("#2e7d32");
-    this.sparkles.emitParticleAt(card.x + CARD_W / 2, card.y + CARD_H / 2, 30);
-
-    this.tweens.add({
-      targets: card,
-      scale: 1.05,
-      duration: 180,
-      yoyo: true,
-      repeat: 1,
-      ease: "Sine.easeOut",
-    });
-
-    this.playSound(playChime);
-  }
-
-  private commiserate(card: GameObjects.Container) {
-    this.feedbackText.setText("😅 Not quite - Jerry can't see it there!").setColor("#c0392b");
-
-    this.tweens.add({
-      targets: card,
-      x: card.x - 8,
-      duration: 60,
-      yoyo: true,
-      repeat: 4,
-      ease: "Sine.easeInOut",
-    });
-
-    this.playSound(playGentleMiss);
-
-    // Gently reveal the correct answer, so a wrong guess is still a
-    // learning moment.
-    const correctCard = this.cards[this.correctCardIndex];
-    this.time.delayedCall(500, () => {
-      this.tweens.add({
-        targets: correctCard,
-        scale: 1.08,
-        duration: 300,
-        yoyo: true,
-        repeat: 2,
-        ease: "Sine.easeInOut",
-      });
-    });
   }
 
   private playSound(fn: (ctx: AudioContext) => void) {

@@ -2,6 +2,7 @@ import { Scene, GameObjects } from "phaser";
 
 import { canSee } from "./lineOfSight.ts";
 import { Side } from "./scoring.ts";
+import { playChime, playGentleMiss } from "./audio.ts";
 
 export type Point = { x: number; y: number };
 
@@ -157,4 +158,81 @@ export function shuffledIndices(n: number): number[] {
     [order[i], order[j]] = [order[j], order[i]];
   }
   return order;
+}
+
+export type FeedbackContext = {
+  scene: Scene;
+  feedbackText: GameObjects.Text;
+  sparkles: GameObjects.Particles.ParticleEmitter;
+  /** Any ✗/✓ marks created by celebrate/commiserate get pushed here, so
+   * the caller can destroy them all in one go at the start of the next
+   * round (same lifecycle as `cards`). */
+  marks: GameObjects.Text[];
+  playSound: (fn: (ctx: AudioContext) => void) => void;
+};
+
+export function celebrateCard(ctx: FeedbackContext, card: GameObjects.Container): void {
+  ctx.feedbackText.setText("🎉 Yes! Jerry can see the bag there!").setColor("#2e7d32");
+  ctx.sparkles.emitParticleAt(card.x + CARD_W / 2, card.y + CARD_H / 2, 30);
+
+  ctx.scene.tweens.add({ targets: card, scale: 1.05, duration: 180, yoyo: true, repeat: 1, ease: "Sine.easeOut" });
+
+  ctx.playSound(playChime);
+}
+
+/**
+ * A wrong guess shakes the card the child actually clicked AND (after a
+ * short beat) reveals the correct card elsewhere on screen. Without a
+ * clear marker, that reads as "I clicked here but something happened
+ * over there" - a big ✗ on the clicked card and a big ✓ on the correct
+ * one make the two distinct reactions unambiguous.
+ */
+export function commiserateCard(ctx: FeedbackContext, clickedCard: GameObjects.Container, correctCard: GameObjects.Container): void {
+  ctx.feedbackText.setText("😅 Not quite - the ✓ shows where Jerry could see it!").setColor("#c0392b");
+
+  const wrongMark = ctx.scene.add
+    .text(clickedCard.x + CARD_W / 2, clickedCard.y + CARD_H / 2, "✗", {
+      fontFamily: "Arial Black",
+      fontSize: 72,
+      color: "#c0392b",
+    })
+    .setOrigin(0.5)
+    .setAlpha(0)
+    .setDepth(10);
+  ctx.marks.push(wrongMark);
+  ctx.scene.tweens.add({ targets: wrongMark, alpha: 1, duration: 200 });
+
+  ctx.scene.tweens.add({
+    targets: clickedCard,
+    x: clickedCard.x - 8,
+    duration: 60,
+    yoyo: true,
+    repeat: 4,
+    ease: "Sine.easeInOut",
+  });
+
+  ctx.playSound(playGentleMiss);
+
+  ctx.scene.time.delayedCall(500, () => {
+    const rightMark = ctx.scene.add
+      .text(correctCard.x + CARD_W / 2, correctCard.y + CARD_H / 2, "✓", {
+        fontFamily: "Arial Black",
+        fontSize: 72,
+        color: "#2e7d32",
+      })
+      .setOrigin(0.5)
+      .setAlpha(0)
+      .setDepth(10);
+    ctx.marks.push(rightMark);
+    ctx.scene.tweens.add({ targets: rightMark, alpha: 1, scale: { from: 0.4, to: 1 }, duration: 300, ease: "Back.easeOut" });
+
+    ctx.scene.tweens.add({
+      targets: correctCard,
+      scale: 1.08,
+      duration: 300,
+      yoyo: true,
+      repeat: 2,
+      ease: "Sine.easeInOut",
+    });
+  });
 }
