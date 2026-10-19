@@ -227,7 +227,7 @@ export function celebrateCard(
   ctx: FeedbackContext,
   card: GameObjects.Container,
 ): void {
-  ctx.successBanner.show("🎉 Yes! Jerry can see the bag there!");
+  ctx.successBanner.show("🎉 Yes! Milo can see the bag there!");
   ctx.sparkles.emitParticleAt(card.x + CARD_W / 2, card.y + CARD_H / 2, 30);
 
   playBigSuccessPop(ctx.scene, card, {
@@ -253,7 +253,7 @@ export function commiserateCard(
   correctCard: GameObjects.Container,
 ): void {
   ctx.feedbackText
-    .setText("😅 Not quite - the ✓ shows where Jerry could see it!")
+    .setText("😅 Not quite - the ✓ shows where Milo could see it!")
     .setColor("#c0392b");
 
   const wrongMark = ctx.scene.add
