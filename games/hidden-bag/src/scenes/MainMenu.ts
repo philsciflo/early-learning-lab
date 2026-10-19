@@ -127,7 +127,7 @@ export class MainMenu extends Scene {
       );
 
     this.add
-      .text(WIDTH / 2, 60, "Hidden Bag", {
+      .text(WIDTH / 2, 60, "Tiro", {
         fontFamily: "Arial Black",
         fontSize: 48,
         color: "#2b2a6b",
