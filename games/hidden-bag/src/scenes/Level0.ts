@@ -26,16 +26,23 @@ export class Level0 extends Scene {
   create() {
     this.add.rectangle(0, 0, WIDTH, HEIGHT, SKY_COLOUR).setOrigin(0, 0);
 
+    // At fontSize 32, "Drag the star around!" (22 chars) is ~408px wide
+    // (~0.58 * fontSize per char for bold Arial Black), spanning
+    // roughly x=372..780 centered on WIDTH/2=576 - comfortably clear of
+    // both the top-left ("← Back", right edge ~151) and top-right
+    // ("Continue →", left edge ~954) button columns. wordWrap is a
+    // safety net in case that ever changes.
     this.add
       .text(WIDTH / 2, 40, "Drag the star around!", {
         fontFamily: "Arial Black",
         fontSize: 32,
         color: "#2b2a6b",
         align: "center",
+        wordWrap: { width: 760 },
       })
       .setOrigin(0.5, 0);
 
-    this.createContinueButton();
+    this.createFacilitatorButtons();
 
     // A small generated texture for the sparkle particles - no asset
     // file needed.
@@ -112,10 +119,21 @@ export class Level0 extends Scene {
     playChime(this.audioContext);
   }
 
-  /** A researcher/facilitator control: move on to the real task whenever
-   * they judge the child is comfortable with dragging, rather than on a
-   * fixed timer. */
-  private createContinueButton() {
+  /** Researcher/facilitator controls: move on to the real task whenever
+   * they judge the child is comfortable with dragging (rather than on a
+   * fixed timer), or step back to the menu - matching every other
+   * level's top-left/top-right button convention. */
+  private createFacilitatorButtons() {
+    const back = createButton(this, 24, 24, "← Back", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [0, 0],
+    });
+    back.hitArea.on("pointerdown", () => {
+      this.scene.start("MainMenu");
+    });
+
     const button = createButton(this, WIDTH - 24, 24, "Continue →", {
       variant: "secondary",
       height: 48,

@@ -58,18 +58,20 @@ export class Level3 extends Scene {
   create() {
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0xf2f4fa).setOrigin(0, 0);
 
+    // At fontSize 22, "Click the postcard where Milo can see their
+    // bag!" (48 chars) is ~613px wide (~0.58 * fontSize per char for
+    // bold Arial Black), spanning roughly x=270..882 centered on
+    // WIDTH/2=576 - clear of both the top-left ("← Back", right edge
+    // ~151) and top-right ("Next Level →", left edge ~931) button
+    // columns. wordWrap is a safety net in case that ever changes.
     this.add
-      .text(
-        WIDTH / 2,
-        36,
-        "Click the postcard where Jerry can see their bag!",
-        {
-          fontFamily: "Arial Black",
-          fontSize: 28,
-          color: "#2b2a6b",
-          align: "center",
-        },
-      )
+      .text(WIDTH / 2, 36, "Click the postcard where Milo can see their bag!", {
+        fontFamily: "Arial Black",
+        fontSize: 22,
+        color: "#2b2a6b",
+        align: "center",
+        wordWrap: { width: 760 },
+      })
       .setOrigin(0.5, 0);
 
     this.createFacilitatorButtons();
@@ -197,6 +199,19 @@ export class Level3 extends Scene {
 
   /** Facilitator controls, matching Level1/Level2's convention. */
   private createFacilitatorButtons() {
+    const back = createButton(this, 24, 24, "← Back", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [0, 0],
+    });
+    back.hitArea.on("pointerdown", () => {
+      if (!this.answered) {
+        this.recordChoice(null, null, null, true);
+      }
+      this.scene.start("Level2");
+    });
+
     const nextLevel = createButton(this, WIDTH - 24, 24, "Next Level →", {
       variant: "secondary",
       height: 48,

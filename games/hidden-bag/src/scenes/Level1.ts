@@ -16,7 +16,6 @@ import { createButton, playBigSuccessPop } from "../ui.ts";
 
 export class Level1 extends Scene {
   private env: HiddenBagEnvironment;
-  private speechBubble: GameObjects.Text;
   private sparkles: GameObjects.Particles.ParticleEmitter;
 
   // Whether the NPC can currently see the bag. Unlike a one-shot "solved"
@@ -64,27 +63,23 @@ export class Level1 extends Scene {
       this.onValidDrag(x, y),
     );
 
+    // At fontSize 32, "Help your friend spot the bag!" (30 chars) is
+    // ~556px wide (~0.58 * fontSize per char for bold Arial Black),
+    // spanning roughly x=298..854 centered on WIDTH/2=576 - clear of
+    // both the top-left ("← Back", right edge ~151) and top-right
+    // ("Next Level →", left edge ~931) button columns. wordWrap is a
+    // safety net in case that ever changes.
     this.add
       .text(WIDTH / 2, 40, "Help your friend spot the bag!", {
         fontFamily: "Arial Black",
         fontSize: 32,
         color: "#2b2a6b",
         align: "center",
+        wordWrap: { width: 760 },
       })
       .setOrigin(0.5, 0);
 
     this.createFacilitatorButtons();
-
-    this.speechBubble = this.add
-      .text(this.env.npcEyeX, this.env.npcEyeY - 110, "Hey, there's my bag!", {
-        fontFamily: "Arial Black",
-        fontSize: 22,
-        color: "#2b2a6b",
-        backgroundColor: "#ffffff",
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(0.5, 1)
-      .setAlpha(0);
   }
 
   private onValidDrag(x: number, y: number) {
@@ -101,6 +96,17 @@ export class Level1 extends Scene {
    * next part of the session on demand (rather than any automatic
    * completion), or end the whole session early from here if needed. */
   private createFacilitatorButtons() {
+    const back = createButton(this, 24, 24, "← Back", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [0, 0],
+    });
+    back.hitArea.on("pointerdown", () => {
+      this.finishTrial();
+      this.scene.start("Level0");
+    });
+
     const nextLevel = createButton(this, WIDTH - 24, 24, "Next Level →", {
       variant: "secondary",
       height: 48,
@@ -172,27 +178,17 @@ export class Level1 extends Scene {
       this.timeToSuccessMs = Date.now() - this.trialStartMs;
     }
 
+    // The NPC's colour change, bounce, and speech-bubble swap are all
+    // handled centrally (see hiddenBagScene.ts's setNpcSeesBag) so this
+    // and Level2 can't drift out of sync with each other.
+    this.env.setNpcSeesBag(visible);
+
     if (visible) {
       playBigSuccessPop(this, this.env.bag, {
         flashWidth: 100,
         flashHeight: 130,
       });
       this.sparkles.emitParticleAt(this.env.bag.x, this.env.bag.y, 30);
-
-      // Only animate scaleY here, not the "scale" shorthand - the NPC
-      // may be horizontally flipped (scaleX = -1) to face the tree, and
-      // a uniform `scale` tween would overwrite that flip.
-      this.tweens.add({
-        targets: this.env.npc,
-        scaleY: 1.08,
-        duration: 200,
-        yoyo: true,
-        ease: "Sine.easeOut",
-      });
-
-      this.tweens.add({ targets: this.speechBubble, alpha: 1, duration: 300 });
-    } else {
-      this.tweens.add({ targets: this.speechBubble, alpha: 0, duration: 200 });
     }
   }
 }
