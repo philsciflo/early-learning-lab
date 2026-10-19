@@ -1,6 +1,14 @@
 import { Scene, GameObjects } from "phaser";
 
-import { WIDTH, HALF_WIDTH, PLAYER_ID_DATA_KEY } from "../constants.ts";
+import {
+  WIDTH,
+  HEIGHT,
+  HALF_WIDTH,
+  PLAYER_ID_DATA_KEY,
+  SKY_COLOUR,
+  GROUND_COLOUR,
+  GROUND_Y,
+} from "../constants.ts";
 import {
   getScoreDataJSONString,
   getScoreDataCSVString,
@@ -31,6 +39,28 @@ const LABEL_STYLE = {
   fontSize: 24,
   color: "#2b2a6b",
 };
+
+// Semi-transparent card behind the Player ID / Age / Location rows, so
+// the form reads as one grouped panel instead of loose floating text -
+// purely decorative, sized with margin around LABEL_X/FIELD_X/ROW_*_Y
+// above, well clear of the Start button and ERROR_Y below it.
+const FORM_PANEL_X = HALF_WIDTH - 320;
+const FORM_PANEL_Y = 180;
+const FORM_PANEL_WIDTH = 640;
+const FORM_PANEL_HEIGHT = 250;
+
+/** A soft, cheap cloud - a cluster of overlapping circles, no asset
+ * files - used to decorate MainMenu's sky so it doesn't read as flat
+ * next to the levels, which all paint a full sky/ground/tree scene. */
+function drawCloud(scene: Scene, x: number, y: number, scale: number) {
+  const g = scene.add.graphics();
+  g.fillStyle(0xffffff, 0.85);
+  g.fillCircle(x, y, 26 * scale);
+  g.fillCircle(x + 28 * scale, y + 6 * scale, 20 * scale);
+  g.fillCircle(x - 28 * scale, y + 6 * scale, 20 * scale);
+  g.fillCircle(x + 10 * scale, y - 14 * scale, 18 * scale);
+  g.fillCircle(x - 12 * scale, y - 12 * scale, 16 * scale);
+}
 
 /** Matches the example in the spec: "hidden-bag-data-2026-10-19T0310Z" -
  * timestamped so repeated exports during a session don't overwrite
@@ -74,6 +104,28 @@ export class MainMenu extends Scene {
   }
 
   create() {
+    // Decorative backdrop only - painted first so it sits behind every
+    // other element below (title, labels, inputs, buttons), none of
+    // which are touched here.
+    this.add.rectangle(0, 0, WIDTH, GROUND_Y, SKY_COLOUR).setOrigin(0, 0);
+    this.add
+      .rectangle(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y, GROUND_COLOUR)
+      .setOrigin(0, 0);
+    drawCloud(this, 150, 90, 1);
+    drawCloud(this, 1010, 95, 0.85);
+    drawCloud(this, 1000, 480, 0.6);
+
+    this.add
+      .graphics()
+      .fillStyle(0xffffff, 0.55)
+      .fillRoundedRect(
+        FORM_PANEL_X,
+        FORM_PANEL_Y,
+        FORM_PANEL_WIDTH,
+        FORM_PANEL_HEIGHT,
+        24,
+      );
+
     this.add
       .text(WIDTH / 2, 60, "Hidden Bag", {
         fontFamily: "Arial Black",
