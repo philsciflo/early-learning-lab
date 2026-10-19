@@ -23,7 +23,7 @@ export type BaseTrialData = {
   endedByFacilitator: boolean;
 };
 
-/** Level 1: free drag, with live "can Jerry see it yet" feedback the
+/** Level 1: free drag, with live "can Milo see it yet" feedback the
  * whole time. There's no single right/wrong moment - the child can
  * drag in and out of view freely - so what's recorded is the full
  * trajectory plus whether/when a success happened at all. */
@@ -38,7 +38,7 @@ export type Level1TrialData = BaseTrialData & {
 
 /** Level 2: the same drag task, but blind - no live feedback. The
  * child commits to a single final position (via the "Done" button),
- * and only then finds out if Jerry could actually see it there. */
+ * and only then finds out if Milo could actually see it there. */
 export type Level2TrialData = BaseTrialData & {
   level: "Level2";
   bagStartSide: Side;
