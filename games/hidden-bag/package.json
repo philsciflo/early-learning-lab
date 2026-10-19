@@ -1,5 +1,5 @@
 {
-  "name": "hidden-bag",
+  "name": "tiro",
   "packageManager": "yarn@4.5.1",
   "devDependencies": {
     "terser": "^5.31.0",

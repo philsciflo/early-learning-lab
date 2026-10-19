@@ -1,4 +1,4 @@
-# Hidden Bag
+# Tiro
 
 A Level-1 visual perspective-taking game: an NPC is standing near a tree and
 cannot see a bag that starts out hidden behind it. The player drags the bag
