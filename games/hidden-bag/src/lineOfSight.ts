@@ -1,7 +1,7 @@
-export interface Point {
+export type Point = {
   x: number;
   y: number;
-}
+};
 
 /**
  * Can `viewer` see `target`, given that `blocker` (the tree) sits

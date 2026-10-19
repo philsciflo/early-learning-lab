@@ -2,6 +2,7 @@ import { Scene, GameObjects } from "phaser";
 
 import { WIDTH, HEIGHT, SKY_COLOUR } from "../constants.ts";
 import { playChime } from "../audio.ts";
+import { createButton } from "../ui.ts";
 
 const STAR_RADIUS = 36;
 const DRAG_MARGIN = STAR_RADIUS;
@@ -60,34 +61,46 @@ export class Level0 extends Scene {
 
     this.input.on(
       "drag",
-      (_pointer: Phaser.Input.Pointer, gameObject: GameObjects.GameObject, dragX: number, dragY: number) => {
+      (
+        _pointer: Phaser.Input.Pointer,
+        gameObject: GameObjects.GameObject,
+        dragX: number,
+        dragY: number,
+      ) => {
         if (gameObject !== this.star) {
           return;
         }
 
-        this.star.x = Phaser.Math.Clamp(dragX, DRAG_MARGIN, WIDTH - DRAG_MARGIN);
+        this.star.x = Phaser.Math.Clamp(
+          dragX,
+          DRAG_MARGIN,
+          WIDTH - DRAG_MARGIN,
+        );
         this.star.y = Phaser.Math.Clamp(dragY, 90, HEIGHT - DRAG_MARGIN);
 
         this.sparkles.emitParticleAt(this.star.x, this.star.y, 2);
       },
     );
 
-    this.input.on("dragend", (_pointer: Phaser.Input.Pointer, gameObject: GameObjects.GameObject) => {
-      if (gameObject !== this.star) {
-        return;
-      }
+    this.input.on(
+      "dragend",
+      (_pointer: Phaser.Input.Pointer, gameObject: GameObjects.GameObject) => {
+        if (gameObject !== this.star) {
+          return;
+        }
 
-      this.sparkles.emitParticleAt(this.star.x, this.star.y, 24);
-      this.playRewardChime();
+        this.sparkles.emitParticleAt(this.star.x, this.star.y, 24);
+        this.playRewardChime();
 
-      this.tweens.add({
-        targets: this.star,
-        scale: 1.25,
-        duration: 180,
-        yoyo: true,
-        ease: "Sine.easeOut",
-      });
-    });
+        this.tweens.add({
+          targets: this.star,
+          scale: 1.25,
+          duration: 180,
+          yoyo: true,
+          ease: "Sine.easeOut",
+        });
+      },
+    );
   }
 
   private playRewardChime() {
@@ -103,18 +116,15 @@ export class Level0 extends Scene {
    * they judge the child is comfortable with dragging, rather than on a
    * fixed timer. */
   private createContinueButton() {
-    this.add
-      .text(WIDTH - 24, 24, "Continue →", {
-        fontFamily: "Arial Black",
-        fontSize: 20,
-        color: "#ffffff",
-        backgroundColor: "#2b2a6b",
-        padding: { x: 14, y: 10 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        this.scene.start("Level1");
-      });
+    const button = createButton(this, WIDTH - 24, 24, "Continue →", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [1, 0],
+    });
+
+    button.hitArea.on("pointerdown", () => {
+      this.scene.start("Level1");
+    });
   }
 }

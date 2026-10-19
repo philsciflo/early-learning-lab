@@ -1,10 +1,20 @@
 import { Scene, GameObjects } from "phaser";
 
-import { WIDTH, HEIGHT, TREE_CENTER_X, TREE_CENTER_Y, PLAYER_ID_DATA_KEY } from "../constants.ts";
+import {
+  WIDTH,
+  HEIGHT,
+  TREE_CENTER_X,
+  TREE_CENTER_Y,
+  PLAYER_ID_DATA_KEY,
+} from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
-import { createHiddenBagEnvironment, HiddenBagEnvironment } from "../hiddenBagScene.ts";
+import {
+  createHiddenBagEnvironment,
+  HiddenBagEnvironment,
+} from "../hiddenBagScene.ts";
 import { playChime, playGentleMiss } from "../audio.ts";
 import { recordTrial, DragPoint } from "../scoring.ts";
+import { createButton } from "../ui.ts";
 
 /**
  * Level 2: the same drag-the-bag task as Level 1, but blind. There is
@@ -61,7 +71,9 @@ export class Level2 extends Scene {
     // createHiddenBagEnvironment() paints the full-screen sky/ground
     // background - it must run before anything else that should be
     // visible on top of it (title, buttons), not after.
-    this.env = createHiddenBagEnvironment(this, (x, y) => this.onValidDrag(x, y));
+    this.env = createHiddenBagEnvironment(this, (x, y) =>
+      this.onValidDrag(x, y),
+    );
 
     this.add
       .text(WIDTH / 2, 40, "Where do you think Jerry can see the bag?", {
@@ -140,21 +152,37 @@ export class Level2 extends Scene {
   }
 
   private celebrate() {
-    this.feedbackText.setText("🎉 Yes! Jerry can see it there!").setColor("#2e7d32");
+    this.feedbackText
+      .setText("🎉 Yes! Jerry can see it there!")
+      .setColor("#2e7d32");
     this.speechBubble.setText("Hey, there's my bag!");
     this.sparkles.emitParticleAt(this.env.bag.x, this.env.bag.y, 30);
 
-    this.tweens.add({ targets: this.env.bag, scale: 1.15, duration: 200, yoyo: true, ease: "Sine.easeOut" });
+    this.tweens.add({
+      targets: this.env.bag,
+      scale: 1.15,
+      duration: 200,
+      yoyo: true,
+      ease: "Sine.easeOut",
+    });
     // scaleY only, not "scale" - preserves the NPC's possible horizontal
     // flip (facing left/right toward the tree).
-    this.tweens.add({ targets: this.env.npc, scaleY: 1.08, duration: 200, yoyo: true, ease: "Sine.easeOut" });
+    this.tweens.add({
+      targets: this.env.npc,
+      scaleY: 1.08,
+      duration: 200,
+      yoyo: true,
+      ease: "Sine.easeOut",
+    });
     this.tweens.add({ targets: this.speechBubble, alpha: 1, duration: 300 });
 
     this.playSound(playChime);
   }
 
   private commiserate() {
-    this.feedbackText.setText("😅 Not quite - try again next time!").setColor("#c0392b");
+    this.feedbackText
+      .setText("😅 Not quite - try again next time!")
+      .setColor("#c0392b");
     this.speechBubble.setText("I still can't see it...");
 
     this.tweens.add({
@@ -179,39 +207,33 @@ export class Level2 extends Scene {
 
   /** Facilitator controls, matching Level1's convention. */
   private createFacilitatorButtons() {
-    this.add
-      .text(WIDTH - 24, 24, "Next Level →", {
-        fontFamily: "Arial Black",
-        fontSize: 20,
-        color: "#ffffff",
-        backgroundColor: "#2b2a6b",
-        padding: { x: 14, y: 10 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        this.finishTrial();
-        this.scene.start("Level3");
-      });
+    const nextLevel = createButton(this, WIDTH - 24, 24, "Next Level →", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [1, 0],
+    });
+    nextLevel.hitArea.on("pointerdown", () => {
+      this.finishTrial();
+      this.scene.start("Level3");
+    });
 
-    this.add
-      .text(WIDTH - 24, 70, "End Test", {
-        fontFamily: "Arial",
-        fontSize: 16,
-        color: "#2b2a6b",
-        backgroundColor: "#f2f4fa",
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        this.finishTrial();
-        this.scene.start("GameOver");
-      });
+    const endTest = createButton(this, WIDTH - 24, 88, "End Test", {
+      variant: "muted",
+      height: 48,
+      fontSize: 15,
+      origin: [1, 0],
+    });
+    endTest.hitArea.on("pointerdown", () => {
+      this.finishTrial();
+      this.scene.start("GameOver");
+    });
   }
 
   private finishTrial() {
-    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as string | undefined;
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
+      | string
+      | undefined;
     if (!playerId) {
       return;
     }

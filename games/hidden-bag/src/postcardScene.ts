@@ -25,7 +25,10 @@ const NPC_EYE_Y_OFFSET = -18; // eye point is a bit above the NPC's feet
 
 export function npcEyeLocal(side: Side): Point {
   const sign = side === "left" ? -1 : 1;
-  return { x: TREE_LOCAL_X + sign * NPC_DISTANCE_FROM_TREE, y: TREE_LOCAL_Y + NPC_EYE_Y_OFFSET };
+  return {
+    x: TREE_LOCAL_X + sign * NPC_DISTANCE_FROM_TREE,
+    y: TREE_LOCAL_Y + NPC_EYE_Y_OFFSET,
+  };
 }
 
 /** Four candidate bag positions in the mini-scene's local coordinates.
@@ -67,15 +70,21 @@ export function buildBagSpots(npcSide: Side): Point[] {
 
   const visibility = ordered.map((p) => canSee(npcEye, p, treeCenter));
   if (visibility[0] !== true || visibility.slice(1).some((v) => v === true)) {
-    // eslint-disable-next-line no-console
-    console.warn("postcardScene: bag spot visibility assumptions do not hold", visibility);
+    console.warn(
+      "postcardScene: bag spot visibility assumptions do not hold",
+      visibility,
+    );
   }
 
   return ordered;
 }
 
 /** Grid slot positions for 2 (side by side) or 4 (2x2) postcards. */
-export function gridSlotPositions(numOptions: 2 | 4, gridX: number, gridY: number): Point[] {
+export function gridSlotPositions(
+  numOptions: 2 | 4,
+  gridX: number,
+  gridY: number,
+): Point[] {
   const topRow = [
     { x: gridX, y: gridY },
     { x: gridX + CARD_W + CARD_GAP, y: gridY },
@@ -100,21 +109,38 @@ export type Postcard = {
 /** Draws one postcard (tree + NPC + bag at `bagPosition`) at `position`.
  * Does not wire up the click handler - callers attach their own
  * "pointerdown" listener via makePostcardClickable(). */
-export function buildPostcard(scene: Scene, position: Point, npcSide: Side, bagPosition: Point): Postcard {
+export function buildPostcard(
+  scene: Scene,
+  position: Point,
+  npcSide: Side,
+  bagPosition: Point,
+): Postcard {
   const container = scene.add.container(position.x, position.y);
 
-  const cardBg = scene.add.rectangle(0, 0, CARD_W, CARD_H, 0xffffff).setOrigin(0, 0).setStrokeStyle(3, 0xcfd6e8);
+  const cardBg = scene.add
+    .rectangle(0, 0, CARD_W, CARD_H, 0xffffff)
+    .setOrigin(0, 0)
+    .setStrokeStyle(3, 0xcfd6e8);
   container.add(cardBg);
 
-  const sceneBg = scene.add.rectangle(SCENE_OFFSET_X, SCENE_OFFSET_Y, SCENE_W, SCENE_H, 0x9fd8ff).setOrigin(0, 0);
+  const sceneBg = scene.add
+    .rectangle(SCENE_OFFSET_X, SCENE_OFFSET_Y, SCENE_W, SCENE_H, 0x9fd8ff)
+    .setOrigin(0, 0);
   container.add(sceneBg);
 
-  const localToCard = (p: Point) => ({ x: SCENE_OFFSET_X + p.x, y: SCENE_OFFSET_Y + p.y });
+  const localToCard = (p: Point) => ({
+    x: SCENE_OFFSET_X + p.x,
+    y: SCENE_OFFSET_Y + p.y,
+  });
 
   // Tree
   const treePos = localToCard({ x: TREE_LOCAL_X, y: TREE_LOCAL_Y });
-  const trunk = scene.add.rectangle(treePos.x, treePos.y + 10, 10, 46, 0x8a5a2a).setStrokeStyle(2, 0x5c3a1a);
-  const canopy = scene.add.circle(treePos.x, treePos.y - 14, TREE_RADIUS, 0x4caf50).setStrokeStyle(3, 0x2e7d32);
+  const trunk = scene.add
+    .rectangle(treePos.x, treePos.y + 10, 10, 46, 0x8a5a2a)
+    .setStrokeStyle(2, 0x5c3a1a);
+  const canopy = scene.add
+    .circle(treePos.x, treePos.y - 14, TREE_RADIUS, 0x4caf50)
+    .setStrokeStyle(3, 0x2e7d32);
   container.add([trunk, canopy]);
 
   // NPC
@@ -123,16 +149,29 @@ export function buildPostcard(scene: Scene, position: Point, npcSide: Side, bagP
     y: TREE_LOCAL_Y,
   };
   const npcPos = localToCard(npcLocalFeet);
-  const npcBody = scene.add.rectangle(npcPos.x, npcPos.y - 16, 20, 40, 0x4fb6a8).setStrokeStyle(2, 0x2b2a6b);
-  const npcHead = scene.add.circle(npcPos.x, npcPos.y - 44, 11, 0xffd9b3).setStrokeStyle(2, 0x2b2a6b);
+  const npcBody = scene.add
+    .rectangle(npcPos.x, npcPos.y - 16, 20, 40, 0x4fb6a8)
+    .setStrokeStyle(2, 0x2b2a6b);
+  const npcHead = scene.add
+    .circle(npcPos.x, npcPos.y - 44, 11, 0xffd9b3)
+    .setStrokeStyle(2, 0x2b2a6b);
   const eyeSign = npcSide === "left" ? 1 : -1;
-  const npcEye = scene.add.circle(npcPos.x + eyeSign * 5, npcPos.y - 45, 2, 0x2b2a6b);
+  const npcEye = scene.add.circle(
+    npcPos.x + eyeSign * 5,
+    npcPos.y - 45,
+    2,
+    0x2b2a6b,
+  );
   container.add([npcBody, npcHead, npcEye]);
 
   // Bag
   const bagPos = localToCard(bagPosition);
-  const bagBody = scene.add.rectangle(bagPos.x, bagPos.y, 20, 24, 0xffb84d).setStrokeStyle(2, 0x8a5a1a);
-  const bagFlap = scene.add.rectangle(bagPos.x, bagPos.y - 14, 22, 8, 0xff9f40).setStrokeStyle(2, 0x8a5a1a);
+  const bagBody = scene.add
+    .rectangle(bagPos.x, bagPos.y, 20, 24, 0xffb84d)
+    .setStrokeStyle(2, 0x8a5a1a);
+  const bagFlap = scene.add
+    .rectangle(bagPos.x, bagPos.y - 14, 22, 8, 0xff9f40)
+    .setStrokeStyle(2, 0x8a5a1a);
   container.add([bagBody, bagFlap]);
 
   return { container, hitArea: cardBg };
@@ -150,7 +189,10 @@ export function buildPostcard(scene: Scene, position: Point, npcSide: Side, bagP
  * for every other clickable thing in this codebase - is the reliable
  * path, rather than fighting a custom hit area on a Container (which
  * has no intrinsic size of its own). */
-export function makePostcardClickable(postcard: Postcard, onClick: () => void): void {
+export function makePostcardClickable(
+  postcard: Postcard,
+  onClick: () => void,
+): void {
   postcard.hitArea.setInteractive({ useHandCursor: true });
   postcard.hitArea.on("pointerdown", onClick);
 }
@@ -176,11 +218,23 @@ export type FeedbackContext = {
   playSound: (fn: (ctx: AudioContext) => void) => void;
 };
 
-export function celebrateCard(ctx: FeedbackContext, card: GameObjects.Container): void {
-  ctx.feedbackText.setText("🎉 Yes! Jerry can see the bag there!").setColor("#2e7d32");
+export function celebrateCard(
+  ctx: FeedbackContext,
+  card: GameObjects.Container,
+): void {
+  ctx.feedbackText
+    .setText("🎉 Yes! Jerry can see the bag there!")
+    .setColor("#2e7d32");
   ctx.sparkles.emitParticleAt(card.x + CARD_W / 2, card.y + CARD_H / 2, 30);
 
-  ctx.scene.tweens.add({ targets: card, scale: 1.05, duration: 180, yoyo: true, repeat: 1, ease: "Sine.easeOut" });
+  ctx.scene.tweens.add({
+    targets: card,
+    scale: 1.05,
+    duration: 180,
+    yoyo: true,
+    repeat: 1,
+    ease: "Sine.easeOut",
+  });
 
   ctx.playSound(playChime);
 }
@@ -192,8 +246,14 @@ export function celebrateCard(ctx: FeedbackContext, card: GameObjects.Container)
  * over there" - a big ✗ on the clicked card and a big ✓ on the correct
  * one make the two distinct reactions unambiguous.
  */
-export function commiserateCard(ctx: FeedbackContext, clickedCard: GameObjects.Container, correctCard: GameObjects.Container): void {
-  ctx.feedbackText.setText("😅 Not quite - the ✓ shows where Jerry could see it!").setColor("#c0392b");
+export function commiserateCard(
+  ctx: FeedbackContext,
+  clickedCard: GameObjects.Container,
+  correctCard: GameObjects.Container,
+): void {
+  ctx.feedbackText
+    .setText("😅 Not quite - the ✓ shows where Jerry could see it!")
+    .setColor("#c0392b");
 
   const wrongMark = ctx.scene.add
     .text(clickedCard.x + CARD_W / 2, clickedCard.y + CARD_H / 2, "✗", {
@@ -229,7 +289,13 @@ export function commiserateCard(ctx: FeedbackContext, clickedCard: GameObjects.C
       .setAlpha(0)
       .setDepth(10);
     ctx.marks.push(rightMark);
-    ctx.scene.tweens.add({ targets: rightMark, alpha: 1, scale: { from: 0.4, to: 1 }, duration: 300, ease: "Back.easeOut" });
+    ctx.scene.tweens.add({
+      targets: rightMark,
+      alpha: 1,
+      scale: { from: 0.4, to: 1 },
+      duration: 300,
+      ease: "Back.easeOut",
+    });
 
     ctx.scene.tweens.add({
       targets: correctCard,

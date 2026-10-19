@@ -1,9 +1,18 @@
 import { Scene, GameObjects } from "phaser";
 
-import { WIDTH, TREE_CENTER_X, TREE_CENTER_Y, PLAYER_ID_DATA_KEY } from "../constants.ts";
+import {
+  WIDTH,
+  TREE_CENTER_X,
+  TREE_CENTER_Y,
+  PLAYER_ID_DATA_KEY,
+} from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
-import { createHiddenBagEnvironment, HiddenBagEnvironment } from "../hiddenBagScene.ts";
+import {
+  createHiddenBagEnvironment,
+  HiddenBagEnvironment,
+} from "../hiddenBagScene.ts";
 import { recordTrial, DragPoint } from "../scoring.ts";
+import { createButton } from "../ui.ts";
 
 export class Level1 extends Scene {
   private env: HiddenBagEnvironment;
@@ -36,7 +45,9 @@ export class Level1 extends Scene {
     // createHiddenBagEnvironment() paints the full-screen sky/ground
     // background - it must run before anything else that should be
     // visible on top of it (title, buttons), not after.
-    this.env = createHiddenBagEnvironment(this, (x, y) => this.onValidDrag(x, y));
+    this.env = createHiddenBagEnvironment(this, (x, y) =>
+      this.onValidDrag(x, y),
+    );
 
     this.add
       .text(WIDTH / 2, 40, "Help your friend spot the bag!", {
@@ -75,42 +86,36 @@ export class Level1 extends Scene {
    * next part of the session on demand (rather than any automatic
    * completion), or end the whole session early from here if needed. */
   private createFacilitatorButtons() {
-    this.add
-      .text(WIDTH - 24, 24, "Next Level →", {
-        fontFamily: "Arial Black",
-        fontSize: 20,
-        color: "#ffffff",
-        backgroundColor: "#2b2a6b",
-        padding: { x: 14, y: 10 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        this.finishTrial();
-        this.scene.start("Level2");
-      });
+    const nextLevel = createButton(this, WIDTH - 24, 24, "Next Level →", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [1, 0],
+    });
+    nextLevel.hitArea.on("pointerdown", () => {
+      this.finishTrial();
+      this.scene.start("Level2");
+    });
 
-    this.add
-      .text(WIDTH - 24, 70, "End Test", {
-        fontFamily: "Arial",
-        fontSize: 16,
-        color: "#2b2a6b",
-        backgroundColor: "#f2f4fa",
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        this.finishTrial();
-        this.scene.start("GameOver");
-      });
+    const endTest = createButton(this, WIDTH - 24, 88, "End Test", {
+      variant: "muted",
+      height: 48,
+      fontSize: 15,
+      origin: [1, 0],
+    });
+    endTest.hitArea.on("pointerdown", () => {
+      this.finishTrial();
+      this.scene.start("GameOver");
+    });
   }
 
   /** Writes this trial's full record to storage in one go (see
    * scoring.ts - recordTrial does a single localStorage write, rather
    * than one per drag-move event). */
   private finishTrial() {
-    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as string | undefined;
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
+      | string
+      | undefined;
     if (!playerId) {
       // Scene started directly, skipping the login screen (e.g. during
       // development) - nothing to attach this trial to.

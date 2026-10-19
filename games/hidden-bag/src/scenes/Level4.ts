@@ -14,6 +14,7 @@ import {
   commiserateCard,
   FeedbackContext,
 } from "../postcardScene.ts";
+import { createButton } from "../ui.ts";
 
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
 const GRID_Y = 150;
@@ -49,12 +50,17 @@ export class Level4 extends Scene {
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0xf2f4fa).setOrigin(0, 0);
 
     this.add
-      .text(WIDTH / 2, 36, "Click the postcard where Jerry can see their bag!", {
-        fontFamily: "Arial Black",
-        fontSize: 28,
-        color: "#2b2a6b",
-        align: "center",
-      })
+      .text(
+        WIDTH / 2,
+        36,
+        "Click the postcard where Jerry can see their bag!",
+        {
+          fontFamily: "Arial Black",
+          fontSize: 28,
+          color: "#2b2a6b",
+          align: "center",
+        },
+      )
       .setOrigin(0.5, 0);
 
     this.createFacilitatorButtons();
@@ -110,8 +116,15 @@ export class Level4 extends Scene {
     const slotPositions = gridSlotPositions(4, GRID_X, GRID_Y);
 
     order.forEach((spotIndex, slot) => {
-      const postcard = buildPostcard(this, slotPositions[slot], this.npcSide, bagSpots[spotIndex]);
-      makePostcardClickable(postcard, () => this.onCardClicked(postcard.container));
+      const postcard = buildPostcard(
+        this,
+        slotPositions[slot],
+        this.npcSide,
+        bagSpots[spotIndex],
+      );
+      makePostcardClickable(postcard, () =>
+        this.onCardClicked(postcard.container),
+      );
       this.cards.push(postcard.container);
       this.hitAreas.push(postcard.hitArea);
     });
@@ -173,22 +186,18 @@ export class Level4 extends Scene {
   /** Facilitator control: this is the last level, so there's no "Next
    * Level" button, only "End Test". */
   private createFacilitatorButtons() {
-    this.add
-      .text(WIDTH - 24, 24, "End Test", {
-        fontFamily: "Arial Black",
-        fontSize: 20,
-        color: "#ffffff",
-        backgroundColor: "#2b2a6b",
-        padding: { x: 14, y: 10 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        if (!this.answered) {
-          this.recordChoice(null, null, null, true);
-        }
-        this.scene.start("GameOver");
-      });
+    const endTest = createButton(this, WIDTH - 24, 24, "End Test", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [1, 0],
+    });
+    endTest.hitArea.on("pointerdown", () => {
+      if (!this.answered) {
+        this.recordChoice(null, null, null, true);
+      }
+      this.scene.start("GameOver");
+    });
   }
 
   private recordChoice(
@@ -197,7 +206,9 @@ export class Level4 extends Scene {
     timeToChoiceMs: number | null,
     endedByFacilitator: boolean,
   ) {
-    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as string | undefined;
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
+      | string
+      | undefined;
     if (!playerId) {
       return;
     }

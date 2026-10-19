@@ -32,8 +32,13 @@ export const TREE_RADIUS = 100;
 export const TREE_TRUNK_HEIGHT = 180;
 export const TREE_TRUNK_WIDTH = 34;
 
-// Bag
-export const BAG_RADIUS = 30; // half the bag's on-screen size, for collision
+// Bag. BAG_RADIUS is "half the bag's on-screen size, for collision" -
+// the actual visuals in hiddenBagScene.createBag() are a scaled-up
+// version of a 60x86-at-BAG_RADIUS=30 reference bag, kept proportional
+// via BAG_VISUAL_SCALE, so the drawn bag and its collision/drag-target
+// size always agree with each other.
+export const BAG_RADIUS = 40; // was 30 - bigger, easier-to-grab drag target
+export const BAG_VISUAL_SCALE = BAG_RADIUS / 30;
 export const TREE_COLLISION_RADIUS = TREE_RADIUS + BAG_RADIUS;
 // How far outside the collision radius the bag starts, so it isn't
 // touching the tree's edge at the very start of the level.
