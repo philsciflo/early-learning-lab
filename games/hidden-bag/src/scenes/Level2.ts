@@ -6,6 +6,7 @@ import {
   TREE_CENTER_X,
   TREE_CENTER_Y,
   PLAYER_ID_DATA_KEY,
+  SUCCESS_BANNER_Y,
 } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
 import {
@@ -14,7 +15,12 @@ import {
 } from "../hiddenBagScene.ts";
 import { playChime, playGentleMiss } from "../audio.ts";
 import { recordTrial, DragPoint } from "../scoring.ts";
-import { createButton } from "../ui.ts";
+import {
+  createButton,
+  createSuccessBanner,
+  playBigSuccessPop,
+  SuccessBanner,
+} from "../ui.ts";
 
 /**
  * Level 2: the same drag-the-bag task as Level 1, but blind. There is
@@ -28,6 +34,7 @@ export class Level2 extends Scene {
   private env: HiddenBagEnvironment;
   private speechBubble: GameObjects.Text;
   private feedbackText: GameObjects.Text;
+  private successBanner: SuccessBanner;
   private doneButton: GameObjects.Text;
   private sparkles: GameObjects.Particles.ParticleEmitter;
   private audioContext?: AudioContext;
@@ -105,6 +112,8 @@ export class Level2 extends Scene {
       })
       .setOrigin(0.5);
 
+    this.successBanner = createSuccessBanner(this, WIDTH / 2, SUCCESS_BANNER_Y);
+
     this.doneButton = this.add
       .text(WIDTH / 2, HEIGHT - 24, "Done! I've decided.", {
         fontFamily: "Arial Black",
@@ -152,18 +161,13 @@ export class Level2 extends Scene {
   }
 
   private celebrate() {
-    this.feedbackText
-      .setText("🎉 Yes! Jerry can see it there!")
-      .setColor("#2e7d32");
+    this.successBanner.show("🎉 Yes! Jerry can see it there!");
     this.speechBubble.setText("Hey, there's my bag!");
     this.sparkles.emitParticleAt(this.env.bag.x, this.env.bag.y, 30);
 
-    this.tweens.add({
-      targets: this.env.bag,
-      scale: 1.15,
-      duration: 200,
-      yoyo: true,
-      ease: "Sine.easeOut",
+    playBigSuccessPop(this, this.env.bag, {
+      flashWidth: 100,
+      flashHeight: 130,
     });
     // scaleY only, not "scale" - preserves the NPC's possible horizontal
     // flip (facing left/right toward the tree).

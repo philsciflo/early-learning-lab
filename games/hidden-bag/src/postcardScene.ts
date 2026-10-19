@@ -3,6 +3,7 @@ import { Scene, GameObjects } from "phaser";
 import { canSee } from "./lineOfSight.ts";
 import { Side } from "./scoring.ts";
 import { playChime, playGentleMiss } from "./audio.ts";
+import { playBigSuccessPop, SuccessBanner } from "./ui.ts";
 
 export type Point = { x: number; y: number };
 
@@ -210,6 +211,10 @@ export function shuffledIndices(n: number): number[] {
 export type FeedbackContext = {
   scene: Scene;
   feedbackText: GameObjects.Text;
+  /** Bannerish positive-feedback panel - the "correct" counterpart to
+   * `feedbackText`, which is reserved for the "not quite" message
+   * (see ui.ts's createSuccessBanner). */
+  successBanner: SuccessBanner;
   sparkles: GameObjects.Particles.ParticleEmitter;
   /** Any ✗/✓ marks created by celebrate/commiserate get pushed here, so
    * the caller can destroy them all in one go at the start of the next
@@ -222,18 +227,14 @@ export function celebrateCard(
   ctx: FeedbackContext,
   card: GameObjects.Container,
 ): void {
-  ctx.feedbackText
-    .setText("🎉 Yes! Jerry can see the bag there!")
-    .setColor("#2e7d32");
+  ctx.successBanner.show("🎉 Yes! Jerry can see the bag there!");
   ctx.sparkles.emitParticleAt(card.x + CARD_W / 2, card.y + CARD_H / 2, 30);
 
-  ctx.scene.tweens.add({
-    targets: card,
-    scale: 1.05,
-    duration: 180,
-    yoyo: true,
-    repeat: 1,
-    ease: "Sine.easeOut",
+  playBigSuccessPop(ctx.scene, card, {
+    centerOffsetX: CARD_W / 2,
+    centerOffsetY: CARD_H / 2,
+    flashWidth: CARD_W,
+    flashHeight: CARD_H,
   });
 
   ctx.playSound(playChime);

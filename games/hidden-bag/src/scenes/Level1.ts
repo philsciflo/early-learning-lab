@@ -12,11 +12,12 @@ import {
   HiddenBagEnvironment,
 } from "../hiddenBagScene.ts";
 import { recordTrial, DragPoint } from "../scoring.ts";
-import { createButton } from "../ui.ts";
+import { createButton, playBigSuccessPop } from "../ui.ts";
 
 export class Level1 extends Scene {
   private env: HiddenBagEnvironment;
   private speechBubble: GameObjects.Text;
+  private sparkles: GameObjects.Particles.ParticleEmitter;
 
   // Whether the NPC can currently see the bag. Unlike a one-shot "solved"
   // flag, this flips back and forth freely as the bag is dragged in and
@@ -41,6 +42,20 @@ export class Level1 extends Scene {
     this.timeToFirstDragMs = null;
     this.successPosition = null;
     this.timeToSuccessMs = null;
+
+    const gfx = this.add.graphics();
+    gfx.fillStyle(0xffe066, 1);
+    gfx.fillCircle(6, 6, 6);
+    gfx.generateTexture("sparkle1", 12, 12);
+    gfx.destroy();
+    this.sparkles = this.add.particles(0, 0, "sparkle1", {
+      lifespan: 600,
+      speed: { min: 30, max: 90 },
+      scale: { start: 1, end: 0 },
+      alpha: { start: 1, end: 0 },
+      blendMode: "ADD",
+      emitting: false,
+    });
 
     // createHiddenBagEnvironment() paints the full-screen sky/ground
     // background - it must run before anything else that should be
@@ -158,13 +173,11 @@ export class Level1 extends Scene {
     }
 
     if (visible) {
-      this.tweens.add({
-        targets: this.env.bag,
-        scale: 1.15,
-        duration: 200,
-        yoyo: true,
-        ease: "Sine.easeOut",
+      playBigSuccessPop(this, this.env.bag, {
+        flashWidth: 100,
+        flashHeight: 130,
       });
+      this.sparkles.emitParticleAt(this.env.bag.x, this.env.bag.y, 30);
 
       // Only animate scaleY here, not the "scale" shorthand - the NPC
       // may be horizontally flipped (scaleX = -1) to face the tree, and

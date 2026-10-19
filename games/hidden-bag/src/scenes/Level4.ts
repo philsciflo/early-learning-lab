@@ -1,6 +1,11 @@
 import { Scene, GameObjects } from "phaser";
 
-import { WIDTH, HEIGHT, PLAYER_ID_DATA_KEY } from "../constants.ts";
+import {
+  WIDTH,
+  HEIGHT,
+  PLAYER_ID_DATA_KEY,
+  SUCCESS_BANNER_Y,
+} from "../constants.ts";
 import { recordTrial, Side } from "../scoring.ts";
 import {
   CARD_W,
@@ -14,7 +19,7 @@ import {
   commiserateCard,
   FeedbackContext,
 } from "../postcardScene.ts";
-import { createButton } from "../ui.ts";
+import { createButton, createSuccessBanner, SuccessBanner } from "../ui.ts";
 
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
 const GRID_Y = 150;
@@ -37,6 +42,7 @@ export class Level4 extends Scene {
   private answered = false;
   private roundStartMs: number;
   private feedbackText: GameObjects.Text;
+  private successBanner: SuccessBanner;
   private sparkles: GameObjects.Particles.ParticleEmitter;
   private audioContext?: AudioContext;
   private tryAgainButton?: GameObjects.Text;
@@ -87,6 +93,8 @@ export class Level4 extends Scene {
       })
       .setOrigin(0.5);
 
+    this.successBanner = createSuccessBanner(this, WIDTH / 2, SUCCESS_BANNER_Y);
+
     this.startRound();
   }
 
@@ -97,6 +105,7 @@ export class Level4 extends Scene {
     this.answered = false;
     this.roundStartMs = Date.now();
     this.feedbackText.setText("");
+    this.successBanner.hide();
     this.cards.forEach((card) => card.destroy()); // also destroys each hitArea, as a child
     this.cards = [];
     this.hitAreas = [];
@@ -145,6 +154,7 @@ export class Level4 extends Scene {
     const feedbackCtx: FeedbackContext = {
       scene: this,
       feedbackText: this.feedbackText,
+      successBanner: this.successBanner,
       sparkles: this.sparkles,
       marks: this.marks,
       playSound: (fn) => this.playSound(fn),

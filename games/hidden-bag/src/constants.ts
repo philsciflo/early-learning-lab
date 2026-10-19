@@ -7,6 +7,13 @@ export const HALF_HEIGHT = HEIGHT / 2;
 export const GAME_SCORE_DATA_KEY = "hidden-bag-data";
 export const PLAYER_ID_DATA_KEY = "playerId";
 
+// Shared y-position for the "you got it!" success banner (see
+// ui.ts's createSuccessBanner), used by Level2 and the postcard levels
+// (Level3/Level4) so the positive feedback moment looks and sits the
+// same way everywhere - clear of the instruction text above it and
+// the facilitator buttons / next-round controls around it.
+export const SUCCESS_BANNER_Y = 112;
+
 // Sky / ground split
 export const SKY_COLOUR = 0x9fd8ff;
 export const GROUND_COLOUR = 0x8fcf6a;
