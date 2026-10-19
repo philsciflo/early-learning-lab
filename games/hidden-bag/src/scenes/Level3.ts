@@ -14,6 +14,7 @@ import {
   commiserateCard,
   FeedbackContext,
 } from "../postcardScene.ts";
+import { createButton } from "../ui.ts";
 
 // Centers the PAIR of cards (2 * CARD_W + the gap between them), not
 // just a single card width - that was the bug: using (WIDTH - CARD_W) / 2
@@ -52,12 +53,17 @@ export class Level3 extends Scene {
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0xf2f4fa).setOrigin(0, 0);
 
     this.add
-      .text(WIDTH / 2, 36, "Click the postcard where Jerry can see their bag!", {
-        fontFamily: "Arial Black",
-        fontSize: 28,
-        color: "#2b2a6b",
-        align: "center",
-      })
+      .text(
+        WIDTH / 2,
+        36,
+        "Click the postcard where Jerry can see their bag!",
+        {
+          fontFamily: "Arial Black",
+          fontSize: 28,
+          color: "#2b2a6b",
+          align: "center",
+        },
+      )
       .setOrigin(0.5, 0);
 
     this.createFacilitatorButtons();
@@ -112,8 +118,15 @@ export class Level3 extends Scene {
     const slotPositions = gridSlotPositions(2, GRID_X, GRID_Y);
 
     order.forEach((spotIndex, slot) => {
-      const postcard = buildPostcard(this, slotPositions[slot], this.npcSide, bagSpots[spotIndex]);
-      makePostcardClickable(postcard, () => this.onCardClicked(postcard.container));
+      const postcard = buildPostcard(
+        this,
+        slotPositions[slot],
+        this.npcSide,
+        bagSpots[spotIndex],
+      );
+      makePostcardClickable(postcard, () =>
+        this.onCardClicked(postcard.container),
+      );
       this.cards.push(postcard.container);
       this.hitAreas.push(postcard.hitArea);
     });
@@ -174,39 +187,31 @@ export class Level3 extends Scene {
 
   /** Facilitator controls, matching Level1/Level2's convention. */
   private createFacilitatorButtons() {
-    this.add
-      .text(WIDTH - 24, 24, "Next Level →", {
-        fontFamily: "Arial Black",
-        fontSize: 20,
-        color: "#ffffff",
-        backgroundColor: "#2b2a6b",
-        padding: { x: 14, y: 10 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        if (!this.answered) {
-          this.recordChoice(null, null, null, true);
-        }
-        this.scene.start("Level4");
-      });
+    const nextLevel = createButton(this, WIDTH - 24, 24, "Next Level →", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [1, 0],
+    });
+    nextLevel.hitArea.on("pointerdown", () => {
+      if (!this.answered) {
+        this.recordChoice(null, null, null, true);
+      }
+      this.scene.start("Level4");
+    });
 
-    this.add
-      .text(WIDTH - 24, 70, "End Test", {
-        fontFamily: "Arial",
-        fontSize: 16,
-        color: "#2b2a6b",
-        backgroundColor: "#f2f4fa",
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
-        if (!this.answered) {
-          this.recordChoice(null, null, null, true);
-        }
-        this.scene.start("GameOver");
-      });
+    const endTest = createButton(this, WIDTH - 24, 88, "End Test", {
+      variant: "muted",
+      height: 48,
+      fontSize: 15,
+      origin: [1, 0],
+    });
+    endTest.hitArea.on("pointerdown", () => {
+      if (!this.answered) {
+        this.recordChoice(null, null, null, true);
+      }
+      this.scene.start("GameOver");
+    });
   }
 
   private recordChoice(
@@ -215,7 +220,9 @@ export class Level3 extends Scene {
     timeToChoiceMs: number | null,
     endedByFacilitator: boolean,
   ) {
-    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as string | undefined;
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
+      | string
+      | undefined;
     if (!playerId) {
       return;
     }

@@ -8,17 +8,22 @@ import {
   BAG_RADIUS,
 } from "./constants.ts";
 
-interface Point {
+type Point = {
   x: number;
   y: number;
-}
+};
 
 const TRUNK_LEFT = TREE_CENTER_X - TREE_TRUNK_WIDTH / 2 - BAG_RADIUS;
 const TRUNK_RIGHT = TREE_CENTER_X + TREE_TRUNK_WIDTH / 2 + BAG_RADIUS;
 const TRUNK_TOP = TREE_FEET_Y - TREE_TRUNK_HEIGHT - BAG_RADIUS;
 const TRUNK_BOTTOM = TREE_FEET_Y + BAG_RADIUS;
 
-function pushOutOfCircle(point: Point, cx: number, cy: number, radius: number): Point {
+function pushOutOfCircle(
+  point: Point,
+  cx: number,
+  cy: number,
+  radius: number,
+): Point {
   const dx = point.x - cx;
   const dy = point.y - cy;
   const distance = Math.sqrt(dx * dx + dy * dy);
@@ -36,8 +41,19 @@ function pushOutOfCircle(point: Point, cx: number, cy: number, radius: number): 
   return { x: cx + dx * scale, y: cy + dy * scale };
 }
 
-function pushOutOfRect(point: Point, left: number, right: number, top: number, bottom: number): Point {
-  if (point.x <= left || point.x >= right || point.y <= top || point.y >= bottom) {
+function pushOutOfRect(
+  point: Point,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+): Point {
+  if (
+    point.x <= left ||
+    point.x >= right ||
+    point.y <= top ||
+    point.y >= bottom
+  ) {
     return point;
   }
 
@@ -65,12 +81,28 @@ function pushOutOfRect(point: Point, left: number, right: number, top: number, b
 export function resolveTreeCollision(x: number, y: number): Point {
   let point: Point = { x, y };
 
-  point = pushOutOfCircle(point, TREE_CENTER_X, TREE_CENTER_Y, TREE_COLLISION_RADIUS);
-  point = pushOutOfRect(point, TRUNK_LEFT, TRUNK_RIGHT, TRUNK_TOP, TRUNK_BOTTOM);
+  point = pushOutOfCircle(
+    point,
+    TREE_CENTER_X,
+    TREE_CENTER_Y,
+    TREE_COLLISION_RADIUS,
+  );
+  point = pushOutOfRect(
+    point,
+    TRUNK_LEFT,
+    TRUNK_RIGHT,
+    TRUNK_TOP,
+    TRUNK_BOTTOM,
+  );
   // Resolving the trunk can, in rare cases right at the seam between the
   // two shapes, nudge the point back into the canopy circle. One more
   // pass settles it.
-  point = pushOutOfCircle(point, TREE_CENTER_X, TREE_CENTER_Y, TREE_COLLISION_RADIUS);
+  point = pushOutOfCircle(
+    point,
+    TREE_CENTER_X,
+    TREE_CENTER_Y,
+    TREE_COLLISION_RADIUS,
+  );
 
   return point;
 }
@@ -83,14 +115,28 @@ export function resolveTreeCollision(x: number, y: number): Point {
  * proposed one) against both solid shapes, so a fast move can be
  * rejected before it ever tunnels through.
  */
-export function segmentHitsTree(x1: number, y1: number, x2: number, y2: number): boolean {
+export function segmentHitsTree(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+): boolean {
   const line = new Phaser.Geom.Line(x1, y1, x2, y2);
 
-  const canopy = new Phaser.Geom.Circle(TREE_CENTER_X, TREE_CENTER_Y, TREE_COLLISION_RADIUS);
+  const canopy = new Phaser.Geom.Circle(
+    TREE_CENTER_X,
+    TREE_CENTER_Y,
+    TREE_COLLISION_RADIUS,
+  );
   if (Phaser.Geom.Intersects.LineToCircle(line, canopy)) {
     return true;
   }
 
-  const trunk = new Phaser.Geom.Rectangle(TRUNK_LEFT, TRUNK_TOP, TRUNK_RIGHT - TRUNK_LEFT, TRUNK_BOTTOM - TRUNK_TOP);
+  const trunk = new Phaser.Geom.Rectangle(
+    TRUNK_LEFT,
+    TRUNK_TOP,
+    TRUNK_RIGHT - TRUNK_LEFT,
+    TRUNK_BOTTOM - TRUNK_TOP,
+  );
   return Phaser.Geom.Intersects.LineToRectangle(line, trunk);
 }
