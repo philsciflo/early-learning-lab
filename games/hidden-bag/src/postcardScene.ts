@@ -50,7 +50,7 @@ export function buildBagSpots(npcSide: Side): Point[] {
   // side" rule says it should be hidden. Same-height, same-side-vs-not
   // is what actually reads clearly at this size.
   const left = {
-    visible: { x: TREE_LOCAL_X - 85, y: TREE_LOCAL_Y },
+    visible: { x: TREE_LOCAL_X - 55, y: TREE_LOCAL_Y },
     hiddenA: { x: TREE_LOCAL_X + 40, y: TREE_LOCAL_Y }, // tucked right behind the trunk
     hiddenB: { x: TREE_LOCAL_X + 85, y: TREE_LOCAL_Y }, // mirrors "visible", opposite side
     hiddenC: { x: TREE_LOCAL_X + 135, y: TREE_LOCAL_Y }, // further past the tree
