@@ -16,6 +16,7 @@ import {
 import { playChime, playGentleMiss } from "../audio.ts";
 import { recordTrial, DragPoint } from "../scoring.ts";
 import {
+  Button,
   createButton,
   createSuccessBanner,
   playBigSuccessPop,
@@ -24,7 +25,7 @@ import {
 
 /**
  * Level 2: the same drag-the-bag task as Level 1, but blind. There is
- * no live "can Jerry see it" feedback while dragging - the child has
+ * no live "can Milo see it" feedback while dragging - the child has
  * to decide for themselves, then commit with the "Done" button. Only
  * then is the result revealed. This is the step up from Level 1's
  * forgiving, hint-as-you-go version, before Level 3/4 drop the
@@ -32,10 +33,9 @@ import {
  */
 export class Level2 extends Scene {
   private env: HiddenBagEnvironment;
-  private speechBubble: GameObjects.Text;
   private feedbackText: GameObjects.Text;
   private successBanner: SuccessBanner;
-  private doneButton: GameObjects.Text;
+  private doneButton: Button;
   private sparkles: GameObjects.Particles.ParticleEmitter;
   private audioContext?: AudioContext;
   private committed = false;
@@ -82,27 +82,24 @@ export class Level2 extends Scene {
       this.onValidDrag(x, y),
     );
 
+    // At fontSize 26, "Where do you think Milo can see the bag?" (40
+    // chars) is ~603px wide (~0.58 * fontSize per char for bold Arial
+    // Black), spanning roughly x=274..878 centered on WIDTH/2=576 -
+    // clear of both the top-left ("← Back"/"Done!", right edge ~298 -
+    // the Done button is wider than Back) and top-right ("Next Level
+    // →", left edge ~931) button columns. wordWrap is a safety net in
+    // case that ever changes.
     this.add
-      .text(WIDTH / 2, 40, "Where do you think Jerry can see the bag?", {
+      .text(WIDTH / 2, 40, "Where do you think Milo can see the bag?", {
         fontFamily: "Arial Black",
-        fontSize: 30,
+        fontSize: 26,
         color: "#2b2a6b",
         align: "center",
+        wordWrap: { width: 760 },
       })
       .setOrigin(0.5, 0);
 
     this.createFacilitatorButtons();
-
-    this.speechBubble = this.add
-      .text(this.env.npcEyeX, this.env.npcEyeY - 110, "", {
-        fontFamily: "Arial Black",
-        fontSize: 22,
-        color: "#2b2a6b",
-        backgroundColor: "#ffffff",
-        padding: { x: 12, y: 8 },
-      })
-      .setOrigin(0.5, 1)
-      .setAlpha(0);
 
     this.feedbackText = this.add
       .text(WIDTH / 2, HEIGHT - 70, "", {
@@ -113,18 +110,6 @@ export class Level2 extends Scene {
       .setOrigin(0.5);
 
     this.successBanner = createSuccessBanner(this, WIDTH / 2, SUCCESS_BANNER_Y);
-
-    this.doneButton = this.add
-      .text(WIDTH / 2, HEIGHT - 24, "Done! I've decided.", {
-        fontFamily: "Arial Black",
-        fontSize: 22,
-        color: "#ffffff",
-        backgroundColor: "#4fb6a8",
-        padding: { x: 22, y: 12 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => this.onCommit());
   }
 
   private onValidDrag(x: number, y: number) {
@@ -142,7 +127,8 @@ export class Level2 extends Scene {
       return;
     }
     this.committed = true;
-    this.doneButton.disableInteractive().setAlpha(0.5);
+    this.doneButton.hitArea.disableInteractive();
+    this.doneButton.container.setAlpha(0.5);
     this.env.bag.disableInteractive();
 
     this.committedPosition = { x: this.env.bag.x, y: this.env.bag.y };
@@ -161,24 +147,17 @@ export class Level2 extends Scene {
   }
 
   private celebrate() {
-    this.successBanner.show("🎉 Yes! Jerry can see it there!");
-    this.speechBubble.setText("Hey, there's my bag!");
+    this.successBanner.show("🎉 Yes! Milo can see it there!");
     this.sparkles.emitParticleAt(this.env.bag.x, this.env.bag.y, 30);
 
     playBigSuccessPop(this, this.env.bag, {
       flashWidth: 100,
       flashHeight: 130,
     });
-    // scaleY only, not "scale" - preserves the NPC's possible horizontal
-    // flip (facing left/right toward the tree).
-    this.tweens.add({
-      targets: this.env.npc,
-      scaleY: 1.08,
-      duration: 200,
-      yoyo: true,
-      ease: "Sine.easeOut",
-    });
-    this.tweens.add({ targets: this.speechBubble, alpha: 1, duration: 300 });
+    // The NPC's colour change, bounce, and speech-bubble swap are all
+    // handled centrally (see hiddenBagScene.ts's setNpcSeesBag) so this
+    // and Level1 can't drift out of sync with each other.
+    this.env.setNpcSeesBag(true);
 
     this.playSound(playChime);
   }
@@ -187,7 +166,7 @@ export class Level2 extends Scene {
     this.feedbackText
       .setText("😅 Not quite - try again next time!")
       .setColor("#c0392b");
-    this.speechBubble.setText("I still can't see it...");
+    this.env.speechBubble.setText("I still can't see it...");
 
     this.tweens.add({
       targets: this.env.bag,
@@ -197,7 +176,6 @@ export class Level2 extends Scene {
       repeat: 4,
       ease: "Sine.easeInOut",
     });
-    this.tweens.add({ targets: this.speechBubble, alpha: 1, duration: 300 });
 
     this.playSound(playGentleMiss);
   }
@@ -209,8 +187,30 @@ export class Level2 extends Scene {
     fn(this.audioContext);
   }
 
-  /** Facilitator controls, matching Level1's convention. */
+  /** Facilitator controls, matching Level1's convention - plus the
+   * "Done! I've decided." commit button, which lives in the top-left
+   * column here (row 2, under "← Back") now that both corners host
+   * facilitator/commit controls instead of just the top-right. */
   private createFacilitatorButtons() {
+    const back = createButton(this, 24, 24, "← Back", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 20,
+      origin: [0, 0],
+    });
+    back.hitArea.on("pointerdown", () => {
+      this.finishTrial();
+      this.scene.start("Level1");
+    });
+
+    this.doneButton = createButton(this, 24, 88, "Done! I've decided.", {
+      variant: "secondary",
+      height: 48,
+      fontSize: 18,
+      origin: [0, 0],
+    });
+    this.doneButton.hitArea.on("pointerdown", () => this.onCommit());
+
     const nextLevel = createButton(this, WIDTH - 24, 24, "Next Level →", {
       variant: "secondary",
       height: 48,
