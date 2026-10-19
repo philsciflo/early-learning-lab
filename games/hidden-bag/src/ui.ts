@@ -174,3 +174,143 @@ export function createButton(
     },
   };
 }
+
+export type SuccessPopOptions = {
+  /** Local-space offset from `target`'s own (x, y) to its visual
+   * centre. (0, 0) for something already centre-anchored (eg the
+   * draggable bag); (width / 2, height / 2) for a top-left-anchored
+   * container (eg a postcard) - without this, scaling up a
+   * top-left-anchored target makes it balloon toward one corner
+   * instead of growing evenly in place. */
+  centerOffsetX?: number;
+  centerOffsetY?: number;
+  scaleTo?: number;
+  hopHeight?: number;
+  duration?: number;
+  /** Size of the gold flash overlay, centred on the target's visual
+   * centre (`centerOffsetX`/`centerOffsetY`). */
+  flashWidth?: number;
+  flashHeight?: number;
+};
+
+/**
+ * The big "yes, found it!" pop used for every "NPC can see it"
+ * celebration (Level1/Level2's bag, postcardScene's card): a chunky
+ * scale-up-and-hop on `target`, plus a brief additive gold flash over
+ * it, so the moment reads as a clear jump rather than a subtle wobble.
+ */
+export function playBigSuccessPop(
+  scene: Scene,
+  target: GameObjects.Container,
+  options: SuccessPopOptions = {},
+): void {
+  const {
+    centerOffsetX = 0,
+    centerOffsetY = 0,
+    scaleTo = 1.45,
+    hopHeight = 28,
+    duration = 260,
+    flashWidth = 90,
+    flashHeight = 120,
+  } = options;
+
+  const baseX = target.x;
+  const baseY = target.y;
+  const progress = { t: 0 };
+
+  scene.tweens.add({
+    targets: progress,
+    t: 1,
+    duration,
+    yoyo: true,
+    ease: "Back.easeOut",
+    onUpdate: () => {
+      const s = 1 + (scaleTo - 1) * progress.t;
+      target.setScale(s);
+      target.x = baseX - centerOffsetX * (s - 1);
+      target.y = baseY - centerOffsetY * (s - 1) - hopHeight * progress.t;
+    },
+    onComplete: () => {
+      target.setScale(1);
+      target.x = baseX;
+      target.y = baseY;
+    },
+  });
+
+  const flash = scene.add
+    .rectangle(
+      baseX + centerOffsetX,
+      baseY + centerOffsetY,
+      flashWidth,
+      flashHeight,
+      0xffe066,
+      0,
+    )
+    .setBlendMode("ADD")
+    .setDepth(20);
+  scene.tweens.add({
+    targets: flash,
+    alpha: { from: 0, to: 0.85 },
+    duration: duration * 0.4,
+    yoyo: true,
+    onComplete: () => flash.destroy(),
+  });
+}
+
+export type SuccessBanner = {
+  container: GameObjects.Container;
+  show(message: string): void;
+  hide(): void;
+};
+
+/**
+ * A solid, bannerish "you got it!" panel - the positive counterpart to
+ * the plain `feedbackText` used for "not quite" messages. Used by
+ * Level2 and the shared postcardScene (Level3/Level4) so the "correct"
+ * moment has the same visual weight and position everywhere, clearly
+ * separated from the facilitator buttons and instruction text around
+ * it rather than floating as plain text on the scene.
+ */
+export function createSuccessBanner(
+  scene: Scene,
+  x: number,
+  y: number,
+): SuccessBanner {
+  const width = 680;
+  const height = 52;
+
+  const bg = scene.add.graphics();
+  bg.fillStyle(0x2e7d32, 1);
+  bg.lineStyle(4, 0x1b5e20, 1);
+  bg.fillRoundedRect(-width / 2, -height / 2, width, height, height / 2);
+  bg.strokeRoundedRect(-width / 2, -height / 2, width, height, height / 2);
+
+  const text = scene.add
+    .text(0, 0, "", {
+      fontFamily: "Arial Black",
+      fontSize: 22,
+      color: "#ffffff",
+      align: "center",
+    })
+    .setOrigin(0.5);
+
+  const container = scene.add.container(x, y, [bg, text]).setAlpha(0);
+
+  return {
+    container,
+    show(message: string) {
+      text.setText(message);
+      container.setScale(0.8).setAlpha(0);
+      scene.tweens.add({
+        targets: container,
+        alpha: 1,
+        scale: 1,
+        duration: 220,
+        ease: "Back.easeOut",
+      });
+    },
+    hide() {
+      container.setAlpha(0);
+    },
+  };
+}
