@@ -17,3 +17,31 @@ body {
 input {
   font-size: xxx-large;
 }
+
+/* This is a facilitator-held tablet/laptop tool, used in landscape -
+ * phone-portrait is the one layout genuinely too cramped for the
+ * research form and the postcard grid (Level3/4) to stay usable, even
+ * though Phaser's FIT scaling keeps everything on-screen without
+ * distortion. A CSS-only advisory banner (not a hard block, so the
+ * game underneath still loads and FIT still does its job) covers that
+ * one case without trying to chase every possible aspect ratio. */
+#small-screen-notice {
+  display: none;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  #small-screen-notice {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 10px 16px;
+    background-color: #2b2a6b;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    text-align: center;
+  }
+}
