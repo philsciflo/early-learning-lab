@@ -87,6 +87,147 @@ export function getScoreDataJSONString(): string {
   return localStorage.getItem(GAME_SCORE_DATA_KEY) ?? "{}";
 }
 
+// --- CSV export ---
+//
+// TrialData is a discriminated union with level-specific fields (see
+// above). A spreadsheet needs one consistent row shape instead, so
+// this flattens every trial into the same columns, leaving a column
+// blank wherever it doesn't apply to that trial's level. `dragPath`
+// (the full point-by-point trajectory) is left out here - a list of
+// {x, y, tMs} points per cell is unwieldy in a spreadsheet - and
+// replaced with `dragPointCount`; the full path is still in the JSON
+// export for anyone who needs it.
+const CSV_COLUMNS = [
+  "playerId",
+  "age",
+  "location",
+  "playthroughStart",
+  "trialIndex",
+  "level",
+  "npcSide",
+  "startTime",
+  "trialDurationMs",
+  "endedByFacilitator",
+  "bagStartSide",
+  "dragPointCount",
+  "timeToFirstDragMs",
+  "successPositionX",
+  "successPositionY",
+  "timeToSuccessMs",
+  "committedPositionX",
+  "committedPositionY",
+  "timeToCommitMs",
+  "correct",
+  "numOptions",
+  "correctOptionIndex",
+  "chosenOptionIndex",
+  "timeToChoiceMs",
+] as const;
+
+type CsvCell = string | number | boolean | null;
+type CsvRow = Record<(typeof CSV_COLUMNS)[number], CsvCell>;
+
+function trialToCsvRow(
+  playerId: string,
+  age: string,
+  location: string,
+  playthroughStart: string,
+  trialIndex: number,
+  trial: TrialData,
+): CsvRow {
+  const row: CsvRow = {
+    playerId,
+    age,
+    location,
+    playthroughStart,
+    trialIndex,
+    level: trial.level,
+    npcSide: trial.npcSide,
+    startTime: trial.startTime,
+    trialDurationMs: trial.trialDurationMs,
+    endedByFacilitator: trial.endedByFacilitator,
+    bagStartSide: null,
+    dragPointCount: null,
+    timeToFirstDragMs: null,
+    successPositionX: null,
+    successPositionY: null,
+    timeToSuccessMs: null,
+    committedPositionX: null,
+    committedPositionY: null,
+    timeToCommitMs: null,
+    correct: null,
+    numOptions: null,
+    correctOptionIndex: null,
+    chosenOptionIndex: null,
+    timeToChoiceMs: null,
+  };
+
+  if (trial.level === "Level1") {
+    row.bagStartSide = trial.bagStartSide;
+    row.dragPointCount = trial.dragPath.length;
+    row.timeToFirstDragMs = trial.timeToFirstDragMs;
+    row.successPositionX = trial.successPosition?.x ?? null;
+    row.successPositionY = trial.successPosition?.y ?? null;
+    row.timeToSuccessMs = trial.timeToSuccessMs;
+  } else if (trial.level === "Level2") {
+    row.bagStartSide = trial.bagStartSide;
+    row.dragPointCount = trial.dragPath.length;
+    row.timeToFirstDragMs = trial.timeToFirstDragMs;
+    row.committedPositionX = trial.committedPosition?.x ?? null;
+    row.committedPositionY = trial.committedPosition?.y ?? null;
+    row.timeToCommitMs = trial.timeToCommitMs;
+    row.correct = trial.correct;
+  } else {
+    row.numOptions = trial.numOptions;
+    row.correctOptionIndex = trial.correctOptionIndex;
+    row.chosenOptionIndex = trial.chosenOptionIndex;
+    row.correct = trial.correct;
+    row.timeToChoiceMs = trial.timeToChoiceMs;
+  }
+
+  return row;
+}
+
+function csvEscape(value: CsvCell): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  const str = String(value);
+  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+/** Same underlying data as getScoreDataJSONString(), flattened into one
+ * row per trial for spreadsheet use. */
+export function getScoreDataCSVString(): string {
+  const allData = getScoreData();
+  const rows: CsvRow[] = [];
+
+  for (const [playerId, instances] of Object.entries(allData)) {
+    instances.forEach((instance) => {
+      const playthroughStart = String(instance.start);
+      instance.trials.forEach((trial, trialIndex) => {
+        rows.push(
+          trialToCsvRow(
+            playerId,
+            instance.age,
+            instance.location,
+            playthroughStart,
+            trialIndex,
+            trial,
+          ),
+        );
+      });
+    });
+  }
+
+  const lines = [CSV_COLUMNS.join(",")];
+  rows.forEach((row) => {
+    lines.push(CSV_COLUMNS.map((col) => csvEscape(row[col])).join(","));
+  });
+
+  return lines.join("\n");
+}
+
 function getScoreData(): ALL_SCORING_DATA {
   return JSON.parse(getScoreDataJSONString());
 }
@@ -95,14 +236,21 @@ function setScoreData(allData: ALL_SCORING_DATA): void {
   localStorage.setItem(GAME_SCORE_DATA_KEY, JSON.stringify(allData));
 }
 
-function getLatestPlayerInstance(allData: ALL_SCORING_DATA, playerId: string): PLAYER_INSTANCE_SCORING_DATA {
+function getLatestPlayerInstance(
+  allData: ALL_SCORING_DATA,
+  playerId: string,
+): PLAYER_INSTANCE_SCORING_DATA {
   const instances = allData[playerId];
   return instances[instances.length - 1];
 }
 
 /** Call once, from the login screen, when a player starts a new
  * play-through. Creates a fresh (empty) trial list for them. */
-export function startNewScore(playerId: string, playerAge: string, playerLocation: string): void {
+export function startNewScore(
+  playerId: string,
+  playerAge: string,
+  playerLocation: string,
+): void {
   const allData = getScoreData();
 
   const newInstance: PLAYER_INSTANCE_SCORING_DATA = {

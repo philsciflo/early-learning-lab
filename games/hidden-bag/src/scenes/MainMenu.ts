@@ -1,7 +1,13 @@
 import { Scene, GameObjects } from "phaser";
 
 import { WIDTH, HALF_WIDTH, PLAYER_ID_DATA_KEY } from "../constants.ts";
-import { getScoreDataJSONString, removeScoreData, startNewScore } from "../scoring.ts";
+import {
+  getScoreDataJSONString,
+  getScoreDataCSVString,
+  removeScoreData,
+  startNewScore,
+} from "../scoring.ts";
+import { createButton } from "../ui.ts";
 
 const LABEL_X = HALF_WIDTH - 260;
 const FIELD_X = HALF_WIDTH - 110;
@@ -9,14 +15,51 @@ const ROW_1_Y = 230;
 const ROW_2_Y = 300;
 const ROW_3_Y = 370;
 const ERROR_Y = 450;
-const START_BUTTON_Y = 520;
-const DATA_BUTTONS_Y = 600;
+const START_BUTTON_Y = 548;
+
+// Three facilitator data buttons in a row, centered as a group.
+const DATA_BUTTON_WIDTH = 200;
+const DATA_BUTTON_GAP = 20;
+const DATA_BUTTONS_Y = 638;
+const DATA_FEEDBACK_Y = DATA_BUTTONS_Y + 40;
+const DATA_BUTTON_1_X = HALF_WIDTH - DATA_BUTTON_WIDTH - DATA_BUTTON_GAP;
+const DATA_BUTTON_2_X = HALF_WIDTH;
+const DATA_BUTTON_3_X = HALF_WIDTH + DATA_BUTTON_WIDTH + DATA_BUTTON_GAP;
 
 const LABEL_STYLE = {
   fontFamily: "Arial Black",
   fontSize: 24,
   color: "#2b2a6b",
 };
+
+/** Matches the example in the spec: "hidden-bag-data-2026-10-19T0310Z" -
+ * timestamped so repeated exports during a session don't overwrite
+ * each other. */
+function timestampedFilename(extension: string): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp =
+    `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}` +
+    `T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}Z`;
+  return `hidden-bag-data-${stamp}.${extension}`;
+}
+
+function downloadBlob(
+  filename: string,
+  content: string,
+  mimeType: string,
+): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export class MainMenu extends Scene {
   private errorText: GameObjects.Text;
@@ -50,7 +93,9 @@ export class MainMenu extends Scene {
       .setOrigin(0.5);
 
     // --- Participant info form ---
-    this.add.text(LABEL_X, ROW_1_Y, "Player ID:", LABEL_STYLE).setOrigin(0, 0.5);
+    this.add
+      .text(LABEL_X, ROW_1_Y, "Player ID:", LABEL_STYLE)
+      .setOrigin(0, 0.5);
     const idInput = this.add.dom(0, 0).createFromCache("input_box");
     idInput.setOrigin(0, 0.5);
     idInput.setPosition(FIELD_X, ROW_1_Y);
@@ -67,7 +112,15 @@ export class MainMenu extends Scene {
     ageEl.setAttribute("inputmode", "numeric");
     ageEl.setAttribute("maxlength", "2");
     ageEl.addEventListener("keydown", (e: KeyboardEvent) => {
-      const allowed = ["Backspace", "ArrowLeft", "ArrowRight", "Delete", "Tab", "Home", "End"];
+      const allowed = [
+        "Backspace",
+        "ArrowLeft",
+        "ArrowRight",
+        "Delete",
+        "Tab",
+        "Home",
+        "End",
+      ];
       if (allowed.includes(e.key)) return;
       if (!/^[0-9]$/.test(e.key)) e.preventDefault();
     });
@@ -93,21 +146,19 @@ export class MainMenu extends Scene {
       .setOrigin(0.5);
 
     // --- Start button ---
-    const startButton = this.add
-      .text(WIDTH / 2, START_BUTTON_Y, "Start", {
-        fontFamily: "Arial Black",
-        fontSize: 28,
-        color: "#ffffff",
-        backgroundColor: "#2b2a6b",
-        padding: { x: 36, y: 14 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
+    const startButton = createButton(this, WIDTH / 2, START_BUTTON_Y, "Start", {
+      variant: "primary",
+      minWidth: 240,
+    });
 
-    startButton.on("pointerdown", () => {
-      const playerId = (idInput.getChildByName("input") as HTMLInputElement).value.trim();
+    startButton.hitArea.on("pointerdown", () => {
+      const playerId = (
+        idInput.getChildByName("input") as HTMLInputElement
+      ).value.trim();
       const playerAge = ageEl.value.trim();
-      const playerLocation = (locationDropdown.getChildByID("dropDown") as HTMLSelectElement).value;
+      const playerLocation = (
+        locationDropdown.getChildByID("dropDown") as HTMLSelectElement
+      ).value;
 
       let error = "";
       if (playerId.length < 6) {
@@ -131,42 +182,72 @@ export class MainMenu extends Scene {
 
     // --- Data management (facilitator controls, same data format as
     // the other games - see scoring.ts) ---
-    this.createDownloadButton();
+    this.createDownloadJsonButton();
+    this.createDownloadCsvButton();
     this.createDeleteButton();
   }
 
-  private createDownloadButton() {
-    const button = this.add
-      .text(WIDTH / 2 - 10, DATA_BUTTONS_Y, "Download Data", {
-        fontFamily: "Arial",
-        fontSize: 18,
-        color: "#2b2a6b",
-        backgroundColor: "#f2f4fa",
-        padding: { x: 14, y: 8 },
-      })
-      .setOrigin(1, 0.5)
-      .setInteractive({ useHandCursor: true });
+  private createDownloadJsonButton() {
+    const button = createButton(
+      this,
+      DATA_BUTTON_1_X,
+      DATA_BUTTONS_Y,
+      "Download Data",
+      {
+        variant: "secondary",
+        height: 56,
+        minWidth: DATA_BUTTON_WIDTH,
+      },
+    );
 
     const feedback = this.add
-      .text(WIDTH / 2 - 10, DATA_BUTTONS_Y + 36, "", {
+      .text(DATA_BUTTON_1_X, DATA_FEEDBACK_Y, "", {
         fontFamily: "Arial",
         fontSize: 14,
         color: "#2e7d32",
       })
-      .setOrigin(1, 0.5);
+      .setOrigin(0.5);
 
-    button.on("pointerdown", () => {
-      const jsonStr = JSON.stringify(JSON.parse(getScoreDataJSONString()), null, 2);
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+    button.hitArea.on("pointerdown", () => {
+      const jsonStr = JSON.stringify(
+        JSON.parse(getScoreDataJSONString()),
+        null,
+        2,
+      );
+      downloadBlob(timestampedFilename("json"), jsonStr, "application/json");
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "hidden-bag-data.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      feedback.setText("Downloaded!");
+      this.time.delayedCall(2000, () => feedback.setText(""));
+    });
+  }
+
+  private createDownloadCsvButton() {
+    const button = createButton(
+      this,
+      DATA_BUTTON_2_X,
+      DATA_BUTTONS_Y,
+      "Download CSV",
+      {
+        variant: "secondary",
+        height: 56,
+        minWidth: DATA_BUTTON_WIDTH,
+      },
+    );
+
+    const feedback = this.add
+      .text(DATA_BUTTON_2_X, DATA_FEEDBACK_Y, "", {
+        fontFamily: "Arial",
+        fontSize: 14,
+        color: "#2e7d32",
+      })
+      .setOrigin(0.5);
+
+    button.hitArea.on("pointerdown", () => {
+      downloadBlob(
+        timestampedFilename("csv"),
+        getScoreDataCSVString(),
+        "text/csv",
+      );
 
       feedback.setText("Downloaded!");
       this.time.delayedCall(2000, () => feedback.setText(""));
@@ -177,39 +258,42 @@ export class MainMenu extends Scene {
     let confirming = false;
     let confirmTimer: Phaser.Time.TimerEvent | null = null;
 
-    const button = this.add
-      .text(WIDTH / 2 + 10, DATA_BUTTONS_Y, "Delete Data", {
-        fontFamily: "Arial",
-        fontSize: 18,
-        color: "#c0392b",
-        backgroundColor: "#f2f4fa",
-        padding: { x: 14, y: 8 },
-      })
-      .setOrigin(0, 0.5)
-      .setInteractive({ useHandCursor: true });
+    const button = createButton(
+      this,
+      DATA_BUTTON_3_X,
+      DATA_BUTTONS_Y,
+      "Delete Data",
+      {
+        variant: "danger",
+        height: 56,
+        minWidth: DATA_BUTTON_WIDTH,
+      },
+    );
 
     const feedback = this.add
-      .text(WIDTH / 2 + 10, DATA_BUTTONS_Y + 36, "", {
+      .text(DATA_BUTTON_3_X, DATA_FEEDBACK_Y, "", {
         fontFamily: "Arial",
         fontSize: 14,
         color: "#c0392b",
       })
-      .setOrigin(0, 0.5);
+      .setOrigin(0.5);
 
-    button.on("pointerdown", () => {
+    button.hitArea.on("pointerdown", () => {
       if (!confirming) {
         confirming = true;
-        button.setText("Click again to confirm");
+        // Short enough to fit the button's fixed width, unlike
+        // "Click again to confirm" - see createButton's setLabel note.
+        button.setLabel("Confirm?");
         confirmTimer = this.time.delayedCall(3000, () => {
           confirming = false;
-          button.setText("Delete Data");
+          button.setLabel("Delete Data");
         });
         return;
       }
 
       confirmTimer?.remove();
       confirming = false;
-      button.setText("Delete Data");
+      button.setLabel("Delete Data");
 
       removeScoreData();
       feedback.setText("All data deleted.");
