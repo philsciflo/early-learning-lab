@@ -36,16 +36,26 @@ export type HiddenBagEnvironment = {
   speechBubble: GameObjects.Text;
   /** Updates the NPC's reaction - body colour, a bigger bounce/hop, and
    * the speech bubble text - to reflect whether it can currently see
-   * the bag right now. A no-op (no replayed animation) if `seen` hasn't
-   * actually changed since the last call, so callers can call this on
-   * every drag step without worrying about re-triggering it. */
+   * the bag right now. Also swaps the bag's own body/flap fill to the
+   * same purple while it's seen, reverting when it isn't, so both
+   * reactions read as one consistent "purple = found it!" signal. A
+   * no-op (no replayed animation) if `seen` hasn't actually changed
+   * since the last call, so callers can call this on every drag step
+   * without worrying about re-triggering it. */
   setNpcSeesBag(seen: boolean): void;
 };
 
 const NPC_BODY_COLOUR = 0x4fb6a8;
-const NPC_EXCITED_COLOUR = 0xffd166;
+const NPC_EXCITED_COLOUR = 0x9b59b6;
 const NPC_QUESTION_TEXT = "Where is my bag?";
 const NPC_THANKS_TEXT = "Ah, there it is. Thank you!";
+
+const BAG_BODY_COLOUR = 0xffb84d;
+const BAG_FLAP_COLOUR = 0xff9f40;
+// Same purple as NPC_EXCITED_COLOUR, with the flap a shade darker to
+// keep the body/flap two-tone look it has normally.
+const BAG_FOUND_BODY_COLOUR = 0x9b59b6;
+const BAG_FOUND_FLAP_COLOUR = 0x8e44ad;
 
 /**
  * Builds the shared "Milo, a tree, and a draggable bag" scene used by
@@ -75,7 +85,11 @@ export function createHiddenBagEnvironment(
   const bagStartSide: Side = npcSide === "left" ? "right" : "left";
 
   const { npc, npcEyeX, npcEyeY, body } = createNpc(scene, npcSide);
-  const bag = createBag(scene, bagStartSide);
+  const {
+    container: bag,
+    body: bagBody,
+    flap: bagFlap,
+  } = createBag(scene, bagStartSide);
 
   const speechBubble = scene.add
     .text(npcEyeX, npcEyeY - 110, NPC_QUESTION_TEXT, {
@@ -95,6 +109,8 @@ export function createHiddenBagEnvironment(
     npcSeesBag = seen;
 
     body.setFillStyle(seen ? NPC_EXCITED_COLOUR : NPC_BODY_COLOUR);
+    bagBody.setFillStyle(seen ? BAG_FOUND_BODY_COLOUR : BAG_BODY_COLOUR);
+    bagFlap.setFillStyle(seen ? BAG_FOUND_FLAP_COLOUR : BAG_FLAP_COLOUR);
     speechBubble.setText(seen ? NPC_THANKS_TEXT : NPC_QUESTION_TEXT);
 
     if (seen) {
@@ -279,7 +295,14 @@ function createNpc(
 /** The bag: the only thing the player can move. Starts just outside
  * the tree's collision radius, on `side` - opposite the NPC - so it
  * always starts hidden. */
-function createBag(scene: Scene, side: Side): GameObjects.Container {
+function createBag(
+  scene: Scene,
+  side: Side,
+): {
+  container: GameObjects.Container;
+  body: GameObjects.Rectangle;
+  flap: GameObjects.Rectangle;
+} {
   const sign = side === "left" ? -1 : 1;
   const clearance = TREE_COLLISION_RADIUS + BAG_HIDDEN_CLEARANCE;
   const bagX = TREE_CENTER_X + sign * clearance;
@@ -287,10 +310,10 @@ function createBag(scene: Scene, side: Side): GameObjects.Container {
 
   const s = BAG_VISUAL_SCALE;
   const body = scene.add
-    .rectangle(0, 5 * s, 50 * s, 60 * s, 0xffb84d)
+    .rectangle(0, 5 * s, 50 * s, 60 * s, BAG_BODY_COLOUR)
     .setStrokeStyle(3, 0x8a5a1a);
   const flap = scene.add
-    .rectangle(0, -18 * s, 54 * s, 18 * s, 0xff9f40)
+    .rectangle(0, -18 * s, 54 * s, 18 * s, BAG_FLAP_COLOUR)
     .setStrokeStyle(3, 0x8a5a1a);
   const buckle = scene.add.circle(0, 5 * s, 6 * s, 0x8a5a1a);
 
@@ -298,5 +321,5 @@ function createBag(scene: Scene, side: Side): GameObjects.Container {
   container.setSize(56 * s, 86 * s);
   container.setInteractive({ draggable: true, useHandCursor: true });
 
-  return container;
+  return { container, body, flap };
 }

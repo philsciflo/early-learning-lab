@@ -187,7 +187,7 @@ export type SuccessPopOptions = {
   scaleTo?: number;
   hopHeight?: number;
   duration?: number;
-  /** Size of the gold flash overlay, centred on the target's visual
+  /** Size of the purple flash overlay, centred on the target's visual
    * centre (`centerOffsetX`/`centerOffsetY`). */
   flashWidth?: number;
   flashHeight?: number;
@@ -196,7 +196,7 @@ export type SuccessPopOptions = {
 /**
  * The big "yes, found it!" pop used for every "NPC can see it"
  * celebration (Level1/Level2's bag, postcardScene's card): a chunky
- * scale-up-and-hop on `target`, plus a brief additive gold flash over
+ * scale-up-and-hop on `target`, plus a brief additive purple flash over
  * it, so the moment reads as a clear jump rather than a subtle wobble.
  */
 export function playBigSuccessPop(
@@ -243,7 +243,7 @@ export function playBigSuccessPop(
       baseY + centerOffsetY,
       flashWidth,
       flashHeight,
-      0xffe066,
+      0x9b59b6,
       0,
     )
     .setBlendMode("ADD")
