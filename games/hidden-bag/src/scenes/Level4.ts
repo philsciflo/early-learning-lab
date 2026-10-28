@@ -24,7 +24,7 @@ import { createButton, createSuccessBanner, SuccessBanner } from "../ui.ts";
 import { FriendId } from "../friends.ts";
 
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
-const GRID_Y = 150;
+const GRID_Y = 150; // 2 rows of CARD_H=240 + CARD_GAP=30 fits in 150..660
 
 /**
  * Level 4 (previously Level 3): four postcards, exactly one of which
@@ -53,6 +53,10 @@ export class Level4 extends Scene {
 
   constructor() {
     super("Level4");
+  }
+
+  preload() {
+    this.load.image("frame", "/assets/frame_01.png");
   }
 
   create() {
