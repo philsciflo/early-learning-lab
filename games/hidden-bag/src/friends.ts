@@ -120,30 +120,42 @@ function buildFriend2(scene: Scene): FriendBuild {
     hexPoints.push(HX + HR * Math.cos(a), HY + HR * Math.sin(a));
   }
 
-  const earLeft = scene.add.triangle(
-    0,
-    0,
-    -HR - 2,
-    HY + 15,
-    -HR - 18,
-    HY - 25,
-    -HR + 10,
-    HY - 13,
-    EAR_COLOUR,
-  );
-  const earRight = scene.add.triangle(
-    0,
-    0,
-    HR + 2,
-    HY + 15,
-    HR + 18,
-    HY - 25,
-    HR - 10,
-    HY - 13,
-    EAR_COLOUR,
-  );
+  // Every shape below is built from absolute coordinates (not centred
+  // around the shape's own (0,0)), so each needs setOrigin(0, 0) -
+  // Phaser's Polygon/Triangle render offset is origin * width/height
+  // (a magnitude), not the actual bounding-box centre, so without this
+  // any off-centre point list renders shifted away from where it's
+  // authored. This is what was pulling Hexa's hexagon away from her
+  // own eyes.
+  const earLeft = scene.add
+    .triangle(
+      0,
+      0,
+      -HR - 2,
+      HY + 15,
+      -HR - 18,
+      HY - 25,
+      -HR + 10,
+      HY - 13,
+      EAR_COLOUR,
+    )
+    .setOrigin(0, 0);
+  const earRight = scene.add
+    .triangle(
+      0,
+      0,
+      HR + 2,
+      HY + 15,
+      HR + 18,
+      HY - 25,
+      HR - 10,
+      HY - 13,
+      EAR_COLOUR,
+    )
+    .setOrigin(0, 0);
   const head = scene.add
     .polygon(0, 0, hexPoints, HEAD_COLOUR)
+    .setOrigin(0, 0)
     .setStrokeStyle(3, OUTLINE_COLOUR);
   const eyes = googlyEyes(scene, 0, HY, 12);
   const mouth = smileLine(scene, [
@@ -189,27 +201,29 @@ function buildFriend3(scene: Scene): FriendBuild {
 
   const eyes = googlyEyes(scene, 0, -138, 11);
   const mouth = smileArc(scene, 0, -122, 10);
+  // Apex extends up to -125, well past the head's bottom edge (-110),
+  // so the head actually sits on/into the triangle rather than just
+  // touching it - drawn before the head so the head renders on top at
+  // the overlap, same "body first, head on top" technique as Milo's
+  // diamond above.
   const body = scene.add
-    .triangle(0, 0, 0, -100, -36, -5, 36, -5, BODY_COLOUR)
+    .triangle(0, 0, 0, -125, -36, -5, 36, -5, BODY_COLOUR)
+    .setOrigin(0, 0)
     .setStrokeStyle(3, OUTLINE_COLOUR);
 
   return {
-    parts: [head, hairVisor, ...eyes, mouth, body],
+    parts: [body, head, hairVisor, ...eyes, mouth],
     body,
     bodyNormalColour: BODY_COLOUR,
   };
 }
 
-/** Friend 4 "Blocky": a square head with a triangle hat sitting
- * directly on a rectangle body (no neck piece), plus simple arms. */
+/** Friend 4 "Blocky": a square head sitting directly on a rectangle
+ * body (no neck piece), plus simple arms. No hat. */
 function buildFriend4(scene: Scene): FriendBuild {
   const HEAD_COLOUR = 0x3f6fd1;
   const BODY_COLOUR = 0xe07a3e;
-  const HAT_COLOUR = 0xe8d44d;
 
-  const hat = scene.add
-    .triangle(0, 0, 0, -192, -26, -158, 26, -158, HAT_COLOUR)
-    .setStrokeStyle(3, OUTLINE_COLOUR);
   const head = scene.add
     .rectangle(0, -128, 60, 60, HEAD_COLOUR)
     .setStrokeStyle(3, OUTLINE_COLOUR);
@@ -259,17 +273,7 @@ function buildFriend4(scene: Scene): FriendBuild {
     .setStrokeStyle(2, OUTLINE_COLOUR);
 
   return {
-    parts: [
-      hat,
-      head,
-      ...eyes,
-      mouth,
-      body,
-      leftArm,
-      leftHand,
-      rightArm,
-      rightHand,
-    ],
+    parts: [head, ...eyes, mouth, body, leftArm, leftHand, rightArm, rightHand],
     body,
     bodyNormalColour: BODY_COLOUR,
   };
