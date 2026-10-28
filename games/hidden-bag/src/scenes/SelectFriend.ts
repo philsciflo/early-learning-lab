@@ -73,8 +73,8 @@ export class SelectFriend extends Scene {
       // guaranteed to match what the child actually sees in-game.
       const build = buildFriend(this, friendId);
       // Feet sit here; comfortably clear of the name label below (which
-      // sits at CARD_H/2 - 24) - the tallest friend design (Blocky's
-      // hat) reaches roughly 192 * 0.55 =~ 106px above this point, well
+      // sits at CARD_H/2 - 24) - the tallest friend design (Dot's head)
+      // reaches roughly 170 * 0.55 =~ 94px above this point, well
       // inside the card's top edge.
       const charContainer = this.add.container(0, CARD_H / 2 - 50, build.parts);
       charContainer.setScale(0.55);
