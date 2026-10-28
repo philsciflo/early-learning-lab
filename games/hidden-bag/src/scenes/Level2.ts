@@ -6,6 +6,7 @@ import {
   TREE_CENTER_X,
   TREE_CENTER_Y,
   PLAYER_ID_DATA_KEY,
+  FRIEND_DATA_KEY,
   SUCCESS_BANNER_Y,
 } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
@@ -22,6 +23,7 @@ import {
   playBigSuccessPop,
   SuccessBanner,
 } from "../ui.ts";
+import { FriendId } from "../friends.ts";
 
 /**
  * Level 2: the same drag-the-bag task as Level 1, but blind. There is
@@ -75,11 +77,16 @@ export class Level2 extends Scene {
       emitting: false,
     });
 
+    const friendId =
+      (this.registry.get(FRIEND_DATA_KEY) as FriendId | undefined) ?? 1;
+
     // createHiddenBagEnvironment() paints the full-screen sky/ground
     // background - it must run before anything else that should be
     // visible on top of it (title, buttons), not after.
-    this.env = createHiddenBagEnvironment(this, (x, y) =>
-      this.onValidDrag(x, y),
+    this.env = createHiddenBagEnvironment(
+      this,
+      (x, y) => this.onValidDrag(x, y),
+      friendId,
     );
 
     // At fontSize 26, "Where do you think Milo can see the bag?" (40

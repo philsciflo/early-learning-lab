@@ -7,6 +7,17 @@ export const HALF_HEIGHT = HEIGHT / 2;
 export const GAME_SCORE_DATA_KEY = "hidden-bag-data";
 export const PLAYER_ID_DATA_KEY = "playerId";
 
+// Which of the 4 selectable friends (see friends.ts) the child picked on
+// the SelectFriend screen, before Level0. Read with a fallback of 1 by
+// anything that draws a friend, so starting a level scene directly
+// during development (skipping SelectFriend) still renders something.
+export const FRIEND_DATA_KEY = "friendId";
+
+// Shared outline/skin colours used by every friend design in friends.ts
+// (and reused by the tree/bag outline colour for visual consistency).
+export const OUTLINE_COLOUR = 0x2b2a6b;
+export const SKIN_COLOUR = 0xffd9b3;
+
 // Shared y-position for the "you got it!" success banner (see
 // ui.ts's createSuccessBanner), used by Level2 and the postcard levels
 // (Level3/Level4) so the positive feedback moment looks and sits the

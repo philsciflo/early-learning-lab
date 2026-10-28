@@ -4,6 +4,7 @@ import {
   WIDTH,
   HEIGHT,
   PLAYER_ID_DATA_KEY,
+  FRIEND_DATA_KEY,
   SUCCESS_BANNER_Y,
 } from "../constants.ts";
 import { recordTrial, Side } from "../scoring.ts";
@@ -20,6 +21,7 @@ import {
   FeedbackContext,
 } from "../postcardScene.ts";
 import { createButton, createSuccessBanner, SuccessBanner } from "../ui.ts";
+import { FriendId } from "../friends.ts";
 
 // Centers the PAIR of cards (2 * CARD_W + the gap between them), not
 // just a single card width - that was the bug: using (WIDTH - CARD_W) / 2
@@ -50,12 +52,18 @@ export class Level3 extends Scene {
   private audioContext?: AudioContext;
   private tryAgainButton?: GameObjects.Text;
   private marks: GameObjects.Text[] = [];
+  private friendId: FriendId;
 
   constructor() {
     super("Level3");
   }
 
   create() {
+    // Default to 1 (Milo) if a level scene is ever started directly
+    // during development, skipping SelectFriend.
+    this.friendId =
+      (this.registry.get(FRIEND_DATA_KEY) as FriendId | undefined) ?? 1;
+
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0xf2f4fa).setOrigin(0, 0);
 
     // At fontSize 22, "Click the postcard where Milo can see their
@@ -134,6 +142,7 @@ export class Level3 extends Scene {
         slotPositions[slot],
         this.npcSide,
         bagSpots[spotIndex],
+        this.friendId,
       );
       makePostcardClickable(postcard, () =>
         this.onCardClicked(postcard.container),
