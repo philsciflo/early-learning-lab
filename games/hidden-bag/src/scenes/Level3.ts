@@ -28,7 +28,7 @@ import { FriendId } from "../friends.ts";
 // only centers one card, so the second card (placed CARD_W + CARD_GAP to
 // its right) ran off the right edge of the canvas.
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
-const GRID_Y = 220;
+const GRID_Y = 260;
 
 /**
  * Level 3: the same postcard-recognition idea as Level 4, but with only
@@ -56,6 +56,10 @@ export class Level3 extends Scene {
 
   constructor() {
     super("Level3");
+  }
+
+  preload() {
+    this.load.image("frame", "/assets/frame_01.png");
   }
 
   create() {

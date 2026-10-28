@@ -36,6 +36,11 @@ export class Level1 extends Scene {
     super("Level1");
   }
 
+  preload() {
+    this.load.image("tree", "/assets/tree_01.png");
+    this.load.image("bag", "/assets/bag_01.png");
+  }
+
   create() {
     this.isVisibleToNpc = false;
     this.trialStartMs = Date.now();

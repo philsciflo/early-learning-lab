@@ -8,22 +8,39 @@ import { buildFriend, FriendId } from "./friends.ts";
 
 export type Point = { x: number; y: number };
 
-export const CARD_W = 480;
-export const CARD_H = 260;
-export const CARD_GAP = 40;
+// Card size follows frame_01.png's own native aspect ratio (1262x1238,
+// nearly square) so the frame image displays undistorted - see the
+// FRAME_* constants below for exactly where that leaves the usable
+// "photo" area to draw into.
+export const CARD_W = 245;
+export const CARD_H = 240;
+export const CARD_GAP = 30;
+
+// frame_01.png's usable "photo" window, measured directly on the
+// source image (1262x1238): the inner white rectangle sits at
+// x:[139,1069], y:[131,844]. Expressed as fractions of the native
+// image so they scale correctly to whatever size the frame is
+// displayed at (CARD_W x CARD_H here).
+const FRAME_NATIVE_W = 1262;
+const FRAME_NATIVE_H = 1238;
+const FRAME_INNER_LEFT = 139 / FRAME_NATIVE_W;
+const FRAME_INNER_TOP = 131 / FRAME_NATIVE_H;
+const FRAME_INNER_RIGHT = 1069 / FRAME_NATIVE_W;
+const FRAME_INNER_BOTTOM = 844 / FRAME_NATIVE_H;
 
 // The mini-scene drawn inside each card, in the card's own local
-// coordinates (0,0 = card's top-left corner).
-const SCENE_W = CARD_W - 40; // leaves a 20px margin inside the card border
-const SCENE_H = CARD_H - 70; // leaves room for the border and a label
-const SCENE_OFFSET_X = 20;
-const SCENE_OFFSET_Y = 20;
+// coordinates (0,0 = card's top-left corner) - sized/positioned to
+// land exactly inside the frame's photo window computed above.
+const SCENE_OFFSET_X = FRAME_INNER_LEFT * CARD_W;
+const SCENE_OFFSET_Y = FRAME_INNER_TOP * CARD_H;
+const SCENE_W = (FRAME_INNER_RIGHT - FRAME_INNER_LEFT) * CARD_W;
+const SCENE_H = (FRAME_INNER_BOTTOM - FRAME_INNER_TOP) * CARD_H;
 
 const TREE_LOCAL_X = SCENE_W / 2;
-const TREE_LOCAL_Y = SCENE_H * 0.65;
-const TREE_RADIUS = 26;
-const NPC_DISTANCE_FROM_TREE = 100;
-const NPC_EYE_Y_OFFSET = -18; // eye point is a bit above the NPC's feet
+const TREE_LOCAL_Y = SCENE_H * 0.62;
+const TREE_RADIUS = 18;
+const NPC_DISTANCE_FROM_TREE = SCENE_W * 0.31;
+const NPC_EYE_Y_OFFSET = -25; // eye point is a bit above the NPC's feet
 
 export function npcEyeLocal(side: Side): Point {
   const sign = side === "left" ? -1 : 1;
@@ -50,11 +67,26 @@ export function buildBagSpots(npcSide: Side): Point[] {
   // blocked by anything in a small thumbnail, even when the "opposite
   // side" rule says it should be hidden. Same-height, same-side-vs-not
   // is what actually reads clearly at this size.
+  // Offsets are ratios of NPC_DISTANCE_FROM_TREE (not fixed pixels), so
+  // this scales correctly with the scene size rather than needing
+  // hand-retuning every time SCENE_W changes.
   const left = {
-    visible: { x: TREE_LOCAL_X - 55, y: TREE_LOCAL_Y },
-    hiddenA: { x: TREE_LOCAL_X + 40, y: TREE_LOCAL_Y }, // tucked right behind the trunk
-    hiddenB: { x: TREE_LOCAL_X + 85, y: TREE_LOCAL_Y }, // mirrors "visible", opposite side
-    hiddenC: { x: TREE_LOCAL_X + 135, y: TREE_LOCAL_Y }, // further past the tree
+    visible: {
+      x: TREE_LOCAL_X - NPC_DISTANCE_FROM_TREE * 0.55,
+      y: TREE_LOCAL_Y,
+    },
+    hiddenA: {
+      x: TREE_LOCAL_X + NPC_DISTANCE_FROM_TREE * 0.4,
+      y: TREE_LOCAL_Y,
+    }, // tucked right behind the trunk
+    hiddenB: {
+      x: TREE_LOCAL_X + NPC_DISTANCE_FROM_TREE * 0.85,
+      y: TREE_LOCAL_Y,
+    }, // mirrors "visible", opposite side
+    hiddenC: {
+      x: TREE_LOCAL_X + NPC_DISTANCE_FROM_TREE * 1.35,
+      y: TREE_LOCAL_Y,
+    }, // further past the tree
   };
 
   const mirror = (p: Point): Point => ({ x: 2 * TREE_LOCAL_X - p.x, y: p.y });
@@ -125,12 +157,24 @@ export function buildPostcard(
 ): Postcard {
   const container = scene.add.container(position.x, position.y);
 
-  const cardBg = scene.add
-    .rectangle(0, 0, CARD_W, CARD_H, 0xffffff)
+  // The frame IS the card background - its own border/corners define
+  // the card's visual bounds, so the click hit area is still a plain
+  // invisible rectangle sized to the frame's full footprint (same
+  // "Phaser computes the hit area from a real Rectangle" reasoning as
+  // makePostcardClickable's doc comment below).
+  const frame = scene.add
+    .image(0, 0, "frame")
     .setOrigin(0, 0)
-    .setStrokeStyle(3, 0xcfd6e8);
-  container.add(cardBg);
+    .setDisplaySize(CARD_W, CARD_H);
+  const hitArea = scene.add
+    .rectangle(0, 0, CARD_W, CARD_H, 0x000000, 0)
+    .setOrigin(0, 0);
+  container.add([frame, hitArea]);
 
+  // A light sky backdrop behind the mini-scene, inset to exactly the
+  // frame's own "photo window" (the FRAME_INNER_* measurements above),
+  // drawn after the frame so it fills that window rather than sitting
+  // under the frame's border.
   const sceneBg = scene.add
     .rectangle(SCENE_OFFSET_X, SCENE_OFFSET_Y, SCENE_W, SCENE_H, 0x9fd8ff)
     .setOrigin(0, 0);
@@ -141,13 +185,15 @@ export function buildPostcard(
     y: SCENE_OFFSET_Y + p.y,
   });
 
-  // Tree
+  // Tree - kept as simple drawn shapes (not the real tree_01.png image)
+  // since at this small a size a detailed image reads as a blur; a
+  // plain trunk+canopy stays legible as a thumbnail-sized hint.
   const treePos = localToCard({ x: TREE_LOCAL_X, y: TREE_LOCAL_Y });
   const trunk = scene.add
-    .rectangle(treePos.x, treePos.y + 10, 10, 46, 0x8a5a2a)
+    .rectangle(treePos.x, treePos.y + 7, 7, 33, 0x8a5a2a)
     .setStrokeStyle(2, 0x5c3a1a);
   const canopy = scene.add
-    .circle(treePos.x, treePos.y - 14, TREE_RADIUS, 0x4caf50)
+    .circle(treePos.x, treePos.y - 10, TREE_RADIUS, 0x4caf50)
     .setStrokeStyle(3, 0x2e7d32);
   container.add([trunk, canopy]);
 
@@ -160,8 +206,10 @@ export function buildPostcard(
   // Reuse the full-size friend build at a small scale, rather than a
   // separately hand-drawn mini version - same "feet at local (0,0),
   // facing right by default" convention as hiddenBagScene.ts's NPC, so
-  // the same facing-flip-on-scaleX trick applies here too.
-  const NPC_SCALE = 0.3;
+  // the same facing-flip-on-scaleX trick applies here too. Scaled down
+  // further than the SelectFriend card preview (0.55) since this
+  // frame's photo window is considerably smaller.
+  const NPC_SCALE = 0.22;
   const build = buildFriend(scene, friendId);
   const npcContainer = scene.add.container(npcPos.x, npcPos.y, build.parts);
   npcContainer.setScale(NPC_SCALE);
@@ -173,14 +221,14 @@ export function buildPostcard(
   // Bag
   const bagPos = localToCard(bagPosition);
   const bagBody = scene.add
-    .rectangle(bagPos.x, bagPos.y, 20, 24, 0xffb84d)
+    .rectangle(bagPos.x, bagPos.y, 15, 18, 0xffb84d)
     .setStrokeStyle(2, 0x8a5a1a);
   const bagFlap = scene.add
-    .rectangle(bagPos.x, bagPos.y - 14, 22, 8, 0xff9f40)
+    .rectangle(bagPos.x, bagPos.y - 10, 16, 6, 0xff9f40)
     .setStrokeStyle(2, 0x8a5a1a);
   container.add([bagBody, bagFlap]);
 
-  return { container, hitArea: cardBg };
+  return { container, hitArea };
 }
 
 /** Makes a whole postcard clickable, not just part of it, and no more

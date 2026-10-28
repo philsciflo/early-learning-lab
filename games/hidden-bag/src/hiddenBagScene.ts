@@ -13,13 +13,13 @@ import {
   TREE_FEET_Y,
   TREE_CENTER_X,
   TREE_CENTER_Y,
-  TREE_RADIUS,
-  TREE_TRUNK_HEIGHT,
-  TREE_TRUNK_WIDTH,
+  TREE_DISPLAY_WIDTH,
+  TREE_DISPLAY_HEIGHT,
   TREE_COLLISION_RADIUS,
   BAG_HIDDEN_CLEARANCE,
   BAG_DRAG_BOUNDS,
-  BAG_VISUAL_SCALE,
+  BAG_DISPLAY_WIDTH,
+  BAG_DISPLAY_HEIGHT,
 } from "./constants.ts";
 import { resolveTreeCollision, segmentHitsTree } from "./collision.ts";
 import { Side } from "./scoring.ts";
@@ -37,25 +37,17 @@ export type HiddenBagEnvironment = {
   speechBubble: GameObjects.Text;
   /** Updates the NPC's reaction - body colour, a bigger bounce/hop, and
    * the speech bubble text - to reflect whether it can currently see
-   * the bag right now. Also swaps the bag's own body/flap fill to the
-   * same purple while it's seen, reverting when it isn't, so both
-   * reactions read as one consistent "purple = found it!" signal. A
-   * no-op (no replayed animation) if `seen` hasn't actually changed
-   * since the last call, so callers can call this on every drag step
-   * without worrying about re-triggering it. */
+   * the bag right now (the bag's own "found it" cue is the separate
+   * flash+hop from ui.ts's playBigSuccessPop, called alongside this by
+   * Level1/Level2). A no-op (no replayed animation) if `seen` hasn't
+   * actually changed since the last call, so callers can call this on
+   * every drag step without worrying about re-triggering it. */
   setNpcSeesBag(seen: boolean): void;
 };
 
 const NPC_EXCITED_COLOUR = 0x9b59b6;
 const NPC_QUESTION_TEXT = "Where is my bag?";
 const NPC_THANKS_TEXT = "Ah, there it is. Thank you!";
-
-const BAG_BODY_COLOUR = 0xffb84d;
-const BAG_FLAP_COLOUR = 0xff9f40;
-// Same purple as NPC_EXCITED_COLOUR, with the flap a shade darker to
-// keep the body/flap two-tone look it has normally.
-const BAG_FOUND_BODY_COLOUR = 0x9b59b6;
-const BAG_FOUND_FLAP_COLOUR = 0x8e44ad;
 
 /**
  * Builds the shared "Milo, a tree, and a draggable bag" scene used by
@@ -93,11 +85,7 @@ export function createHiddenBagEnvironment(
     npcSide,
     friendId,
   );
-  const {
-    container: bag,
-    body: bagBody,
-    flap: bagFlap,
-  } = createBag(scene, bagStartSide);
+  const { container: bag } = createBag(scene, bagStartSide);
 
   const speechBubble = scene.add
     .text(npcEyeX, npcEyeY - 110, NPC_QUESTION_TEXT, {
@@ -116,9 +104,14 @@ export function createHiddenBagEnvironment(
     }
     npcSeesBag = seen;
 
+    // The bag is now a real image (bag_01.png), not plain fill-able
+    // shapes, so it no longer gets its own purple colour swap - tinting
+    // a detailed multi-colour illustration muddies the art rather than
+    // reading as a clean "found it" signal. The existing flash+hop
+    // (playBigSuccessPop, called by Level1/Level2 at the same moment)
+    // is the bag's own "found it" cue; Milo's colour swap below plus
+    // that flash/hop together are still a strong, clear signal.
     body.setFillStyle(seen ? NPC_EXCITED_COLOUR : bodyNormalColour);
-    bagBody.setFillStyle(seen ? BAG_FOUND_BODY_COLOUR : BAG_BODY_COLOUR);
-    bagFlap.setFillStyle(seen ? BAG_FOUND_FLAP_COLOUR : BAG_FLAP_COLOUR);
     speechBubble.setText(seen ? NPC_THANKS_TEXT : NPC_QUESTION_TEXT);
 
     if (seen) {
@@ -197,64 +190,17 @@ export function createHiddenBagEnvironment(
   };
 }
 
-/** The tree: a trunk, a few branches, and a canopy built from the main
- * collider circle plus extra leaf clumps layered around it. TREE_CENTER
- * / TREE_RADIUS (the main canopy circle below) are also used as the
- * solid collider and as the pivot point for the "which side is the bag
- * on" visibility check - the branches and leaf clumps are purely
- * decorative and don't change that circle's position or size, so the
- * visual, the collision, and the logic always agree with each other. */
+/** The tree: tree_01.png, bottom-centre-anchored so its trunk base
+ * sits on the ground at (TREE_CENTER_X, TREE_FEET_Y), sized so its
+ * canopy roughly fills the TREE_CENTER_Y/TREE_RADIUS circle (see
+ * constants.ts's TREE_DISPLAY_WIDTH/HEIGHT derivation) - that circle
+ * remains the actual collider and line-of-sight pivot, entirely
+ * independent of this image; this is purely the visual. */
 function createTree(scene: Scene) {
-  const trunkTopY = TREE_FEET_Y - TREE_TRUNK_HEIGHT;
-
   scene.add
-    .rectangle(
-      TREE_CENTER_X,
-      TREE_FEET_Y - TREE_TRUNK_HEIGHT / 2,
-      TREE_TRUNK_WIDTH,
-      TREE_TRUNK_HEIGHT,
-      0x8a5a2a,
-    )
-    .setStrokeStyle(3, 0x5c3a1a);
-
-  // A few thin branches fanning up from the trunk's top into the
-  // canopy - drawn before the canopy/leaves below so their far ends
-  // are mostly hidden under the foliage, the way a real tree's
-  // branches are.
-  const BRANCH_DIRECTIONS: { dx: number; dy: number; length: number }[] = [
-    { dx: -0.6, dy: -1, length: 70 },
-    { dx: 0.6, dy: -1, length: 70 },
-    { dx: -0.95, dy: -0.35, length: 48 },
-    { dx: 0.95, dy: -0.35, length: 48 },
-  ];
-  BRANCH_DIRECTIONS.forEach(({ dx, dy, length }) => {
-    scene.add
-      .rectangle(TREE_CENTER_X, trunkTopY, length, 12, 0x8a5a2a)
-      .setOrigin(0, 0.5)
-      .setRotation(Math.atan2(dy, dx))
-      .setStrokeStyle(2, 0x5c3a1a);
-  });
-
-  scene.add
-    .circle(TREE_CENTER_X, TREE_CENTER_Y, TREE_RADIUS, 0x4caf50)
-    .setStrokeStyle(4, 0x2e7d32);
-
-  // A fuller leaf silhouette: smaller overlapping circles in varied
-  // greens, layered on top of/around the main canopy circle above, so
-  // the outline reads as leafy clumps rather than one flat disc. These
-  // extend a little past TREE_RADIUS in places, which is fine - only
-  // the circle above is the actual collider/visibility pivot.
-  const LEAF_CLUMPS: { dx: number; dy: number; r: number; colour: number }[] = [
-    { dx: -65, dy: -35, r: 46, colour: 0x66bb6a },
-    { dx: 60, dy: -30, r: 42, colour: 0x81c784 },
-    { dx: -45, dy: 45, r: 40, colour: 0x4caf50 },
-    { dx: 50, dy: 50, r: 38, colour: 0x388e3c },
-  ];
-  LEAF_CLUMPS.forEach(({ dx, dy, r, colour }) => {
-    scene.add
-      .circle(TREE_CENTER_X + dx, TREE_CENTER_Y + dy, r, colour)
-      .setStrokeStyle(2, 0x2e7d32);
-  });
+    .image(TREE_CENTER_X, TREE_FEET_Y, "tree")
+    .setOrigin(0.5, 1)
+    .setDisplaySize(TREE_DISPLAY_WIDTH, TREE_DISPLAY_HEIGHT);
 }
 
 /** The NPC: fixed in place for the round, standing on `side` of the
@@ -293,32 +239,27 @@ function createNpc(
 
 /** The bag: the only thing the player can move. Starts just outside
  * the tree's collision radius, on `side` - opposite the NPC - so it
- * always starts hidden. */
+ * always starts hidden. bag_01.png, sized to BAG_DISPLAY_WIDTH/HEIGHT
+ * (see constants.ts - BAG_RADIUS, and everything collision/drag-bounds
+ * derived from it, is sized to match this same image). */
 function createBag(
   scene: Scene,
   side: Side,
 ): {
   container: GameObjects.Container;
-  body: GameObjects.Rectangle;
-  flap: GameObjects.Rectangle;
 } {
   const sign = side === "left" ? -1 : 1;
   const clearance = TREE_COLLISION_RADIUS + BAG_HIDDEN_CLEARANCE;
   const bagX = TREE_CENTER_X + sign * clearance;
   const bagY = TREE_CENTER_Y;
 
-  const s = BAG_VISUAL_SCALE;
-  const body = scene.add
-    .rectangle(0, 5 * s, 50 * s, 60 * s, BAG_BODY_COLOUR)
-    .setStrokeStyle(3, 0x8a5a1a);
-  const flap = scene.add
-    .rectangle(0, -18 * s, 54 * s, 18 * s, BAG_FLAP_COLOUR)
-    .setStrokeStyle(3, 0x8a5a1a);
-  const buckle = scene.add.circle(0, 5 * s, 6 * s, 0x8a5a1a);
+  const image = scene.add
+    .image(0, 0, "bag")
+    .setDisplaySize(BAG_DISPLAY_WIDTH, BAG_DISPLAY_HEIGHT);
 
-  const container = scene.add.container(bagX, bagY, [body, flap, buckle]);
-  container.setSize(56 * s, 86 * s);
+  const container = scene.add.container(bagX, bagY, [image]);
+  container.setSize(BAG_DISPLAY_WIDTH, BAG_DISPLAY_HEIGHT);
   container.setInteractive({ draggable: true, useHandCursor: true });
 
-  return { container, body, flap };
+  return { container };
 }
