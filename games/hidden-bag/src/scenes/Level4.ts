@@ -9,8 +9,8 @@ import {
 } from "../constants.ts";
 import { recordTrial, Side } from "../scoring.ts";
 import {
-  CARD_W,
   CARD_GAP,
+  computeCardLayout,
   buildBagSpots,
   buildPostcard,
   gridSlotPositions,
@@ -23,8 +23,17 @@ import {
 import { createButton, createSuccessBanner, SuccessBanner } from "../ui.ts";
 import { FriendId } from "../friends.ts";
 
+// A 2x2 grid has a hard vertical ceiling (2 rows + a gap has to fit
+// between the top instruction/success-banner zone and the bottom
+// feedback/Try-Again zone), so these cards can't grow nearly as much
+// as Level3's single row - this is as big as that constraint allows.
+// CARD_H follows the frame image's own native aspect ratio.
+const CARD_W = 265;
+const CARD_H = Math.round(CARD_W * (1238 / 1262));
+const LAYOUT = computeCardLayout(CARD_W, CARD_H);
+
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
-const GRID_Y = 150; // 2 rows of CARD_H=240 + CARD_GAP=30 fits in 150..660
+const GRID_Y = 140; // 2 rows of CARD_H + CARD_GAP must fit in ~140..680
 
 /**
  * Level 4 (previously Level 3): four postcards, exactly one of which
@@ -129,14 +138,14 @@ export class Level4 extends Scene {
     this.tryAgainButton = undefined;
 
     this.npcSide = Math.random() < 0.5 ? "left" : "right";
-    const bagSpots = buildBagSpots(this.npcSide);
+    const bagSpots = buildBagSpots(this.npcSide, LAYOUT);
 
     // bagSpots[0] is always the visible/correct one. Shuffle which grid
     // slot it (and the three distractors) land in.
     const order = shuffledIndices(4);
     this.correctCardIndex = order.indexOf(0);
 
-    const slotPositions = gridSlotPositions(4, GRID_X, GRID_Y);
+    const slotPositions = gridSlotPositions(4, GRID_X, GRID_Y, LAYOUT);
 
     order.forEach((spotIndex, slot) => {
       const postcard = buildPostcard(
@@ -145,6 +154,7 @@ export class Level4 extends Scene {
         this.npcSide,
         bagSpots[spotIndex],
         this.friendId,
+        LAYOUT,
       );
       makePostcardClickable(postcard, () =>
         this.onCardClicked(postcard.container),
@@ -176,9 +186,14 @@ export class Level4 extends Scene {
     };
 
     if (correct) {
-      celebrateCard(feedbackCtx, card);
+      celebrateCard(feedbackCtx, card, LAYOUT);
     } else {
-      commiserateCard(feedbackCtx, card, this.cards[this.correctCardIndex]);
+      commiserateCard(
+        feedbackCtx,
+        card,
+        this.cards[this.correctCardIndex],
+        LAYOUT,
+      );
     }
 
     this.recordChoice(clickedIndex, correct, timeToChoiceMs, false);
