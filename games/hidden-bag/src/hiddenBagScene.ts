@@ -23,6 +23,7 @@ import {
 } from "./constants.ts";
 import { resolveTreeCollision, segmentHitsTree } from "./collision.ts";
 import { Side } from "./scoring.ts";
+import { buildFriend, FriendId } from "./friends.ts";
 
 export type HiddenBagEnvironment = {
   npc: GameObjects.Container;
@@ -45,7 +46,6 @@ export type HiddenBagEnvironment = {
   setNpcSeesBag(seen: boolean): void;
 };
 
-const NPC_BODY_COLOUR = 0x4fb6a8;
 const NPC_EXCITED_COLOUR = 0x9b59b6;
 const NPC_QUESTION_TEXT = "Where is my bag?";
 const NPC_THANKS_TEXT = "Ah, there it is. Thank you!";
@@ -69,10 +69,14 @@ const BAG_FOUND_FLAP_COLOUR = 0x8e44ad;
  * clamped to the play area and resolved against the tree's collision -
  * callers only need to decide what to DO with that (e.g. Level1 checks
  * live visibility; Level2 just records the path).
+ *
+ * `friendId` picks which of the 4 friend designs (see friends.ts) the
+ * child selected on the SelectFriend screen.
  */
 export function createHiddenBagEnvironment(
   scene: Scene,
   onValidDrag: (x: number, y: number) => void,
+  friendId: FriendId,
 ): HiddenBagEnvironment {
   scene.add.rectangle(0, 0, WIDTH, GROUND_Y, SKY_COLOUR).setOrigin(0, 0);
   scene.add
@@ -84,7 +88,11 @@ export function createHiddenBagEnvironment(
   const npcSide: Side = Math.random() < 0.5 ? "left" : "right";
   const bagStartSide: Side = npcSide === "left" ? "right" : "left";
 
-  const { npc, npcEyeX, npcEyeY, body } = createNpc(scene, npcSide);
+  const { npc, npcEyeX, npcEyeY, body, bodyNormalColour } = createNpc(
+    scene,
+    npcSide,
+    friendId,
+  );
   const {
     container: bag,
     body: bagBody,
@@ -108,7 +116,7 @@ export function createHiddenBagEnvironment(
     }
     npcSeesBag = seen;
 
-    body.setFillStyle(seen ? NPC_EXCITED_COLOUR : NPC_BODY_COLOUR);
+    body.setFillStyle(seen ? NPC_EXCITED_COLOUR : bodyNormalColour);
     bagBody.setFillStyle(seen ? BAG_FOUND_BODY_COLOUR : BAG_BODY_COLOUR);
     bagFlap.setFillStyle(seen ? BAG_FOUND_FLAP_COLOUR : BAG_FLAP_COLOUR);
     speechBubble.setText(seen ? NPC_THANKS_TEXT : NPC_QUESTION_TEXT);
@@ -250,46 +258,37 @@ function createTree(scene: Scene) {
 }
 
 /** The NPC: fixed in place for the round, standing on `side` of the
- * tree and facing toward it. */
+ * tree and facing toward it, drawn as whichever friend the child chose
+ * on the SelectFriend screen (see friends.ts for the actual shapes -
+ * this just positions/flips that build the same way every friend
+ * design shares). */
 function createNpc(
   scene: Scene,
   side: Side,
+  friendId: FriendId,
 ): {
   npc: GameObjects.Container;
   npcEyeX: number;
   npcEyeY: number;
-  body: GameObjects.Rectangle;
+  body: GameObjects.Shape;
+  bodyNormalColour: number;
 } {
   const sign = side === "left" ? -1 : 1;
   const npcX = TREE_CENTER_X + sign * NPC_DISTANCE_FROM_TREE;
   const npcEyeX = TREE_CENTER_X + sign * NPC_EYE_DISTANCE_FROM_TREE;
   const npcEyeY = NPC_EYE_Y;
 
-  const body = scene.add
-    .rectangle(0, -55, 56, 110, NPC_BODY_COLOUR)
-    .setStrokeStyle(3, 0x2b2a6b);
-  const head = scene.add
-    .circle(0, -128, 32, 0xffd9b3)
-    .setStrokeStyle(3, 0x2b2a6b);
-  // Eyes offset toward the tree side of the head, so the NPC visibly
-  // looks toward it. Drawn facing right; flipped below for "left".
-  const eyeLeft = scene.add.circle(8, -132, 5, 0x2b2a6b);
-  const eyeRight = scene.add.circle(20, -128, 5, 0x2b2a6b);
+  const { parts, body, bodyNormalColour } = buildFriend(scene, friendId);
 
-  const npc = scene.add.container(npcX, NPC_FEET_Y, [
-    body,
-    head,
-    eyeLeft,
-    eyeRight,
-  ]);
+  const npc = scene.add.container(npcX, NPC_FEET_Y, parts);
 
   if (side === "right") {
-    // NPC stands to the right of the tree, so it must face left - the
-    // shapes above are drawn facing right by default.
+    // NPC stands to the right of the tree, so it must face left - every
+    // friend design is drawn facing right by default.
     npc.scaleX = -1;
   }
 
-  return { npc, npcEyeX, npcEyeY, body };
+  return { npc, npcEyeX, npcEyeY, body, bodyNormalColour };
 }
 
 /** The bag: the only thing the player can move. Starts just outside

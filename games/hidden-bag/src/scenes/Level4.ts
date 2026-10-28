@@ -4,6 +4,7 @@ import {
   WIDTH,
   HEIGHT,
   PLAYER_ID_DATA_KEY,
+  FRIEND_DATA_KEY,
   SUCCESS_BANNER_Y,
 } from "../constants.ts";
 import { recordTrial, Side } from "../scoring.ts";
@@ -20,6 +21,7 @@ import {
   FeedbackContext,
 } from "../postcardScene.ts";
 import { createButton, createSuccessBanner, SuccessBanner } from "../ui.ts";
+import { FriendId } from "../friends.ts";
 
 const GRID_X = (WIDTH - (CARD_W * 2 + CARD_GAP)) / 2;
 const GRID_Y = 150;
@@ -47,12 +49,16 @@ export class Level4 extends Scene {
   private audioContext?: AudioContext;
   private tryAgainButton?: GameObjects.Text;
   private marks: GameObjects.Text[] = [];
+  private friendId: FriendId;
 
   constructor() {
     super("Level4");
   }
 
   create() {
+    this.friendId =
+      (this.registry.get(FRIEND_DATA_KEY) as FriendId | undefined) ?? 1;
+
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0xf2f4fa).setOrigin(0, 0);
 
     // At fontSize 22, "Click the postcard where Milo can see their
@@ -132,6 +138,7 @@ export class Level4 extends Scene {
         slotPositions[slot],
         this.npcSide,
         bagSpots[spotIndex],
+        this.friendId,
       );
       makePostcardClickable(postcard, () =>
         this.onCardClicked(postcard.container),

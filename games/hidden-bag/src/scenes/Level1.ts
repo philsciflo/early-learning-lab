@@ -5,6 +5,7 @@ import {
   TREE_CENTER_X,
   TREE_CENTER_Y,
   PLAYER_ID_DATA_KEY,
+  FRIEND_DATA_KEY,
 } from "../constants.ts";
 import { canSee } from "../lineOfSight.ts";
 import {
@@ -13,6 +14,7 @@ import {
 } from "../hiddenBagScene.ts";
 import { recordTrial, DragPoint } from "../scoring.ts";
 import { createButton, playBigSuccessPop } from "../ui.ts";
+import { FriendId } from "../friends.ts";
 
 export class Level1 extends Scene {
   private env: HiddenBagEnvironment;
@@ -56,11 +58,16 @@ export class Level1 extends Scene {
       emitting: false,
     });
 
+    const friendId =
+      (this.registry.get(FRIEND_DATA_KEY) as FriendId | undefined) ?? 1;
+
     // createHiddenBagEnvironment() paints the full-screen sky/ground
     // background - it must run before anything else that should be
     // visible on top of it (title, buttons), not after.
-    this.env = createHiddenBagEnvironment(this, (x, y) =>
-      this.onValidDrag(x, y),
+    this.env = createHiddenBagEnvironment(
+      this,
+      (x, y) => this.onValidDrag(x, y),
+      friendId,
     );
 
     // At fontSize 32, "Help your friend spot the bag!" (30 chars) is

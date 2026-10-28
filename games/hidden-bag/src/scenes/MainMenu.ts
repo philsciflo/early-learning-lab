@@ -127,7 +127,7 @@ export class MainMenu extends Scene {
       );
 
     this.add
-      .text(WIDTH / 2, 60, "Titiro", {
+      .text(WIDTH / 2, 60, "Tiro", {
         fontFamily: "Arial Black",
         fontSize: 48,
         color: "#2b2a6b",
@@ -229,7 +229,7 @@ export class MainMenu extends Scene {
       this.errorText.setText("");
       this.registry.set(PLAYER_ID_DATA_KEY, playerId);
       startNewScore(playerId, playerAge, playerLocation);
-      this.scene.start("Level0");
+      this.scene.start("SelectFriend");
     });
 
     // --- Data management (facilitator controls, same data format as

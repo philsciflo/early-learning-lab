@@ -131,7 +131,8 @@ export class Level0 extends Scene {
       origin: [0, 0],
     });
     back.hitArea.on("pointerdown", () => {
-      this.scene.start("MainMenu");
+      // SelectFriend now sits between MainMenu and Level0 in the flow.
+      this.scene.start("SelectFriend");
     });
 
     const button = createButton(this, WIDTH - 24, 24, "Continue →", {

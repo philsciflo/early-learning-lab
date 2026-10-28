@@ -4,6 +4,7 @@ import { canSee } from "./lineOfSight.ts";
 import { Side } from "./scoring.ts";
 import { playChime, playGentleMiss } from "./audio.ts";
 import { playBigSuccessPop, SuccessBanner } from "./ui.ts";
+import { buildFriend, FriendId } from "./friends.ts";
 
 export type Point = { x: number; y: number };
 
@@ -108,13 +109,19 @@ export type Postcard = {
 };
 
 /** Draws one postcard (tree + NPC + bag at `bagPosition`) at `position`.
- * Does not wire up the click handler - callers attach their own
- * "pointerdown" listener via makePostcardClickable(). */
+ * `friendId` picks which of the 4 friend designs (see friends.ts) draws
+ * the NPC here, reusing the exact same shapes as the full-size level
+ * and the SelectFriend screen (just scaled down) rather than a
+ * separately hand-drawn mini version, so the chosen friend looks like
+ * the same character everywhere in the game. Does not wire up the
+ * click handler - callers attach their own "pointerdown" listener via
+ * makePostcardClickable(). */
 export function buildPostcard(
   scene: Scene,
   position: Point,
   npcSide: Side,
   bagPosition: Point,
+  friendId: FriendId,
 ): Postcard {
   const container = scene.add.container(position.x, position.y);
 
@@ -150,20 +157,18 @@ export function buildPostcard(
     y: TREE_LOCAL_Y,
   };
   const npcPos = localToCard(npcLocalFeet);
-  const npcBody = scene.add
-    .rectangle(npcPos.x, npcPos.y - 16, 20, 40, 0x4fb6a8)
-    .setStrokeStyle(2, 0x2b2a6b);
-  const npcHead = scene.add
-    .circle(npcPos.x, npcPos.y - 44, 11, 0xffd9b3)
-    .setStrokeStyle(2, 0x2b2a6b);
-  const eyeSign = npcSide === "left" ? 1 : -1;
-  const npcEye = scene.add.circle(
-    npcPos.x + eyeSign * 5,
-    npcPos.y - 45,
-    2,
-    0x2b2a6b,
-  );
-  container.add([npcBody, npcHead, npcEye]);
+  // Reuse the full-size friend build at a small scale, rather than a
+  // separately hand-drawn mini version - same "feet at local (0,0),
+  // facing right by default" convention as hiddenBagScene.ts's NPC, so
+  // the same facing-flip-on-scaleX trick applies here too.
+  const NPC_SCALE = 0.3;
+  const build = buildFriend(scene, friendId);
+  const npcContainer = scene.add.container(npcPos.x, npcPos.y, build.parts);
+  npcContainer.setScale(NPC_SCALE);
+  if (npcSide === "right") {
+    npcContainer.scaleX = -NPC_SCALE;
+  }
+  container.add(npcContainer);
 
   // Bag
   const bagPos = localToCard(bagPosition);
