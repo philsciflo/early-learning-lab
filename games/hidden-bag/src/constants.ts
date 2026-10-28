@@ -37,6 +37,11 @@ export const NPC_FEET_Y = 650;
 export const NPC_EYE_Y = 430;
 export const NPC_DISTANCE_FROM_TREE = 350;
 export const NPC_EYE_DISTANCE_FROM_TREE = 350;
+// Applied as a uniform container scale in hiddenBagScene.ts's
+// createNpc() (on top of the facing-direction scaleX flip) - purely
+// visual, doesn't move NPC_FEET_Y/NPC_EYE_Y/NPC_EYE_DISTANCE_FROM_TREE,
+// so the line-of-sight "eye point" used by canSee() is unaffected.
+export const NPC_DISPLAY_SCALE = 1.1;
 
 // Tree (the obstacle). TREE_CENTER_X/Y and TREE_RADIUS are the actual
 // gameplay geometry - the collider the bag can't be dragged through,
@@ -50,6 +55,10 @@ export const TREE_CENTER_X = WIDTH / 2;
 export const TREE_CENTER_Y = 410;
 export const TREE_FEET_Y = 660;
 export const TREE_RADIUS = 100;
+// Purely visual: shifts the tree IMAGE up on screen without moving
+// TREE_FEET_Y itself (the actual ground/collision reference, also used
+// by collision.ts's TRUNK_TOP) - see hiddenBagScene.ts's createTree().
+export const TREE_VISUAL_Y_OFFSET = 45;
 // Also actual collision geometry (see collision.ts's TRUNK_LEFT/RIGHT/
 // TOP) - a rectangular trunk zone the bag can't be dragged into, on
 // top of the canopy circle above. Not used by the visual any more
@@ -76,7 +85,7 @@ export const TREE_DISPLAY_HEIGHT = Math.round(1238 * TREE_IMAGE_SCALE);
 // circle (TREE_COLLISION_RADIUS below) fully contains the visible
 // image rather than the bag visually overlapping the tree before
 // collision kicks in.
-export const BAG_DISPLAY_HEIGHT = 92;
+export const BAG_DISPLAY_HEIGHT = 101; // 92, +10%
 export const BAG_DISPLAY_WIDTH = Math.round(BAG_DISPLAY_HEIGHT * (1184 / 1048));
 export const BAG_RADIUS = Math.round(
   Math.max(BAG_DISPLAY_WIDTH, BAG_DISPLAY_HEIGHT) / 2,
