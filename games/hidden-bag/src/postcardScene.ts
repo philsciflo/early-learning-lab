@@ -38,9 +38,23 @@ const SCENE_H = (FRAME_INNER_BOTTOM - FRAME_INNER_TOP) * CARD_H;
 
 const TREE_LOCAL_X = SCENE_W / 2;
 const TREE_LOCAL_Y = SCENE_H * 0.62;
-const TREE_RADIUS = 18;
 const NPC_DISTANCE_FROM_TREE = SCENE_W * 0.31;
 const NPC_EYE_Y_OFFSET = -25; // eye point is a bit above the NPC's feet
+
+// tree_01.png/bag_01.png reused directly here (not simple drawn
+// shapes) so the postcard matches the same art used everywhere else in
+// the game. Sized generously - 30% larger than a "fits naturally at a
+// glance" baseline (tree ~50% of the scene height, bag ~16%) - so they
+// read clearly rather than as a blurry thumbnail.
+const POSTCARD_TREE_DISPLAY_HEIGHT = Math.round(SCENE_H * 0.5 * 1.3);
+const POSTCARD_TREE_DISPLAY_WIDTH = Math.round(
+  POSTCARD_TREE_DISPLAY_HEIGHT * (1262 / 1238),
+);
+const POSTCARD_BAG_DISPLAY_HEIGHT = Math.round(SCENE_H * 0.16 * 1.3);
+const POSTCARD_BAG_DISPLAY_WIDTH = Math.round(
+  POSTCARD_BAG_DISPLAY_HEIGHT * (1184 / 1048),
+);
+const POSTCARD_NPC_SCALE = 0.22 * 1.3;
 
 export function npcEyeLocal(side: Side): Point {
   const sign = side === "left" ? -1 : 1;
@@ -171,31 +185,25 @@ export function buildPostcard(
     .setOrigin(0, 0);
   container.add([frame, hitArea]);
 
-  // A light sky backdrop behind the mini-scene, inset to exactly the
-  // frame's own "photo window" (the FRAME_INNER_* measurements above),
-  // drawn after the frame so it fills that window rather than sitting
-  // under the frame's border.
-  const sceneBg = scene.add
-    .rectangle(SCENE_OFFSET_X, SCENE_OFFSET_Y, SCENE_W, SCENE_H, 0x9fd8ff)
-    .setOrigin(0, 0);
-  container.add(sceneBg);
+  // No separate backdrop here - frame_01.png's own photo window is
+  // already plain white, which is exactly what's wanted (no sky/
+  // horizon/grass for this postcard-style view, just the assets
+  // themselves on white).
 
   const localToCard = (p: Point) => ({
     x: SCENE_OFFSET_X + p.x,
     y: SCENE_OFFSET_Y + p.y,
   });
 
-  // Tree - kept as simple drawn shapes (not the real tree_01.png image)
-  // since at this small a size a detailed image reads as a blur; a
-  // plain trunk+canopy stays legible as a thumbnail-sized hint.
+  // Tree - the real tree_01.png (background removed), not a simple
+  // drawn shape, same bottom-centre-anchor convention as the main
+  // level's tree in hiddenBagScene.ts.
   const treePos = localToCard({ x: TREE_LOCAL_X, y: TREE_LOCAL_Y });
-  const trunk = scene.add
-    .rectangle(treePos.x, treePos.y + 7, 7, 33, 0x8a5a2a)
-    .setStrokeStyle(2, 0x5c3a1a);
-  const canopy = scene.add
-    .circle(treePos.x, treePos.y - 10, TREE_RADIUS, 0x4caf50)
-    .setStrokeStyle(3, 0x2e7d32);
-  container.add([trunk, canopy]);
+  const tree = scene.add
+    .image(treePos.x, treePos.y, "tree")
+    .setOrigin(0.5, 1)
+    .setDisplaySize(POSTCARD_TREE_DISPLAY_WIDTH, POSTCARD_TREE_DISPLAY_HEIGHT);
+  container.add(tree);
 
   // NPC
   const npcLocalFeet = {
@@ -206,27 +214,22 @@ export function buildPostcard(
   // Reuse the full-size friend build at a small scale, rather than a
   // separately hand-drawn mini version - same "feet at local (0,0),
   // facing right by default" convention as hiddenBagScene.ts's NPC, so
-  // the same facing-flip-on-scaleX trick applies here too. Scaled down
-  // further than the SelectFriend card preview (0.55) since this
-  // frame's photo window is considerably smaller.
-  const NPC_SCALE = 0.22;
+  // the same facing-flip-on-scaleX trick applies here too.
   const build = buildFriend(scene, friendId);
   const npcContainer = scene.add.container(npcPos.x, npcPos.y, build.parts);
-  npcContainer.setScale(NPC_SCALE);
+  npcContainer.setScale(POSTCARD_NPC_SCALE);
   if (npcSide === "right") {
-    npcContainer.scaleX = -NPC_SCALE;
+    npcContainer.scaleX = -POSTCARD_NPC_SCALE;
   }
   container.add(npcContainer);
 
-  // Bag
+  // Bag - the real bag_01.png (background removed), centre-anchored
+  // same as the main level's bag.
   const bagPos = localToCard(bagPosition);
-  const bagBody = scene.add
-    .rectangle(bagPos.x, bagPos.y, 15, 18, 0xffb84d)
-    .setStrokeStyle(2, 0x8a5a1a);
-  const bagFlap = scene.add
-    .rectangle(bagPos.x, bagPos.y - 10, 16, 6, 0xff9f40)
-    .setStrokeStyle(2, 0x8a5a1a);
-  container.add([bagBody, bagFlap]);
+  const bag = scene.add
+    .image(bagPos.x, bagPos.y, "bag")
+    .setDisplaySize(POSTCARD_BAG_DISPLAY_WIDTH, POSTCARD_BAG_DISPLAY_HEIGHT);
+  container.add(bag);
 
   return { container, hitArea };
 }

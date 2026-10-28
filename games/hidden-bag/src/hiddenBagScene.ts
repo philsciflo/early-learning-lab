@@ -15,11 +15,13 @@ import {
   TREE_CENTER_Y,
   TREE_DISPLAY_WIDTH,
   TREE_DISPLAY_HEIGHT,
+  TREE_VISUAL_Y_OFFSET,
   TREE_COLLISION_RADIUS,
   BAG_HIDDEN_CLEARANCE,
   BAG_DRAG_BOUNDS,
   BAG_DISPLAY_WIDTH,
   BAG_DISPLAY_HEIGHT,
+  NPC_DISPLAY_SCALE,
 } from "./constants.ts";
 import { resolveTreeCollision, segmentHitsTree } from "./collision.ts";
 import { Side } from "./scoring.ts";
@@ -123,7 +125,10 @@ export function createHiddenBagEnvironment(
       const baseY = npc.y;
       scene.tweens.add({
         targets: npc,
-        scaleY: 1.22,
+        // Relative to the npc's own base scale (NPC_DISPLAY_SCALE), not
+        // an absolute 1.0 - otherwise this tween target would fight the
+        // base scale and the bounce would shrink instead of pop.
+        scaleY: NPC_DISPLAY_SCALE * 1.22,
         y: baseY - 20,
         duration: 260,
         yoyo: true,
@@ -198,7 +203,7 @@ export function createHiddenBagEnvironment(
  * independent of this image; this is purely the visual. */
 function createTree(scene: Scene) {
   scene.add
-    .image(TREE_CENTER_X, TREE_FEET_Y, "tree")
+    .image(TREE_CENTER_X, TREE_FEET_Y - TREE_VISUAL_Y_OFFSET, "tree")
     .setOrigin(0.5, 1)
     .setDisplaySize(TREE_DISPLAY_WIDTH, TREE_DISPLAY_HEIGHT);
 }
@@ -227,11 +232,12 @@ function createNpc(
   const { parts, body, bodyNormalColour } = buildFriend(scene, friendId);
 
   const npc = scene.add.container(npcX, NPC_FEET_Y, parts);
+  npc.setScale(NPC_DISPLAY_SCALE);
 
   if (side === "right") {
     // NPC stands to the right of the tree, so it must face left - every
     // friend design is drawn facing right by default.
-    npc.scaleX = -1;
+    npc.scaleX = -NPC_DISPLAY_SCALE;
   }
 
   return { npc, npcEyeX, npcEyeY, body, bodyNormalColour };
