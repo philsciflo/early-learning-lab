@@ -8,19 +8,17 @@ import { buildFriend, FriendId } from "./friends.ts";
 
 export type Point = { x: number; y: number };
 
-// Card size follows frame_01.png's own native aspect ratio (1262x1238,
-// nearly square) so the frame image displays undistorted - see the
-// FRAME_* constants below for exactly where that leaves the usable
-// "photo" area to draw into.
-export const CARD_W = 245;
-export const CARD_H = 240;
-export const CARD_GAP = 30;
+// Tighter than it might otherwise be, specifically so Level4's 2x2
+// grid (a hard vertical ceiling - 2 rows + this gap has to fit between
+// the top instruction/success-banner zone and the bottom feedback/
+// Try-Again zone) can use as large a card size as that ceiling allows.
+export const CARD_GAP = 20;
 
 // frame_01.png's usable "photo" window, measured directly on the
 // source image (1262x1238): the inner white rectangle sits at
 // x:[139,1069], y:[131,844]. Expressed as fractions of the native
 // image so they scale correctly to whatever size the frame is
-// displayed at (CARD_W x CARD_H here).
+// displayed at.
 const FRAME_NATIVE_W = 1262;
 const FRAME_NATIVE_H = 1238;
 const FRAME_INNER_LEFT = 139 / FRAME_NATIVE_W;
@@ -28,39 +26,75 @@ const FRAME_INNER_TOP = 131 / FRAME_NATIVE_H;
 const FRAME_INNER_RIGHT = 1069 / FRAME_NATIVE_W;
 const FRAME_INNER_BOTTOM = 844 / FRAME_NATIVE_H;
 
-// The mini-scene drawn inside each card, in the card's own local
-// coordinates (0,0 = card's top-left corner) - sized/positioned to
-// land exactly inside the frame's photo window computed above.
-const SCENE_OFFSET_X = FRAME_INNER_LEFT * CARD_W;
-const SCENE_OFFSET_Y = FRAME_INNER_TOP * CARD_H;
-const SCENE_W = (FRAME_INNER_RIGHT - FRAME_INNER_LEFT) * CARD_W;
-const SCENE_H = (FRAME_INNER_BOTTOM - FRAME_INNER_TOP) * CARD_H;
+/** Every size/position derived from a given card width/height - cards
+ * aren't one fixed size: Level3 (2 cards, a single row, lots of
+ * vertical room) and Level4 (4 cards, a 2x2 grid, a hard vertical
+ * ceiling) each pick their own card size and get their own layout via
+ * computeCardLayout() below, rather than sharing one fixed CARD_W/H
+ * that's forced to fit the tighter of the two. */
+export type CardLayout = {
+  cardW: number;
+  cardH: number;
+  sceneOffsetX: number;
+  sceneOffsetY: number;
+  treeLocalX: number;
+  treeLocalY: number;
+  npcDistanceFromTree: number;
+  npcEyeYOffset: number;
+  treeDisplayW: number;
+  treeDisplayH: number;
+  bagDisplayW: number;
+  bagDisplayH: number;
+  npcScale: number;
+};
 
-const TREE_LOCAL_X = SCENE_W / 2;
-const TREE_LOCAL_Y = SCENE_H * 0.62;
-const NPC_DISTANCE_FROM_TREE = SCENE_W * 0.31;
-const NPC_EYE_Y_OFFSET = -25; // eye point is a bit above the NPC's feet
+/** Card size follows frame_01.png's own native aspect ratio (1262x1238,
+ * nearly square) so the frame image displays undistorted at whatever
+ * `cardW`/`cardH` a level picks (as long as that pair keeps the ratio -
+ * each level computes its own `cardH` from `cardW` via FRAME_NATIVE_H /
+ * FRAME_NATIVE_W, or vice versa). */
+export function computeCardLayout(cardW: number, cardH: number): CardLayout {
+  const sceneOffsetX = FRAME_INNER_LEFT * cardW;
+  const sceneOffsetY = FRAME_INNER_TOP * cardH;
+  const sceneW = (FRAME_INNER_RIGHT - FRAME_INNER_LEFT) * cardW;
+  const sceneH = (FRAME_INNER_BOTTOM - FRAME_INNER_TOP) * cardH;
 
-// tree_01.png/bag_01.png reused directly here (not simple drawn
-// shapes) so the postcard matches the same art used everywhere else in
-// the game. Sized generously - 30% larger than a "fits naturally at a
-// glance" baseline (tree ~50% of the scene height, bag ~16%) - so they
-// read clearly rather than as a blurry thumbnail.
-const POSTCARD_TREE_DISPLAY_HEIGHT = Math.round(SCENE_H * 0.5 * 1.3);
-const POSTCARD_TREE_DISPLAY_WIDTH = Math.round(
-  POSTCARD_TREE_DISPLAY_HEIGHT * (1262 / 1238),
-);
-const POSTCARD_BAG_DISPLAY_HEIGHT = Math.round(SCENE_H * 0.16 * 1.3);
-const POSTCARD_BAG_DISPLAY_WIDTH = Math.round(
-  POSTCARD_BAG_DISPLAY_HEIGHT * (1184 / 1048),
-);
-const POSTCARD_NPC_SCALE = 0.22 * 1.3;
+  const treeLocalX = sceneW / 2;
+  const treeLocalY = sceneH * 0.62;
+  const npcDistanceFromTree = sceneW * 0.31;
 
-export function npcEyeLocal(side: Side): Point {
+  // tree_01.png/bag_01.png reused directly (not simple drawn shapes) so
+  // the postcard matches the same art used everywhere else in the
+  // game. Sized generously - 30% larger than a "fits naturally at a
+  // glance" baseline (tree ~50% of the scene height, bag ~16%) - so
+  // they read clearly rather than as a blurry thumbnail.
+  const treeDisplayH = Math.round(sceneH * 0.5 * 1.3);
+  const treeDisplayW = Math.round(treeDisplayH * (1262 / 1238));
+  const bagDisplayH = Math.round(sceneH * 0.16 * 1.3);
+  const bagDisplayW = Math.round(bagDisplayH * (1184 / 1048));
+
+  return {
+    cardW,
+    cardH,
+    sceneOffsetX,
+    sceneOffsetY,
+    treeLocalX,
+    treeLocalY,
+    npcDistanceFromTree,
+    npcEyeYOffset: -sceneH * 0.18, // eye point is a bit above the NPC's feet
+    treeDisplayW,
+    treeDisplayH,
+    bagDisplayW,
+    bagDisplayH,
+    npcScale: 0.22 * 1.3,
+  };
+}
+
+export function npcEyeLocal(side: Side, layout: CardLayout): Point {
   const sign = side === "left" ? -1 : 1;
   return {
-    x: TREE_LOCAL_X + sign * NPC_DISTANCE_FROM_TREE,
-    y: TREE_LOCAL_Y + NPC_EYE_Y_OFFSET,
+    x: layout.treeLocalX + sign * layout.npcDistanceFromTree,
+    y: layout.treeLocalY + layout.npcEyeYOffset,
   };
 }
 
@@ -70,9 +104,10 @@ export function npcEyeLocal(side: Side): Point {
  * standing on. Callers that only need 2 options just use the first
  * two entries. Verified against canSee() at build time rather than
  * trusted blindly, since these were hand-placed. */
-export function buildBagSpots(npcSide: Side): Point[] {
-  const npcEye = npcEyeLocal(npcSide);
-  const treeCenter = { x: TREE_LOCAL_X, y: TREE_LOCAL_Y };
+export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
+  const npcEye = npcEyeLocal(npcSide, layout);
+  const { treeLocalX, treeLocalY, npcDistanceFromTree } = layout;
+  const treeCenter = { x: treeLocalX, y: treeLocalY };
 
   // Authored for "npc on the left"; mirrored below if npc is on the
   // right. All four sit at the same ground height as the tree/NPC and
@@ -81,29 +116,28 @@ export function buildBagSpots(npcSide: Side): Point[] {
   // blocked by anything in a small thumbnail, even when the "opposite
   // side" rule says it should be hidden. Same-height, same-side-vs-not
   // is what actually reads clearly at this size.
-  // Offsets are ratios of NPC_DISTANCE_FROM_TREE (not fixed pixels), so
-  // this scales correctly with the scene size rather than needing
-  // hand-retuning every time SCENE_W changes.
+  // Offsets are ratios of npcDistanceFromTree (not fixed pixels), so
+  // this scales correctly with the card's own layout.
   const left = {
     visible: {
-      x: TREE_LOCAL_X - NPC_DISTANCE_FROM_TREE * 0.55,
-      y: TREE_LOCAL_Y,
+      x: treeLocalX - npcDistanceFromTree * 0.55,
+      y: treeLocalY,
     },
     hiddenA: {
-      x: TREE_LOCAL_X + NPC_DISTANCE_FROM_TREE * 0.4,
-      y: TREE_LOCAL_Y,
+      x: treeLocalX + npcDistanceFromTree * 0.4,
+      y: treeLocalY,
     }, // tucked right behind the trunk
     hiddenB: {
-      x: TREE_LOCAL_X + NPC_DISTANCE_FROM_TREE * 0.85,
-      y: TREE_LOCAL_Y,
+      x: treeLocalX + npcDistanceFromTree * 0.85,
+      y: treeLocalY,
     }, // mirrors "visible", opposite side
     hiddenC: {
-      x: TREE_LOCAL_X + NPC_DISTANCE_FROM_TREE * 1.35,
-      y: TREE_LOCAL_Y,
+      x: treeLocalX + npcDistanceFromTree * 1.35,
+      y: treeLocalY,
     }, // further past the tree
   };
 
-  const mirror = (p: Point): Point => ({ x: 2 * TREE_LOCAL_X - p.x, y: p.y });
+  const mirror = (p: Point): Point => ({ x: 2 * treeLocalX - p.x, y: p.y });
   const spots =
     npcSide === "left"
       ? left
@@ -132,18 +166,20 @@ export function gridSlotPositions(
   numOptions: 2 | 4,
   gridX: number,
   gridY: number,
+  layout: CardLayout,
 ): Point[] {
+  const step = { x: layout.cardW + CARD_GAP, y: layout.cardH + CARD_GAP };
   const topRow = [
     { x: gridX, y: gridY },
-    { x: gridX + CARD_W + CARD_GAP, y: gridY },
+    { x: gridX + step.x, y: gridY },
   ];
   if (numOptions === 2) {
     return topRow;
   }
   return [
     ...topRow,
-    { x: gridX, y: gridY + CARD_H + CARD_GAP },
-    { x: gridX + CARD_W + CARD_GAP, y: gridY + CARD_H + CARD_GAP },
+    { x: gridX, y: gridY + step.y },
+    { x: gridX + step.x, y: gridY + step.y },
   ];
 }
 
@@ -168,7 +204,9 @@ export function buildPostcard(
   npcSide: Side,
   bagPosition: Point,
   friendId: FriendId,
+  layout: CardLayout,
 ): Postcard {
+  const { cardW, cardH } = layout;
   const container = scene.add.container(position.x, position.y);
 
   // The frame IS the card background - its own border/corners define
@@ -179,9 +217,9 @@ export function buildPostcard(
   const frame = scene.add
     .image(0, 0, "frame")
     .setOrigin(0, 0)
-    .setDisplaySize(CARD_W, CARD_H);
+    .setDisplaySize(cardW, cardH);
   const hitArea = scene.add
-    .rectangle(0, 0, CARD_W, CARD_H, 0x000000, 0)
+    .rectangle(0, 0, cardW, cardH, 0x000000, 0)
     .setOrigin(0, 0);
   container.add([frame, hitArea]);
 
@@ -191,24 +229,26 @@ export function buildPostcard(
   // themselves on white).
 
   const localToCard = (p: Point) => ({
-    x: SCENE_OFFSET_X + p.x,
-    y: SCENE_OFFSET_Y + p.y,
+    x: layout.sceneOffsetX + p.x,
+    y: layout.sceneOffsetY + p.y,
   });
 
   // Tree - the real tree_01.png (background removed), not a simple
   // drawn shape, same bottom-centre-anchor convention as the main
   // level's tree in hiddenBagScene.ts.
-  const treePos = localToCard({ x: TREE_LOCAL_X, y: TREE_LOCAL_Y });
+  const treePos = localToCard({ x: layout.treeLocalX, y: layout.treeLocalY });
   const tree = scene.add
     .image(treePos.x, treePos.y, "tree")
     .setOrigin(0.5, 1)
-    .setDisplaySize(POSTCARD_TREE_DISPLAY_WIDTH, POSTCARD_TREE_DISPLAY_HEIGHT);
+    .setDisplaySize(layout.treeDisplayW, layout.treeDisplayH);
   container.add(tree);
 
   // NPC
   const npcLocalFeet = {
-    x: TREE_LOCAL_X + (npcSide === "left" ? -1 : 1) * NPC_DISTANCE_FROM_TREE,
-    y: TREE_LOCAL_Y,
+    x:
+      layout.treeLocalX +
+      (npcSide === "left" ? -1 : 1) * layout.npcDistanceFromTree,
+    y: layout.treeLocalY,
   };
   const npcPos = localToCard(npcLocalFeet);
   // Reuse the full-size friend build at a small scale, rather than a
@@ -217,9 +257,9 @@ export function buildPostcard(
   // the same facing-flip-on-scaleX trick applies here too.
   const build = buildFriend(scene, friendId);
   const npcContainer = scene.add.container(npcPos.x, npcPos.y, build.parts);
-  npcContainer.setScale(POSTCARD_NPC_SCALE);
+  npcContainer.setScale(layout.npcScale);
   if (npcSide === "right") {
-    npcContainer.scaleX = -POSTCARD_NPC_SCALE;
+    npcContainer.scaleX = -layout.npcScale;
   }
   container.add(npcContainer);
 
@@ -228,7 +268,7 @@ export function buildPostcard(
   const bagPos = localToCard(bagPosition);
   const bag = scene.add
     .image(bagPos.x, bagPos.y, "bag")
-    .setDisplaySize(POSTCARD_BAG_DISPLAY_WIDTH, POSTCARD_BAG_DISPLAY_HEIGHT);
+    .setDisplaySize(layout.bagDisplayW, layout.bagDisplayH);
   container.add(bag);
 
   return { container, hitArea };
@@ -282,15 +322,20 @@ export type FeedbackContext = {
 export function celebrateCard(
   ctx: FeedbackContext,
   card: GameObjects.Container,
+  layout: CardLayout,
 ): void {
   ctx.successBanner.show("🎉 Yes! Milo can see the bag there!");
-  ctx.sparkles.emitParticleAt(card.x + CARD_W / 2, card.y + CARD_H / 2, 30);
+  ctx.sparkles.emitParticleAt(
+    card.x + layout.cardW / 2,
+    card.y + layout.cardH / 2,
+    30,
+  );
 
   playBigSuccessPop(ctx.scene, card, {
-    centerOffsetX: CARD_W / 2,
-    centerOffsetY: CARD_H / 2,
-    flashWidth: CARD_W,
-    flashHeight: CARD_H,
+    centerOffsetX: layout.cardW / 2,
+    centerOffsetY: layout.cardH / 2,
+    flashWidth: layout.cardW,
+    flashHeight: layout.cardH,
   });
 
   ctx.playSound(playChime);
@@ -307,17 +352,23 @@ export function commiserateCard(
   ctx: FeedbackContext,
   clickedCard: GameObjects.Container,
   correctCard: GameObjects.Container,
+  layout: CardLayout,
 ): void {
   ctx.feedbackText
     .setText("😅 Not quite - the ✓ shows where Milo could see it!")
     .setColor("#c0392b");
 
   const wrongMark = ctx.scene.add
-    .text(clickedCard.x + CARD_W / 2, clickedCard.y + CARD_H / 2, "✗", {
-      fontFamily: "Arial Black",
-      fontSize: 72,
-      color: "#c0392b",
-    })
+    .text(
+      clickedCard.x + layout.cardW / 2,
+      clickedCard.y + layout.cardH / 2,
+      "✗",
+      {
+        fontFamily: "Arial Black",
+        fontSize: 72,
+        color: "#c0392b",
+      },
+    )
     .setOrigin(0.5)
     .setAlpha(0)
     .setDepth(10);
@@ -337,11 +388,16 @@ export function commiserateCard(
 
   ctx.scene.time.delayedCall(500, () => {
     const rightMark = ctx.scene.add
-      .text(correctCard.x + CARD_W / 2, correctCard.y + CARD_H / 2, "✓", {
-        fontFamily: "Arial Black",
-        fontSize: 72,
-        color: "#2e7d32",
-      })
+      .text(
+        correctCard.x + layout.cardW / 2,
+        correctCard.y + layout.cardH / 2,
+        "✓",
+        {
+          fontFamily: "Arial Black",
+          fontSize: 72,
+          color: "#2e7d32",
+        },
+      )
       .setOrigin(0.5)
       .setAlpha(0)
       .setDepth(10);
