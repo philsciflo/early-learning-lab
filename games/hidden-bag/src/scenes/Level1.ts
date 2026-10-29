@@ -196,9 +196,14 @@ export class Level1 extends Scene {
     this.env.setNpcSeesBag(visible);
 
     if (visible) {
+      // preservePosition: true - the bag stays draggable through this
+      // whole level (see the class comment above), including right
+      // through this pop, so it must never have its x/y driven by
+      // anything but the drag handler itself.
       playBigSuccessPop(this, this.env.bag, {
         flashWidth: 100,
         flashHeight: 130,
+        preservePosition: true,
       });
       this.sparkles.emitParticleAt(this.env.bag.x, this.env.bag.y, 30);
     }
