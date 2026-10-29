@@ -46,6 +46,14 @@ export type CardLayout = {
   bagDisplayW: number;
   bagDisplayH: number;
   npcScale: number;
+  /** Half the tree's trunk-base width (not canopy - see
+   * computeCardLayout()'s comment on why only the trunk matters for
+   * ground-level clearance). Used by buildBagSpots() to place the
+   * "hidden, tucked behind the trunk" spot convincingly close to it. */
+  trunkHalfW: number;
+  /** Where the "visible" bag spot sits - just past the trunk, clearly
+   * in the open rather than hugging it. */
+  clearOfTrunkX: number;
 };
 
 /** Card size follows frame_01.png's own native aspect ratio (1262x1238,
@@ -59,7 +67,11 @@ export function computeCardLayout(cardW: number, cardH: number): CardLayout {
   const sceneW = (FRAME_INNER_RIGHT - FRAME_INNER_LEFT) * cardW;
   const sceneH = (FRAME_INNER_BOTTOM - FRAME_INNER_TOP) * cardH;
 
-  const treeLocalX = sceneW / 2;
+  // Centred on the CARD itself, not just the (slightly off-centre, per
+  // the frame's own measured margins) scene window - sceneOffsetX is
+  // subtracted back out so the tree always lands at the card's true
+  // horizontal centre regardless of the frame's asymmetric border.
+  const treeLocalX = cardW / 2 - sceneOffsetX;
   // 0.85, not dead-centre: the tree/NPC/bag share this as their ground
   // line, and the tree's own canopy already extends well above it, so
   // a lower baseline uses the window's height properly - at 0.62 the
@@ -67,7 +79,6 @@ export function computeCardLayout(cardW: number, cardH: number): CardLayout {
   // below (no horizon/grass means nothing fills that gap, unlike the
   // main level which has a ground band).
   const treeLocalY = sceneH * 0.85;
-  const npcDistanceFromTree = sceneW * 0.31;
 
   // tree_01.png/bag_01.png reused directly (not simple drawn shapes) so
   // the postcard matches the same art used everywhere else in the
@@ -78,6 +89,36 @@ export function computeCardLayout(cardW: number, cardH: number): CardLayout {
   const treeDisplayW = Math.round(treeDisplayH * (1262 / 1238));
   const bagDisplayH = Math.round(sceneH * 0.16 * 1.3);
   const bagDisplayW = Math.round(bagDisplayH * (1184 / 1048));
+  // Proportional to sceneH (targets ~25% of the scene's height), same
+  // as the tree/bag above - a fixed scale here would make the NPC
+  // relatively bigger (and margins tighter) on Level4's smaller cards
+  // than on Level3's larger ones, for no good reason.
+  const npcScale = (sceneH * 0.25) / 185;
+
+  // How far the NPC stands from the tree - and where the bag spots
+  // land (see buildBagSpots) - is derived from the actual drawn sizes
+  // above, not a fixed fraction of sceneW. That matters because the
+  // bag sits at the SAME ground line as the tree's trunk base, where
+  // only the (much narrower) trunk is present - the wide canopy sits
+  // well above this line and never actually touches it (measured on
+  // tree_01.png: canopy's lowest leaf is well clear of the trunk base,
+  // so a bag at ground level only needs to clear the trunk, not the
+  // full canopy width). trunkHalfW below is that measured trunk-base
+  // width as a fraction of the tree's own display width.
+  const trunkHalfW = treeDisplayW * 0.18;
+  const bagHalfW = bagDisplayW / 2;
+  // Widest friend design (Blocky, arms included) is roughly 130px wide
+  // at native scale - used as a safe clearance estimate regardless of
+  // which friend is actually selected.
+  const npcApproxHalfW = (130 * npcScale) / 2;
+  const gap = sceneW * 0.05;
+
+  // Clearly past the trunk (open ground, not hugging it) - this is
+  // also where the "visible" bag spot sits (see buildBagSpots).
+  const clearOfTrunkX = trunkHalfW + gap;
+  // NPC stands clear of that visible spot too, so the two never
+  // overlap regardless of which friend is drawn.
+  const npcDistanceFromTree = clearOfTrunkX + bagHalfW + gap + npcApproxHalfW;
 
   return {
     cardW,
@@ -92,7 +133,9 @@ export function computeCardLayout(cardW: number, cardH: number): CardLayout {
     treeDisplayH,
     bagDisplayW,
     bagDisplayH,
-    npcScale: 0.22 * 1.3,
+    npcScale,
+    trunkHalfW,
+    clearOfTrunkX,
   };
 }
 
@@ -112,35 +155,45 @@ export function npcEyeLocal(side: Side, layout: CardLayout): Point {
  * trusted blindly, since these were hand-placed. */
 export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
   const npcEye = npcEyeLocal(npcSide, layout);
-  const { treeLocalX, treeLocalY, npcDistanceFromTree } = layout;
+  const {
+    treeLocalX,
+    treeLocalY,
+    npcDistanceFromTree,
+    trunkHalfW,
+    clearOfTrunkX,
+  } = layout;
   const treeCenter = { x: treeLocalX, y: treeLocalY };
 
   // Authored for "npc on the left"; mirrored below if npc is on the
-  // right. All four sit at the same ground height as the tree/NPC and
-  // differ only in which side (and how far) - earlier versions varied
-  // height too, but a bag floating above/below the tree doesn't *look*
-  // blocked by anything in a small thumbnail, even when the "opposite
-  // side" rule says it should be hidden. Same-height, same-side-vs-not
-  // is what actually reads clearly at this size.
-  // Offsets are ratios of npcDistanceFromTree (not fixed pixels), so
-  // this scales correctly with the card's own layout.
+  // right. All four sit at the same ground height as the tree/NPC.
+  //
+  // "visible" and "hiddenA" are deliberately NOT close to each other in
+  // distance from the trunk, even though they're only a trunk's-width
+  // apart on paper - hiddenA sits tight against the trunk (convincingly
+  // tucked behind it), while visible sits just clear of it, in open
+  // ground, well before the NPC (see computeCardLayout()'s derivation
+  // of clearOfTrunkX/npcDistanceFromTree) - without that gap, both
+  // positions read as "bag next to the tree" with no visible contrast
+  // between "hidden" and "visible", which was the actual problem with
+  // the previous (fixed-ratio-of-npcDistanceFromTree) version once the
+  // tree became a much larger real image instead of a small circle.
   const left = {
     visible: {
-      x: treeLocalX - npcDistanceFromTree * 0.55,
+      x: treeLocalX - clearOfTrunkX,
       y: treeLocalY,
     },
     hiddenA: {
-      x: treeLocalX + npcDistanceFromTree * 0.4,
+      x: treeLocalX + trunkHalfW * 0.5,
       y: treeLocalY,
     }, // tucked right behind the trunk
     hiddenB: {
-      x: treeLocalX + npcDistanceFromTree * 0.85,
+      x: treeLocalX + clearOfTrunkX,
       y: treeLocalY,
     }, // mirrors "visible", opposite side
     hiddenC: {
-      x: treeLocalX + npcDistanceFromTree * 1.35,
+      x: treeLocalX + npcDistanceFromTree * 1.1,
       y: treeLocalY,
-    }, // further past the tree
+    }, // further past the tree, past where the NPC itself would stand
   };
 
   const mirror = (p: Point): Point => ({ x: 2 * treeLocalX - p.x, y: p.y });
