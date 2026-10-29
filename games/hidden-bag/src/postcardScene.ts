@@ -149,10 +149,17 @@ export function npcEyeLocal(side: Side, layout: CardLayout): Point {
 
 /** Four candidate bag positions in the mini-scene's local coordinates.
  * Index 0 is always the one the NPC can actually see; 1-3 are hidden
- * distractors. Mirrored automatically for whichever side the NPC is
- * standing on. Callers that only need 2 options just use the first
- * two entries. Verified against canSee() at build time rather than
- * trusted blindly, since these were hand-placed. */
+ * distractors, each drawn from a different band of distance-from-trunk
+ * AND height (per Florian's marked-up screenshot: the "wrong" cards'
+ * bag can sit anywhere in a tall zone to the hidden side, not just at
+ * ground level), so they look genuinely different from each other and
+ * from round to round. Mirrored automatically for whichever side the
+ * NPC is standing on. Callers that only need 2 options just use the
+ * first two entries. Every hidden draw is verified against canSee()
+ * (re-rolling if a particular draw isn't actually hidden) rather than
+ * trusted from the ranges alone - height and distance-from-trunk
+ * interact in the dot-product check in ways not obvious from the
+ * ranges by eye. */
 export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
   const npcEye = npcEyeLocal(npcSide, layout);
   const {
@@ -161,50 +168,84 @@ export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
     npcDistanceFromTree,
     trunkHalfW,
     clearOfTrunkX,
+    treeDisplayH,
   } = layout;
   const treeCenter = { x: treeLocalX, y: treeLocalY };
 
-  // Randomised each call (same idea as the main level's randomised bag
-  // start position - see constants.ts's BAG_START_X_EXTRA_RANGE), so
-  // the four spots aren't pixel-identical every round. Jitter is x-only
-  // (distance from the trunk) - these cards have no ground plane, just
-  // one shared height for tree/NPC/bag, so varying y would make the bag
-  // float at a different level than its own shadow-less "ground" line
-  // with nothing to explain why. Each spot's jitter range stays safely
-  // within the side/magnitude that already makes canSee() classify it
-  // correctly (verified below), never crossing the trunk's centreline.
   const jitter = (min: number, max: number) => min + Math.random() * (max - min);
 
-  // Authored for "npc on the left"; mirrored below if npc is on the
-  // right. All four sit at the same ground height as the tree/NPC.
+  // The `left` block below is authored as if the NPC stands on the
+  // left (then mirrored for real further down) - so draws must be
+  // validated against the LEFT-side eye position, not whichever side
+  // the NPC actually ends up on this round. Mirroring a viewer and a
+  // target through the same point (the tree) preserves canSee()'s
+  // dot-product sign, so a point validated hidden here stays hidden
+  // after mirroring to the real side.
+  const npcEyeForAuthoring = npcEyeLocal("left", layout);
+
+  // Draws a random point on the hidden side (xMin/xMax are a distance-
+  // from-trunk magnitude; yMin/yMax are how far to raise it above the
+  // shared ground line, toward the canopy), re-rolling until canSee()
+  // actually agrees it's hidden. Falls back to the innermost, ground-
+  // level corner of the range (the one combination simple left/right
+  // separation always gets right) if every attempt fails.
+  const drawHiddenSpot = (
+    xMin: number,
+    xMax: number,
+    yMin: number,
+    yMax: number,
+  ): Point => {
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const point = {
+        x: treeLocalX + jitter(xMin, xMax),
+        y: treeLocalY - jitter(yMin, yMax),
+      };
+      if (!canSee(npcEyeForAuthoring, point, treeCenter)) {
+        return point;
+      }
+    }
+    return { x: treeLocalX + xMin, y: treeLocalY };
+  };
+
+  // Authored for "npc on the left" (so "visible"/hidden sides below are
+  // the opposite of what they'd be for npc-on-right), mirrored after.
   //
-  // "visible" and "hiddenA" are deliberately NOT close to each other in
-  // distance from the trunk, even though they're only a trunk's-width
-  // apart on paper - hiddenA sits tight against the trunk (convincingly
-  // tucked behind it), while visible sits just clear of it, in open
-  // ground, well before the NPC (see computeCardLayout()'s derivation
-  // of clearOfTrunkX/npcDistanceFromTree) - without that gap, both
-  // positions read as "bag next to the tree" with no visible contrast
-  // between "hidden" and "visible", which was the actual problem with
-  // the previous (fixed-ratio-of-npcDistanceFromTree) version once the
-  // tree became a much larger real image instead of a small circle.
+  // "visible" stays close to its old spot - just clear of the trunk, in
+  // open ground, well before the NPC (see computeCardLayout()'s
+  // derivation of clearOfTrunkX/npcDistanceFromTree) - that gap is what
+  // makes it read as unambiguously "in the open" rather than "bag next
+  // to the tree" once the tree became a large real image instead of a
+  // small drawn circle.
   const left = {
     visible: {
       x: treeLocalX - jitter(clearOfTrunkX * 0.85, clearOfTrunkX * 1.25),
       y: treeLocalY,
     },
-    hiddenA: {
-      x: treeLocalX + jitter(trunkHalfW * 0.2, trunkHalfW * 0.9),
-      y: treeLocalY,
-    }, // tucked right behind the trunk
-    hiddenB: {
-      x: treeLocalX + jitter(clearOfTrunkX * 0.85, clearOfTrunkX * 1.25),
-      y: treeLocalY,
-    }, // mirrors "visible", opposite side
-    hiddenC: {
-      x: treeLocalX + jitter(npcDistanceFromTree * 1.05, npcDistanceFromTree * 1.3),
-      y: treeLocalY,
-    }, // further past the tree, past where the NPC itself would stand
+    // Far past the trunk, mostly ground-level (small height variety) -
+    // unambiguously hidden on its own, so this is the one Level3 shows
+    // (buildBagSpots(...).slice(0, 2) only ever takes index 1).
+    hiddenFar: drawHiddenSpot(
+      npcDistanceFromTree * 0.9,
+      npcDistanceFromTree * 1.3,
+      0,
+      treeDisplayH * 0.15,
+    ),
+    // Mid-distance, moderate height range.
+    hiddenMid: drawHiddenSpot(
+      clearOfTrunkX * 0.9,
+      npcDistanceFromTree * 0.8,
+      0,
+      treeDisplayH * 0.5,
+    ),
+    // Close to the trunk, but can rise well up toward the canopy -
+    // the trickiest-looking of the three, a legitimate distractor
+    // among Level4's 4 simultaneous choices.
+    hiddenNear: drawHiddenSpot(
+      trunkHalfW * 0.3,
+      clearOfTrunkX * 0.9,
+      0,
+      treeDisplayH * 0.75,
+    ),
   };
 
   const mirror = (p: Point): Point => ({ x: 2 * treeLocalX - p.x, y: p.y });
@@ -213,22 +254,16 @@ export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
       ? left
       : {
           visible: mirror(left.visible),
-          hiddenA: mirror(left.hiddenA),
-          hiddenB: mirror(left.hiddenB),
-          hiddenC: mirror(left.hiddenC),
+          hiddenFar: mirror(left.hiddenFar),
+          hiddenMid: mirror(left.hiddenMid),
+          hiddenNear: mirror(left.hiddenNear),
         };
 
-  // hiddenB (not hiddenA) comes right after visible: hiddenA is
-  // deliberately subtle (tucked tight against the trunk - a legitimate
-  // "trickier" option among Level4's 4 simultaneous choices), but
-  // Level3 only ever shows one hidden option (buildBagSpots(...).slice
-  // (0, 2) in Level3.ts), and hiddenA's subtlety there just reads as
-  // ambiguous rather than clearly "the opposite side from the NPC".
-  // hiddenB mirrors `visible` at the same clear distance from the
-  // trunk, just on the other side, so it's unambiguous on its own.
-  // Level4 still gets all four (shuffled, so array order doesn't
-  // matter there) via the full array, unaffected by this reordering.
-  const ordered = [spots.visible, spots.hiddenB, spots.hiddenA, spots.hiddenC];
+  // hiddenFar comes right after visible, same reasoning as before: it's
+  // the unambiguous one, so it's what Level3's single hidden slot gets.
+  // Level4 still gets all four (shuffled, so array order doesn't matter
+  // there) via the full array.
+  const ordered = [spots.visible, spots.hiddenFar, spots.hiddenNear, spots.hiddenMid];
 
   const visibility = ordered.map((p) => canSee(npcEye, p, treeCenter));
   if (visibility[0] !== true || visibility.slice(1).some((v) => v === true)) {
