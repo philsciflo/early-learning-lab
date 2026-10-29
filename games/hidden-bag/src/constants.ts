@@ -95,6 +95,22 @@ export const TREE_COLLISION_RADIUS = TREE_RADIUS + BAG_RADIUS;
 // touching the tree's edge at the very start of the level.
 export const BAG_HIDDEN_CLEARANCE = 10;
 
+// Level1/Level2: the bag's starting spot is randomised within this
+// area (on whichever side it's assigned to) each time the level
+// loads, instead of always the exact same point - measured from a
+// screenshot Florian marked up with the intended region. The distance
+// from the tree's centre is TREE_COLLISION_RADIUS + BAG_HIDDEN_CLEARANCE
+// (the same minimum the old fixed spot used, so the bag can never
+// start closer to the tree than before - only further) plus a random
+// extra amount up to BAG_START_X_EXTRA_RANGE. The marked-up box's own
+// inner edge was actually a bit closer to the tree than that minimum
+// allows, so the minimum wins there; its outer edge is what
+// BAG_START_X_EXTRA_RANGE is sized to reach. Height-wise, the box ran
+// from partway up the canopy down to the ground line.
+export const BAG_START_X_EXTRA_RANGE = 180;
+export const BAG_START_Y_MIN = 150;
+export const BAG_START_Y_MAX = GROUND_Y;
+
 // Where the player is allowed to drag the bag: almost the full canvas,
 // just enough margin that the bag never goes fully off-screen or under
 // the instruction text.

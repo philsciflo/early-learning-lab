@@ -12,7 +12,6 @@ import {
   NPC_EYE_DISTANCE_FROM_TREE,
   TREE_FEET_Y,
   TREE_CENTER_X,
-  TREE_CENTER_Y,
   TREE_DISPLAY_WIDTH,
   TREE_DISPLAY_HEIGHT,
   TREE_VISUAL_Y_OFFSET,
@@ -21,6 +20,9 @@ import {
   BAG_DRAG_BOUNDS,
   BAG_DISPLAY_WIDTH,
   BAG_DISPLAY_HEIGHT,
+  BAG_START_X_EXTRA_RANGE,
+  BAG_START_Y_MIN,
+  BAG_START_Y_MAX,
   NPC_DISPLAY_SCALE,
 } from "./constants.ts";
 import { resolveTreeCollision, segmentHitsTree } from "./collision.ts";
@@ -255,9 +257,18 @@ function createBag(
   container: GameObjects.Container;
 } {
   const sign = side === "left" ? -1 : 1;
-  const clearance = TREE_COLLISION_RADIUS + BAG_HIDDEN_CLEARANCE;
+  // Randomised within the marked-up start area (see constants.ts) each
+  // time the level loads - minimum clearance is unchanged from before
+  // (so the bag never starts overlapping the tree), with a random
+  // extra distance added, and an independently-random height anywhere
+  // from partway up the canopy down to the ground line.
+  const clearance =
+    TREE_COLLISION_RADIUS +
+    BAG_HIDDEN_CLEARANCE +
+    Math.random() * BAG_START_X_EXTRA_RANGE;
   const bagX = TREE_CENTER_X + sign * clearance;
-  const bagY = TREE_CENTER_Y;
+  const bagY =
+    BAG_START_Y_MIN + Math.random() * (BAG_START_Y_MAX - BAG_START_Y_MIN);
 
   const image = scene.add
     .image(0, 0, "bag")
