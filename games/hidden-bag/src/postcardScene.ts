@@ -60,7 +60,13 @@ export function computeCardLayout(cardW: number, cardH: number): CardLayout {
   const sceneH = (FRAME_INNER_BOTTOM - FRAME_INNER_TOP) * cardH;
 
   const treeLocalX = sceneW / 2;
-  const treeLocalY = sceneH * 0.62;
+  // 0.85, not dead-centre: the tree/NPC/bag share this as their ground
+  // line, and the tree's own canopy already extends well above it, so
+  // a lower baseline uses the window's height properly - at 0.62 the
+  // whole cluster sat cramped near the top with ~38% empty white space
+  // below (no horizon/grass means nothing fills that gap, unlike the
+  // main level which has a ground band).
+  const treeLocalY = sceneH * 0.85;
   const npcDistanceFromTree = sceneW * 0.31;
 
   // tree_01.png/bag_01.png reused directly (not simple drawn shapes) so
