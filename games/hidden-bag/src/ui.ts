@@ -191,6 +191,14 @@ export type SuccessPopOptions = {
    * centre (`centerOffsetX`/`centerOffsetY`). */
   flashWidth?: number;
   flashHeight?: number;
+  /** Skips the x/y hop entirely - only scale (and the flash) play.
+   * Needed for a target that may still be receiving live position
+   * writes from elsewhere while this plays (Level1's bag stays
+   * draggable even while the NPC's "can see it" pop fires - the hop's
+   * per-frame x/y writes would otherwise fight the drag handler's own
+   * x/y writes every frame and make the bag look like it freezes or
+   * snaps back mid-drag). */
+  preservePosition?: boolean;
 };
 
 /**
@@ -212,6 +220,7 @@ export function playBigSuccessPop(
     duration = 260,
     flashWidth = 90,
     flashHeight = 120,
+    preservePosition = false,
   } = options;
 
   const baseX = target.x;
@@ -227,13 +236,17 @@ export function playBigSuccessPop(
     onUpdate: () => {
       const s = 1 + (scaleTo - 1) * progress.t;
       target.setScale(s);
-      target.x = baseX - centerOffsetX * (s - 1);
-      target.y = baseY - centerOffsetY * (s - 1) - hopHeight * progress.t;
+      if (!preservePosition) {
+        target.x = baseX - centerOffsetX * (s - 1);
+        target.y = baseY - centerOffsetY * (s - 1) - hopHeight * progress.t;
+      }
     },
     onComplete: () => {
       target.setScale(1);
-      target.x = baseX;
-      target.y = baseY;
+      if (!preservePosition) {
+        target.x = baseX;
+        target.y = baseY;
+      }
     },
   });
 
