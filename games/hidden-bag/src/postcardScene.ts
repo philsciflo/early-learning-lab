@@ -164,6 +164,17 @@ export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
   } = layout;
   const treeCenter = { x: treeLocalX, y: treeLocalY };
 
+  // Randomised each call (same idea as the main level's randomised bag
+  // start position - see constants.ts's BAG_START_X_EXTRA_RANGE), so
+  // the four spots aren't pixel-identical every round. Jitter is x-only
+  // (distance from the trunk) - these cards have no ground plane, just
+  // one shared height for tree/NPC/bag, so varying y would make the bag
+  // float at a different level than its own shadow-less "ground" line
+  // with nothing to explain why. Each spot's jitter range stays safely
+  // within the side/magnitude that already makes canSee() classify it
+  // correctly (verified below), never crossing the trunk's centreline.
+  const jitter = (min: number, max: number) => min + Math.random() * (max - min);
+
   // Authored for "npc on the left"; mirrored below if npc is on the
   // right. All four sit at the same ground height as the tree/NPC.
   //
@@ -179,19 +190,19 @@ export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
   // tree became a much larger real image instead of a small circle.
   const left = {
     visible: {
-      x: treeLocalX - clearOfTrunkX,
+      x: treeLocalX - jitter(clearOfTrunkX * 0.85, clearOfTrunkX * 1.25),
       y: treeLocalY,
     },
     hiddenA: {
-      x: treeLocalX + trunkHalfW * 0.5,
+      x: treeLocalX + jitter(trunkHalfW * 0.2, trunkHalfW * 0.9),
       y: treeLocalY,
     }, // tucked right behind the trunk
     hiddenB: {
-      x: treeLocalX + clearOfTrunkX,
+      x: treeLocalX + jitter(clearOfTrunkX * 0.85, clearOfTrunkX * 1.25),
       y: treeLocalY,
     }, // mirrors "visible", opposite side
     hiddenC: {
-      x: treeLocalX + npcDistanceFromTree * 1.1,
+      x: treeLocalX + jitter(npcDistanceFromTree * 1.05, npcDistanceFromTree * 1.3),
       y: treeLocalY,
     }, // further past the tree, past where the NPC itself would stand
   };
