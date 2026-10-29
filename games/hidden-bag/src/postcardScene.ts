@@ -165,31 +165,38 @@ export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
   const treeCenter = { x: treeLocalX, y: treeLocalY };
 
   // Authored for "npc on the left"; mirrored below if npc is on the
-  // right. All four sit at the same ground height as the tree/NPC.
+  // right. visible/hiddenB/hiddenC sit at the shared ground height;
+  // hiddenA is raised up into the trunk/lower-canopy zone instead (see
+  // below) - buildPostcard() draws the tree in front of the bag now,
+  // specifically so this one reads as genuinely tucked behind the tree
+  // rather than just "the same ground spot, opposite side".
   //
-  // "visible" and "hiddenA" are deliberately NOT close to each other in
-  // distance from the trunk, even though they're only a trunk's-width
-  // apart on paper - hiddenA sits tight against the trunk (convincingly
-  // tucked behind it), while visible sits just clear of it, in open
-  // ground, well before the NPC (see computeCardLayout()'s derivation
-  // of clearOfTrunkX/npcDistanceFromTree) - without that gap, both
-  // positions read as "bag next to the tree" with no visible contrast
-  // between "hidden" and "visible", which was the actual problem with
-  // the previous (fixed-ratio-of-npcDistanceFromTree) version once the
-  // tree became a much larger real image instead of a small circle.
+  // "visible" and "hiddenB"/"hiddenC" are deliberately NOT close to the
+  // trunk, even at their nearest - visible sits just clear of it, in
+  // open ground, well before the NPC (see computeCardLayout()'s
+  // derivation of clearOfTrunkX/npcDistanceFromTree) - without that
+  // gap, positions read as "bag next to the tree" with no visible
+  // contrast between "hidden" and "visible", which was the actual
+  // problem once the tree became a much larger real image instead of a
+  // small drawn circle.
   const left = {
     visible: {
       x: treeLocalX - clearOfTrunkX,
       y: treeLocalY,
     },
+    // Up and in behind the trunk - small x-offset (within the trunk's
+    // own width, not out past it) combined with a raise into the zone
+    // where the trunk is visually present, so with the tree drawn on
+    // top (see buildPostcard()) the trunk actually overlaps/covers
+    // part of the bag instead of just sitting beside it on the ground.
     hiddenA: {
-      x: treeLocalX + trunkHalfW * 0.5,
-      y: treeLocalY,
-    }, // tucked right behind the trunk
+      x: treeLocalX + trunkHalfW * 0.7,
+      y: treeLocalY - trunkHalfW * 1.0,
+    },
     hiddenB: {
       x: treeLocalX + clearOfTrunkX,
       y: treeLocalY,
-    }, // mirrors "visible", opposite side
+    }, // mirrors "visible", opposite side, ground level
     hiddenC: {
       x: treeLocalX + npcDistanceFromTree * 1.1,
       y: treeLocalY,
@@ -207,17 +214,16 @@ export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
           hiddenC: mirror(left.hiddenC),
         };
 
-  // hiddenB (not hiddenA) comes right after visible: hiddenA is
-  // deliberately subtle (tucked tight against the trunk - a legitimate
-  // "trickier" option among Level4's 4 simultaneous choices), but
-  // Level3 only ever shows one hidden option (buildBagSpots(...).slice
-  // (0, 2) in Level3.ts), and hiddenA's subtlety there just reads as
-  // ambiguous rather than clearly "the opposite side from the NPC".
-  // hiddenB mirrors `visible` at the same clear distance from the
-  // trunk, just on the other side, so it's unambiguous on its own.
-  // Level4 still gets all four (shuffled, so array order doesn't
-  // matter there) via the full array, unaffected by this reordering.
-  const ordered = [spots.visible, spots.hiddenB, spots.hiddenA, spots.hiddenC];
+  // hiddenA comes right after visible: Level3 only ever shows one
+  // hidden option (buildBagSpots(...).slice(0, 2) in Level3.ts), and
+  // hiddenA is now the one genuinely tucked up behind the trunk (see
+  // above and buildPostcard()'s tree-in-front-of-bag z-order) - a much
+  // clearer "hidden" read than a ground-level spot that's merely on
+  // the opposite side with no visual occlusion. hiddenB/hiddenC stay
+  // as ground-level variants for visual variety among Level4's other 3
+  // simultaneous choices (shuffled there, so array order doesn't
+  // matter to it).
+  const ordered = [spots.visible, spots.hiddenA, spots.hiddenB, spots.hiddenC];
 
   const visibility = ordered.map((p) => canSee(npcEye, p, treeCenter));
   if (visibility[0] !== true || visibility.slice(1).some((v) => v === true)) {
@@ -302,6 +308,20 @@ export function buildPostcard(
     y: layout.sceneOffsetY + p.y,
   });
 
+  // Bag - the real bag_01.png (background removed), centre-anchored
+  // same as the main level's bag. Added BEFORE the tree (see below)
+  // so the tree renders in front of it: the "hiddenA" spot (see
+  // buildBagSpots) is deliberately positioned to overlap the trunk, so
+  // it needs the trunk drawn on top to actually look tucked behind it
+  // rather than sitting in front of/beside it. Spots that don't
+  // geometrically overlap the tree (visible, hiddenB, hiddenC) render
+  // identically regardless of this order.
+  const bagPos = localToCard(bagPosition);
+  const bag = scene.add
+    .image(bagPos.x, bagPos.y, "bag")
+    .setDisplaySize(layout.bagDisplayW, layout.bagDisplayH);
+  container.add(bag);
+
   // Tree - the real tree_01.png (background removed), not a simple
   // drawn shape, same bottom-centre-anchor convention as the main
   // level's tree in hiddenBagScene.ts.
@@ -312,7 +332,9 @@ export function buildPostcard(
     .setDisplaySize(layout.treeDisplayW, layout.treeDisplayH);
   container.add(tree);
 
-  // NPC
+  // NPC - added last so it's always fully visible regardless of
+  // position (it never overlaps the tree by design - see
+  // computeCardLayout()'s npcDistanceFromTree derivation).
   const npcLocalFeet = {
     x:
       layout.treeLocalX +
@@ -331,14 +353,6 @@ export function buildPostcard(
     npcContainer.scaleX = -layout.npcScale;
   }
   container.add(npcContainer);
-
-  // Bag - the real bag_01.png (background removed), centre-anchored
-  // same as the main level's bag.
-  const bagPos = localToCard(bagPosition);
-  const bag = scene.add
-    .image(bagPos.x, bagPos.y, "bag")
-    .setDisplaySize(layout.bagDisplayW, layout.bagDisplayH);
-  container.add(bag);
 
   return { container, hitArea };
 }
