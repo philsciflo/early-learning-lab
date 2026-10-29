@@ -207,7 +207,17 @@ export function buildBagSpots(npcSide: Side, layout: CardLayout): Point[] {
           hiddenC: mirror(left.hiddenC),
         };
 
-  const ordered = [spots.visible, spots.hiddenA, spots.hiddenB, spots.hiddenC];
+  // hiddenB (not hiddenA) comes right after visible: hiddenA is
+  // deliberately subtle (tucked tight against the trunk - a legitimate
+  // "trickier" option among Level4's 4 simultaneous choices), but
+  // Level3 only ever shows one hidden option (buildBagSpots(...).slice
+  // (0, 2) in Level3.ts), and hiddenA's subtlety there just reads as
+  // ambiguous rather than clearly "the opposite side from the NPC".
+  // hiddenB mirrors `visible` at the same clear distance from the
+  // trunk, just on the other side, so it's unambiguous on its own.
+  // Level4 still gets all four (shuffled, so array order doesn't
+  // matter there) via the full array, unaffected by this reordering.
+  const ordered = [spots.visible, spots.hiddenB, spots.hiddenA, spots.hiddenC];
 
   const visibility = ordered.map((p) => canSee(npcEye, p, treeCenter));
   if (visibility[0] !== true || visibility.slice(1).some((v) => v === true)) {
