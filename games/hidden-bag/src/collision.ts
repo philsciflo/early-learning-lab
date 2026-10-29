@@ -3,6 +3,7 @@ import {
   TREE_CENTER_Y,
   TREE_COLLISION_RADIUS,
   TREE_FEET_Y,
+  TREE_VISUAL_Y_OFFSET,
   TREE_TRUNK_HEIGHT,
   TREE_TRUNK_WIDTH,
   BAG_RADIUS,
@@ -15,8 +16,17 @@ type Point = {
 
 const TRUNK_LEFT = TREE_CENTER_X - TREE_TRUNK_WIDTH / 2 - BAG_RADIUS;
 const TRUNK_RIGHT = TREE_CENTER_X + TREE_TRUNK_WIDTH / 2 + BAG_RADIUS;
-const TRUNK_TOP = TREE_FEET_Y - TREE_TRUNK_HEIGHT - BAG_RADIUS;
-const TRUNK_BOTTOM = TREE_FEET_Y + BAG_RADIUS;
+// Anchored to the tree's actual on-screen base (TREE_FEET_Y minus the
+// same TREE_VISUAL_Y_OFFSET the tree image itself is drawn with - see
+// hiddenBagScene.ts's createTree()), not the raw TREE_FEET_Y - that
+// offset was introduced as "purely visual, doesn't move the collider"
+// at the time, but left this invisible trunk box extending ~45px
+// deeper into the grass than the trunk is actually drawn, blocking
+// drags through open ground well below the tree with nothing visible
+// to explain why.
+const TRUNK_VISUAL_BASE_Y = TREE_FEET_Y - TREE_VISUAL_Y_OFFSET;
+const TRUNK_TOP = TRUNK_VISUAL_BASE_Y - TREE_TRUNK_HEIGHT - BAG_RADIUS;
+const TRUNK_BOTTOM = TRUNK_VISUAL_BASE_Y + BAG_RADIUS;
 
 function pushOutOfCircle(
   point: Point,
