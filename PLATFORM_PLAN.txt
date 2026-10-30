@@ -1,0 +1,75 @@
+Full-Stack Platform Plan
+Early Learning Lab -> schools/teachers/parents accounts, per-child game
+data, researcher analysis + report distribution (Storypark-style, smaller)
+Drafted: 2026-10-30
+
+STACK NOTE
+Phaser (games, already in use) + Java/Spring Boot (backend API + data)
++ React (frontend dashboard for school/teacher/parent/researcher UI).
+React is the frontend library here, not the backend - Java is the
+backend/API layer.
+
+Tradeoff to keep in mind: this moves from one toolchain (TypeScript/
+Vite, used by every game today) to three (Phaser/TS, Java, React).
+Worth being deliberate that the Java choice is wanted (team skill,
+existing infra) rather than a default, since a Node/TypeScript backend
+(e.g. NestJS) would let one team/language cover games + backend, at
+the cost of losing Java's typically stronger typed-ORM/enterprise
+tooling (JPA/Hibernate) for data that genuinely needs strict
+relational modelling (profiles, consent, orgs).
+
+TOP 10 FIRST STEPS, RANKED
+1. Nail down data model + privacy/consent requirements first - NZ
+   Privacy Act, what a school/parent actually consents to, data
+   retention/deletion rights. This gates the schema, not the other
+   way round.
+2. Design the tenancy model: school -> classes -> children -> linked
+   parents, with the researcher having cross-school access. This is
+   the structural backbone everything else hangs off.
+3. Design auth/RBAC for four distinct actors (school admin, teacher,
+   parent, researcher) - and separately, how a CHILD starts a game
+   session without needing real login credentials (almost certainly a
+   token/link a teacher or parent issues, not a child account).
+4. Pick the concrete backend stack (Java/Spring Boot + Postgres) and
+   write the API contract (REST/GraphQL) that Phaser and React will
+   both call.
+5. Define the Phaser -> backend contract: how a running game
+   identifies "which child, which trial" and posts results - this
+   replaces/extends the existing recordTrial/localStorage pattern
+   already in each game's scoring.ts.
+6. Build one thin vertical slice end-to-end (one school, one teacher,
+   one child, one game - Tiro is the natural pick, already closest to
+   done) before building out any admin CRUD screens. Validates the
+   whole pipeline early, cheaply.
+7. Design what a "report" actually is - per-child trend, per-class
+   aggregate, researcher export - and how it's delivered (in-
+   dashboard, emailed PDF, scheduled) before building the generator.
+8. Plan hosting/deploy - today everything's static GitHub Pages; a
+   Java backend + Postgres + React dashboard needs real hosting
+   (Render/Fly/AWS/etc).
+9. Migrate each game's local scoring code to call the new API instead
+   of localStorage, ideally keeping offline-friendly retry behaviour
+   (classroom wifi is unreliable).
+10. Stand up a separate staging environment before touching anything
+    with real children's data.
+
+TOP 5 ISSUES TO WATCH, RANKED
+1. Children's data privacy/compliance is the real project, not an
+   add-on - NZ Privacy Act, informed consent, data minimisation,
+   deletion rights; likely worth a privacy impact assessment before
+   storing anything real.
+2. Children can't have normal logins - access has to be mediated
+   through a teacher or parent, which complicates "attribute this
+   gameplay session to the right child" cleanly.
+3. Three toolchains (Phaser/TS, Java, React) vs. one today - real ops
+   overhead for a solo/small-team early-stage project; worth
+   confirming the Java choice is deliberate rather than default.
+4. No shared data contract across games yet - each game (Tiro, apple-
+   catcher, etc.) has its own bespoke scoring shape; the backend needs
+   one common "trial result" schema they all map into, or reporting
+   becomes per-game special-casing.
+5. Report access is a second privacy surface, distinct from
+   collection - a parent sees only their child, a teacher sees their
+   class, the researcher likely sees de-identified/aggregate by
+   default. Easy to get this wrong by reusing the same RBAC as data
+   entry.
