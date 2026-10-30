@@ -62,7 +62,7 @@ function drawCloud(scene: Scene, x: number, y: number, scale: number) {
   g.fillCircle(x - 12 * scale, y - 12 * scale, 16 * scale);
 }
 
-/** Matches the example in the spec: "hidden-bag-data-2026-10-19T0310Z" -
+/** Matches the example in the spec: "tiro-data-2026-10-19T0310Z" -
  * timestamped so repeated exports during a session don't overwrite
  * each other. */
 function timestampedFilename(extension: string): string {
@@ -71,7 +71,7 @@ function timestampedFilename(extension: string): string {
   const stamp =
     `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}` +
     `T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}Z`;
-  return `hidden-bag-data-${stamp}.${extension}`;
+  return `tiro-data-${stamp}.${extension}`;
 }
 
 function downloadBlob(

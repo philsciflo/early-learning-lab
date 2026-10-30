@@ -4,7 +4,7 @@ export const HALF_WIDTH = WIDTH / 2;
 export const HALF_HEIGHT = HEIGHT / 2;
 
 // Data tracking (see scoring.ts)
-export const GAME_SCORE_DATA_KEY = "hidden-bag-data";
+export const GAME_SCORE_DATA_KEY = "tiro-data";
 export const PLAYER_ID_DATA_KEY = "playerId";
 
 // Which of the 4 selectable friends (see friends.ts) the child picked on

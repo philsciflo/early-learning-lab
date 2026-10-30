@@ -22,7 +22,7 @@ export default defineConfig({
       },
     },
     emptyOutDir: true,
-    outDir: "../../docs/games/hidden-bag",
+    outDir: "../../docs/games/tiro",
   },
   server: {
     port: 8080,
