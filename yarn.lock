@@ -3001,9 +3001,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"titiro@workspace:games/hidden-bag":
+"tiro@workspace:games/tiro":
   version: 0.0.0-use.local
-  resolution: "titiro@workspace:games/hidden-bag"
+  resolution: "tiro@workspace:games/tiro"
   dependencies:
     phaser: "npm:^3.86.0"
     terser: "npm:^5.31.0"
