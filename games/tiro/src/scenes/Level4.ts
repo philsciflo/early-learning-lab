@@ -65,9 +65,9 @@ export class Level4 extends Scene {
   }
 
   preload() {
-    this.load.image("frame", "/assets/frame_01.png");
-    this.load.image("tree", "/assets/tree_01.png");
-    this.load.image("bag", "/assets/bag_01.png");
+    this.load.image("frame", "assets/frame_01.png");
+    this.load.image("tree", "assets/tree_01.png");
+    this.load.image("bag", "assets/bag_01.png");
   }
 
   create() {
