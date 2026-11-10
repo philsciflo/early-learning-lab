@@ -3166,6 +3166,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"whaka-ahua@workspace:games/whaka-ahua":
+  version: 0.0.0-use.local
+  resolution: "whaka-ahua@workspace:games/whaka-ahua"
+  dependencies:
+    phaser: "npm:^3.86.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.4.5"
+    vite: "npm:^5.3.1"
+  languageName: unknown
+  linkType: soft
+
 "which@npm:^2.0.1":
   version: 2.0.2
   resolution: "which@npm:2.0.2"
