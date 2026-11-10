@@ -11,14 +11,20 @@ import {
   CANVAS_BACKGROUND_COLOUR,
   CANVAS_BORDER_COLOUR,
   REFERENCE_LINE_COLOUR,
+  REFERENCE_LINE_WIDTH,
   DRAWING_LINE_COLOUR,
+  DRAWING_LINE_WIDTH,
   REFERENCE_TRIANGLE_VERTICES,
   PLAYER_ID_DATA_KEY,
   LAST_SCORE_DATA_KEY,
 } from "../constants.ts";
 import { Point, scoreTriangleDrawing } from "../triangleScoring.ts";
 import { recordTrial } from "../scoring.ts";
-import { createButton } from "../ui.ts";
+import { Button, createButton, downloadUrl } from "../ui.ts";
+import {
+  renderDrawingToPngDataUrl,
+  renderOverlayToPngDataUrl,
+} from "../renderDrawing.ts";
 
 const BUTTONS_Y = CANVAS_TOP_Y + CANVAS_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
@@ -34,6 +40,7 @@ const FEEDBACK_Y = BUTTONS_Y + 70;
 export class Level1 extends Scene {
   private drawGraphics: GameObjects.Graphics;
   private feedbackText: GameObjects.Text;
+  private downloadOverlayButton: Button;
 
   private drawnPoints: Point[] = [];
   private isDrawing = false;
@@ -126,7 +133,7 @@ export class Level1 extends Scene {
   private drawReferenceTriangle() {
     const [a, b, c] = REFERENCE_TRIANGLE_VERTICES;
     const g = this.add.graphics();
-    g.lineStyle(5, REFERENCE_LINE_COLOUR, 1);
+    g.lineStyle(REFERENCE_LINE_WIDTH, REFERENCE_LINE_COLOUR, 1);
     g.beginPath();
     g.moveTo(CANVAS_LEFT_X + a.x, CANVAS_TOP_Y + a.y);
     g.lineTo(CANVAS_LEFT_X + b.x, CANVAS_TOP_Y + b.y);
@@ -171,7 +178,7 @@ export class Level1 extends Scene {
       this.drawnPoints.push(local);
 
       if (this.lastLocalPoint) {
-        this.drawGraphics.lineStyle(4, DRAWING_LINE_COLOUR, 1);
+        this.drawGraphics.lineStyle(DRAWING_LINE_WIDTH, DRAWING_LINE_COLOUR, 1);
         this.drawGraphics.beginPath();
         this.drawGraphics.moveTo(
           CANVAS_RIGHT_X + this.lastLocalPoint.x,
@@ -191,8 +198,9 @@ export class Level1 extends Scene {
   }
 
   private createActionButtons() {
-    const clearX = WIDTH / 2 - 130;
-    const checkX = WIDTH / 2 + 130;
+    const clearX = WIDTH / 2 - 310;
+    const checkX = WIDTH / 2;
+    const downloadX = WIDTH / 2 + 310;
 
     const clearButton = createButton(this, clearX, BUTTONS_Y, "Clear", {
       variant: "muted",
@@ -205,6 +213,33 @@ export class Level1 extends Scene {
       minWidth: 180,
     });
     checkButton.hitArea.on("pointerdown", () => this.checkDrawing());
+
+    this.downloadOverlayButton = createButton(
+      this,
+      downloadX,
+      BUTTONS_Y,
+      "Download overlay",
+      { variant: "secondary", minWidth: 240 },
+    );
+    this.downloadOverlayButton.hitArea.on("pointerdown", () =>
+      this.downloadOverlay(),
+    );
+    this.setDownloadOverlayEnabled(false);
+  }
+
+  /** The overlay download is only meaningful once "Check" has produced
+   * a valid score for the drawing currently on the right canvas -
+   * disabled (dimmed, non-interactive) the rest of the time rather than
+   * silently downloading a stale or empty attempt. */
+  private setDownloadOverlayEnabled(enabled: boolean) {
+    this.downloadOverlayButton.container.setAlpha(enabled ? 1 : 0.4);
+    if (enabled) {
+      this.downloadOverlayButton.hitArea.setInteractive({
+        useHandCursor: true,
+      });
+    } else {
+      this.downloadOverlayButton.hitArea.disableInteractive();
+    }
   }
 
   private clearDrawing() {
@@ -217,6 +252,7 @@ export class Level1 extends Scene {
     this.lastValid = false;
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
+    this.setDownloadOverlayEnabled(false);
   }
 
   private checkDrawing() {
@@ -240,10 +276,27 @@ export class Level1 extends Scene {
 
     if (!result.valid) {
       this.feedbackText.setText("Not quite a triangle yet - try again!");
+      this.setDownloadOverlayEnabled(false);
       return;
     }
 
     this.feedbackText.setText(`Score: ${result.score}/100`);
+    this.setDownloadOverlayEnabled(true);
+  }
+
+  private downloadOverlay() {
+    if (!this.lastValid) {
+      return;
+    }
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
+      | string
+      | undefined;
+    const dataUrl = renderOverlayToPngDataUrl(
+      this.drawnPoints,
+      REFERENCE_TRIANGLE_VERTICES,
+    );
+    const filename = `whaka-ahua-${playerId ?? "unknown"}-level1-attempt${this.attempts}-overlay.png`;
+    downloadUrl(filename, dataUrl);
   }
 
   /** Facilitator controls: move on whenever they judge the child is
@@ -287,6 +340,10 @@ export class Level1 extends Scene {
       return;
     }
 
+    const drawnImageDataUrl = this.lastValid
+      ? renderDrawingToPngDataUrl(this.drawnPoints)
+      : null;
+
     recordTrial(playerId, {
       level: "Level1",
       startTime: new Date(this.trialStartMs).toISOString(),
@@ -298,6 +355,7 @@ export class Level1 extends Scene {
       score: this.lastScore,
       meanRefToDraw: this.lastMeanRefToDraw,
       meanDrawToRef: this.lastMeanDrawToRef,
+      drawnImageDataUrl,
     });
   }
 }

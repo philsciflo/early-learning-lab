@@ -35,6 +35,11 @@ export const CANVAS_BACKGROUND_COLOUR = 0xffffff;
 export const CANVAS_BORDER_COLOUR = 0x2b2a6b;
 export const REFERENCE_LINE_COLOUR = 0x2b2a6b;
 export const DRAWING_LINE_COLOUR = 0xff6f3c;
+// Shared by both canvases so the reference and the player's drawing read
+// as a visually matched pair - also used by renderDrawing.ts so the
+// rasterized PNGs match what's shown live in-game.
+export const REFERENCE_LINE_WIDTH = 8;
+export const DRAWING_LINE_WIDTH = 8;
 
 // The static reference triangle's vertices, in canvas-local coordinates
 // (0,0 is the target canvas's own top-left corner) - roughly centred in
