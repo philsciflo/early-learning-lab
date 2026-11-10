@@ -50,16 +50,195 @@ export function sampleTriangleEdgePoints(
   return points;
 }
 
+function crossProduct(o: Point, a: Point, b: Point): number {
+  return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+}
+
+/**
+ * Convex hull via the monotone chain (Andrew's) algorithm - no external
+ * library, kept self-contained like the rest of this file. Returns hull
+ * vertices in counter-clockwise order, deduplicating collinear points.
+ * Degenerate inputs (fewer than 3 distinct points, or all-collinear
+ * points such as a straight line) return the points sorted but without
+ * forming a 2D hull; polygonArea() below naturally yields 0 for those.
+ */
+export function convexHull(points: Point[]): Point[] {
+  if (points.length < 3) {
+    return points;
+  }
+
+  const sorted = [...points].sort((a, b) =>
+    a.x === b.x ? a.y - b.y : a.x - b.x,
+  );
+
+  const lower: Point[] = [];
+  for (const p of sorted) {
+    while (
+      lower.length >= 2 &&
+      crossProduct(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
+    ) {
+      lower.pop();
+    }
+    lower.push(p);
+  }
+
+  const upper: Point[] = [];
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const p = sorted[i];
+    while (
+      upper.length >= 2 &&
+      crossProduct(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
+    ) {
+      upper.pop();
+    }
+    upper.push(p);
+  }
+
+  lower.pop();
+  upper.pop();
+  return [...lower, ...upper];
+}
+
+/** Shoelace formula. Works for any simple polygon; for the degenerate
+ * (collinear or <3 vertex) hulls convexHull() can return, this
+ * correctly yields 0. */
+export function polygonArea(vertices: Point[]): number {
+  if (vertices.length < 3) {
+    return 0;
+  }
+  let sum = 0;
+  for (let i = 0; i < vertices.length; i++) {
+    const a = vertices[i];
+    const b = vertices[(i + 1) % vertices.length];
+    sum += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(sum) / 2;
+}
+
+/**
+ * Ratio (0-1) between the drawn polyline's convex-hull area and the
+ * reference triangle's area - whichever is smaller over whichever is
+ * larger, so both "drawn way too big" and "drawn way too small" are
+ * penalised the same way. A flat line, tight needle, or single-tap
+ * scribble has ~zero hull area and collapses this to 0, which is what
+ * catches shapes with no real enclosed area regardless of how closely
+ * they happen to graze the reference edges.
+ */
+function hullAreaRatio(
+  drawnPoints: Point[],
+  referenceVertices: [Point, Point, Point],
+): number {
+  const hullArea = polygonArea(convexHull(drawnPoints));
+  const refArea = polygonArea(referenceVertices);
+  if (refArea === 0 || hullArea === 0) {
+    return 0;
+  }
+  const ratio = Math.min(hullArea, refArea) / Math.max(hullArea, refArea);
+  return Math.min(1, Math.max(0, ratio));
+}
+
+function perpendicularDistance(p: Point, a: Point, b: Point): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lengthSq = dx * dx + dy * dy;
+  if (lengthSq === 0) {
+    return distance(p, a);
+  }
+  const t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSq;
+  const projection = { x: a.x + t * dx, y: a.y + t * dy };
+  return distance(p, projection);
+}
+
+/** Standard recursive Douglas-Peucker polyline simplification. Keeps
+ * both endpoints and any point further than `epsilon` from the current
+ * simplified segment, discarding the rest. */
+function douglasPeucker(points: Point[], epsilon: number): Point[] {
+  if (points.length < 3) {
+    return points;
+  }
+
+  const end = points.length - 1;
+  let maxDistance = 0;
+  let splitIndex = 0;
+  for (let i = 1; i < end; i++) {
+    const d = perpendicularDistance(points[i], points[0], points[end]);
+    if (d > maxDistance) {
+      maxDistance = d;
+      splitIndex = i;
+    }
+  }
+
+  if (maxDistance > epsilon) {
+    const left = douglasPeucker(points.slice(0, splitIndex + 1), epsilon);
+    const right = douglasPeucker(points.slice(splitIndex), epsilon);
+    return [...left.slice(0, -1), ...right];
+  }
+
+  return [points[0], points[end]];
+}
+
+/** Interior turning angle at `cur`, in degrees: 0 for dead-straight,
+ * up to 180 for a full reversal. Used to tell a real corner apart from
+ * a shallow bend left over after simplification. */
+function turnAngleDegrees(prev: Point, cur: Point, next: Point): number {
+  const v1 = { x: cur.x - prev.x, y: cur.y - prev.y };
+  const v2 = { x: next.x - cur.x, y: next.y - cur.y };
+  const len1 = Math.hypot(v1.x, v1.y);
+  const len2 = Math.hypot(v2.x, v2.y);
+  if (len1 === 0 || len2 === 0) {
+    return 0;
+  }
+  const cosAngle = (v1.x * v2.x + v1.y * v2.y) / (len1 * len2);
+  const clamped = Math.min(1, Math.max(-1, cosAngle));
+  return (Math.acos(clamped) * 180) / Math.PI;
+}
+
+/**
+ * Simplifies the drawn polyline with Douglas-Peucker (epsilon scaled to
+ * the drawing's own size, so this works the same whether the drawing is
+ * large or small) and counts how many of the remaining interior
+ * vertices turn sharply enough (> `angleThresholdDeg`) to count as a
+ * real corner. A triangle trace simplifies to ~2-3 such corners
+ * (3 vertices, minus whichever one the pen started/ended closest to);
+ * a circle or smooth curve simplifies to shallow turns that don't clear
+ * the angle threshold even after simplification; a spiral or zigzag
+ * keeps many sharp turns no matter the epsilon.
+ */
+export function countCorners(
+  points: Point[],
+  epsilon: number,
+  angleThresholdDeg = 55,
+): number {
+  const simplified = douglasPeucker(points, epsilon);
+  let corners = 0;
+  for (let i = 1; i < simplified.length - 1; i++) {
+    const angle = turnAngleDegrees(
+      simplified[i - 1],
+      simplified[i],
+      simplified[i + 1],
+    );
+    if (angle > angleThresholdDeg) {
+      corners++;
+    }
+  }
+  return corners;
+}
+
 export type TriangleScoreResult = {
   /** 0-100, rounded. Always 0 when `valid` is false. */
   score: number;
-  /** False for a degenerate attempt (too few points, or a bounding box
-   * far smaller than the reference triangle's - eg a single tap) - the
-   * caller should prompt the player to try again rather than trust the
-   * score. */
+  /** False for a degenerate attempt (too few points, a bounding box far
+   * smaller than the reference triangle's, a convex hull with too
+   * little area relative to the reference, or a corner count way
+   * outside what a triangle trace produces) - the caller should prompt
+   * the player to try again rather than trust the score. */
   valid: boolean;
   meanRefToDraw: number;
   meanDrawToRef: number;
+  /** Convex-hull-area / reference-area overlap ratio, 0-1. */
+  areaRatio: number;
+  /** Count of sharp direction changes in the simplified drawn path. */
+  cornerCount: number;
 };
 
 export type TriangleScoreOptions = {
@@ -71,13 +250,35 @@ export type TriangleScoreOptions = {
    * fraction of the reference triangle's, or the attempt is treated as
    * incomplete (eg a tiny scribble in one corner). */
   minBoundingBoxRatio?: number;
+  /** Below this convex-hull/reference area ratio, the attempt is
+   * treated as invalid outright - this is what catches a flat line,
+   * needle, or near-zero-area scribble that happens to graze the
+   * reference edges closely enough to otherwise look plausible. 0.18
+   * sits well below the ~0.5+ ratio a real (even sloppy) triangle hull
+   * has against the reference, but comfortably above the ~0 a line or
+   * needle produces. */
+  minAreaRatio?: number;
+  /** Corner counts at or below this are treated as invalid (eg a
+   * circle/ellipse that never turns sharply, or a near-straight line). */
+  minValidCorners?: number;
+  /** Corner counts above this are treated as invalid (eg a spiral or
+   * zigzag scribble with many sharp turns). */
+  maxValidCorners?: number;
+  /** The "ideal" inclusive corner-count range for a triangle trace;
+   * valid attempts outside this range (but within min/maxValidCorners)
+   * get a score penalty rather than being invalidated outright. */
+  idealCornerRange?: [number, number];
 };
 
 /**
  * Symmetric nearest-neighbour (Chamfer-style) distance between a drawn
  * polyline and a dense sample of points along the reference triangle's
- * edges - deliberately pixel-free (no canvas/rendering involved) so it
- * can be unit-tested directly on point arrays.
+ * edges, combined with two structural checks - convex-hull area overlap
+ * and corner-count/complexity - so a degenerate non-triangle (line,
+ * circle, spiral, needle) that happens to graze the reference edges
+ * can no longer score moderately well on proximity alone. Deliberately
+ * pixel-free (no canvas/rendering involved) so it can be unit-tested
+ * directly on point arrays.
  *
  * meanRefToDraw: for every reference edge-sample, distance to the
  * nearest drawn point - penalises parts of the triangle the player
@@ -87,12 +288,10 @@ export type TriangleScoreOptions = {
  * triangle.
  * The two are averaged, then normalised against a quarter of the
  * canvas's diagonal (an error that large is treated as a 0) and
- * inverted so perfect tracing scores 100. This is deliberately tight:
- * see the synthetic cases in the commit that introduced this constant
- * for why - a looser normaliser (eg half the diagonal) let a rough,
- * imprecise triangle still score in the 80s-90s, clustering almost
- * every real attempt near the top of the range instead of spreading
- * across it.
+ * inverted so perfect tracing scores 100 - this "trace score" is then
+ * blended with the area-overlap ratio (see areaRatio in
+ * TriangleScoreOptions) so a shape with the right outline proximity but
+ * little enclosed area still scores low rather than high.
  */
 export function scoreTriangleDrawing(
   drawnPoints: Point[],
@@ -103,14 +302,25 @@ export function scoreTriangleDrawing(
 ): TriangleScoreResult {
   const minDrawnPoints = options.minDrawnPoints ?? 10;
   const minBoundingBoxRatio = options.minBoundingBoxRatio ?? 0.3;
+  const minAreaRatio = options.minAreaRatio ?? 0.18;
+  const minValidCorners = options.minValidCorners ?? 2;
+  const maxValidCorners = options.maxValidCorners ?? 8;
+  const idealCornerRange = options.idealCornerRange ?? [2, 5];
+
+  const invalidResult = (
+    areaRatio = 0,
+    cornerCount = 0,
+  ): TriangleScoreResult => ({
+    score: 0,
+    valid: false,
+    meanRefToDraw: Infinity,
+    meanDrawToRef: Infinity,
+    areaRatio,
+    cornerCount,
+  });
 
   if (drawnPoints.length < minDrawnPoints) {
-    return {
-      score: 0,
-      valid: false,
-      meanRefToDraw: Infinity,
-      meanDrawToRef: Infinity,
-    };
+    return invalidResult();
   }
 
   const referenceSamples = sampleTriangleEdgePoints(referenceVertices, 300);
@@ -121,12 +331,20 @@ export function scoreTriangleDrawing(
     referenceDiagonal === 0 ||
     drawnDiagonal / referenceDiagonal < minBoundingBoxRatio
   ) {
-    return {
-      score: 0,
-      valid: false,
-      meanRefToDraw: Infinity,
-      meanDrawToRef: Infinity,
-    };
+    return invalidResult();
+  }
+
+  const areaRatio = hullAreaRatio(drawnPoints, referenceVertices);
+  if (areaRatio < minAreaRatio) {
+    return invalidResult(areaRatio);
+  }
+
+  // Epsilon scales with the drawing's own size so corner detection works
+  // the same regardless of how large or small the attempt is drawn.
+  const cornerEpsilon = drawnDiagonal * 0.1;
+  const cornerCount = countCorners(drawnPoints, cornerEpsilon);
+  if (cornerCount <= minValidCorners - 1 || cornerCount > maxValidCorners) {
+    return invalidResult(areaRatio, cornerCount);
   }
 
   const meanRefToDraw =
@@ -144,8 +362,30 @@ export function scoreTriangleDrawing(
   const canvasDiagonal = Math.hypot(canvasWidth, canvasHeight);
   const maxError = canvasDiagonal * 0.25;
 
-  const rawScore = 100 * (1 - avgError / maxError);
+  const traceScore = 100 * (1 - avgError / maxError);
+
+  // Blend in area overlap: a perfectly-traced outline with little
+  // enclosed area (areaRatio near 0) is cut to half credit; full area
+  // overlap (areaRatio = 1) leaves the trace score untouched.
+  const areaBlendedScore = traceScore * (0.5 + 0.5 * areaRatio);
+
+  // Corner counts outside the "ideal" triangle range (but still inside
+  // the valid min/max) get a mild penalty - this is what pulls down a
+  // trace whose complexity doesn't quite read as a triangle without
+  // invalidating it outright.
+  const [idealMin, idealMax] = idealCornerRange;
+  const cornerPenalty =
+    cornerCount < idealMin || cornerCount > idealMax ? 0.85 : 1;
+
+  const rawScore = areaBlendedScore * cornerPenalty;
   const score = Math.round(Math.min(100, Math.max(0, rawScore)));
 
-  return { score, valid: true, meanRefToDraw, meanDrawToRef };
+  return {
+    score,
+    valid: true,
+    meanRefToDraw,
+    meanDrawToRef,
+    areaRatio,
+    cornerCount,
+  };
 }
