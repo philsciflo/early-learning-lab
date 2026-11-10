@@ -13,8 +13,12 @@ export type TriangleTrialData = {
   endedByFacilitator: boolean;
   attempts: number;
   drawnPointCount: number;
-  valid: boolean;
-  score: number | null;
+  /** Layer 1: categorical "is this even triangle-shaped?" check. */
+  shapeMatch: boolean;
+  /** Layer 2: continuous 0-100 accuracy number, computed independently
+   * of `shapeMatch` - null only when there were too few drawn points to
+   * compute anything at all. */
+  accuracyScore: number | null;
   meanRefToDraw: number | null;
   meanDrawToRef: number | null;
   /** PNG data URL of the rasterized drawn polyline (see
@@ -58,8 +62,8 @@ const CSV_COLUMNS = [
   "endedByFacilitator",
   "attempts",
   "drawnPointCount",
-  "valid",
-  "score",
+  "shapeMatch",
+  "accuracyScore",
   "meanRefToDraw",
   "meanDrawToRef",
 ] as const;
@@ -87,8 +91,8 @@ function trialToCsvRow(
     endedByFacilitator: trial.endedByFacilitator,
     attempts: trial.attempts,
     drawnPointCount: trial.drawnPointCount,
-    valid: trial.valid,
-    score: trial.score,
+    shapeMatch: trial.shapeMatch,
+    accuracyScore: trial.accuracyScore,
     meanRefToDraw: trial.meanRefToDraw,
     meanDrawToRef: trial.meanDrawToRef,
   };

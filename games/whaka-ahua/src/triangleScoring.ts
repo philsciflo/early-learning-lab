@@ -225,16 +225,21 @@ export function countCorners(
 }
 
 export type TriangleScoreResult = {
-  /** 0-100, rounded. Always 0 when `valid` is false. */
-  score: number;
-  /** False for a degenerate attempt (too few points, a bounding box far
-   * smaller than the reference triangle's, a convex hull with too
-   * little area relative to the reference, or a corner count way
-   * outside what a triangle trace produces) - the caller should prompt
-   * the player to try again rather than trust the score. */
-  valid: boolean;
-  meanRefToDraw: number;
-  meanDrawToRef: number;
+  /** Layer 1 - categorical "is this even triangle-shaped?" check: true
+   * when the drawn polyline's bounding box, convex-hull area overlap,
+   * and simplified corner count all land in triangle-like ranges.
+   * Decoupled from `accuracyScore` below - a mismatch does not force
+   * the accuracy number to 0. */
+  shapeMatch: boolean;
+  /** Layer 2 - continuous 0-100 accuracy number from the Chamfer-style
+   * edge distance blended with area overlap, computed the same way
+   * regardless of `shapeMatch`. Only `null` when there weren't enough
+   * drawn points to compute anything at all (see `minDrawnPoints`). */
+  accuracyScore: number | null;
+  /** Null alongside `accuracyScore` when nothing could be computed. */
+  meanRefToDraw: number | null;
+  /** Null alongside `accuracyScore` when nothing could be computed. */
+  meanDrawToRef: number | null;
   /** Convex-hull-area / reference-area overlap ratio, 0-1. */
   areaRatio: number;
   /** Count of sharp direction changes in the simplified drawn path. */
@@ -242,31 +247,34 @@ export type TriangleScoreResult = {
 };
 
 export type TriangleScoreOptions = {
-  /** Below this many points, the attempt is treated as incomplete
-   * rather than scored - a lucky single dot could otherwise land close
-   * to an edge and score deceptively high. */
+  /** Below this many points, nothing can be computed at all - a lucky
+   * single dot could otherwise land close to an edge and score
+   * deceptively high. */
   minDrawnPoints?: number;
-  /** The drawn polyline's bounding-box diagonal must be at least this
-   * fraction of the reference triangle's, or the attempt is treated as
-   * incomplete (eg a tiny scribble in one corner). */
+  /** Below this fraction of the reference triangle's bounding-box
+   * diagonal, the drawn polyline is too small to count as a shape
+   * match (eg a tiny scribble in one corner) - it still gets a real
+   * `accuracyScore`, just with `shapeMatch: false`. */
   minBoundingBoxRatio?: number;
-  /** Below this convex-hull/reference area ratio, the attempt is
-   * treated as invalid outright - this is what catches a flat line,
-   * needle, or near-zero-area scribble that happens to graze the
-   * reference edges closely enough to otherwise look plausible. 0.18
-   * sits well below the ~0.5+ ratio a real (even sloppy) triangle hull
-   * has against the reference, but comfortably above the ~0 a line or
-   * needle produces. */
+  /** Below this convex-hull/reference area ratio, the attempt is not a
+   * shape match - this is what catches a flat line, needle, or
+   * near-zero-area scribble that happens to graze the reference edges
+   * closely enough to otherwise look plausible. 0.18 sits well below
+   * the ~0.5+ ratio a real (even sloppy) triangle hull has against the
+   * reference, but comfortably above the ~0 a line or needle
+   * produces. */
   minAreaRatio?: number;
-  /** Corner counts at or below this are treated as invalid (eg a
-   * circle/ellipse that never turns sharply, or a near-straight line). */
+  /** Corner counts at or below this are not a shape match (eg a
+   * circle/ellipse that never turns sharply, or a near-straight
+   * line). */
   minValidCorners?: number;
-  /** Corner counts above this are treated as invalid (eg a spiral or
+  /** Corner counts above this are not a shape match (eg a spiral or
    * zigzag scribble with many sharp turns). */
   maxValidCorners?: number;
   /** The "ideal" inclusive corner-count range for a triangle trace;
-   * valid attempts outside this range (but within min/maxValidCorners)
-   * get a score penalty rather than being invalidated outright. */
+   * shape-matching attempts outside this range (but within
+   * min/maxValidCorners) get an accuracy penalty rather than losing
+   * the shape match. */
   idealCornerRange?: [number, number];
 };
 
@@ -274,11 +282,12 @@ export type TriangleScoreOptions = {
  * Symmetric nearest-neighbour (Chamfer-style) distance between a drawn
  * polyline and a dense sample of points along the reference triangle's
  * edges, combined with two structural checks - convex-hull area overlap
- * and corner-count/complexity - so a degenerate non-triangle (line,
- * circle, spiral, needle) that happens to graze the reference edges
- * can no longer score moderately well on proximity alone. Deliberately
- * pixel-free (no canvas/rendering involved) so it can be unit-tested
- * directly on point arrays.
+ * and corner-count/complexity - into two independently-meaningful
+ * results: a categorical `shapeMatch` ("is this even triangle-shaped?")
+ * and a continuous `accuracyScore` (0-100, "how close is the outline?"),
+ * always computed from the real geometry rather than forced to 0 when
+ * `shapeMatch` is false. Deliberately pixel-free (no canvas/rendering
+ * involved) so it can be unit-tested directly on point arrays.
  *
  * meanRefToDraw: for every reference edge-sample, distance to the
  * nearest drawn point - penalises parts of the triangle the player
@@ -307,45 +316,39 @@ export function scoreTriangleDrawing(
   const maxValidCorners = options.maxValidCorners ?? 8;
   const idealCornerRange = options.idealCornerRange ?? [2, 5];
 
-  const invalidResult = (
-    areaRatio = 0,
-    cornerCount = 0,
-  ): TriangleScoreResult => ({
-    score: 0,
-    valid: false,
-    meanRefToDraw: Infinity,
-    meanDrawToRef: Infinity,
-    areaRatio,
-    cornerCount,
+  const uncomputableResult = (): TriangleScoreResult => ({
+    shapeMatch: false,
+    accuracyScore: null,
+    meanRefToDraw: null,
+    meanDrawToRef: null,
+    areaRatio: 0,
+    cornerCount: 0,
   });
 
   if (drawnPoints.length < minDrawnPoints) {
-    return invalidResult();
+    return uncomputableResult();
   }
 
   const referenceSamples = sampleTriangleEdgePoints(referenceVertices, 300);
   const referenceDiagonal = boundingBoxDiagonal(referenceSamples);
   const drawnDiagonal = boundingBoxDiagonal(drawnPoints);
 
-  if (
-    referenceDiagonal === 0 ||
-    drawnDiagonal / referenceDiagonal < minBoundingBoxRatio
-  ) {
-    return invalidResult();
+  if (referenceDiagonal === 0) {
+    return uncomputableResult();
   }
 
   const areaRatio = hullAreaRatio(drawnPoints, referenceVertices);
-  if (areaRatio < minAreaRatio) {
-    return invalidResult(areaRatio);
-  }
 
   // Epsilon scales with the drawing's own size so corner detection works
   // the same regardless of how large or small the attempt is drawn.
   const cornerEpsilon = drawnDiagonal * 0.1;
   const cornerCount = countCorners(drawnPoints, cornerEpsilon);
-  if (cornerCount <= minValidCorners - 1 || cornerCount > maxValidCorners) {
-    return invalidResult(areaRatio, cornerCount);
-  }
+
+  const shapeMatch =
+    drawnDiagonal / referenceDiagonal >= minBoundingBoxRatio &&
+    areaRatio >= minAreaRatio &&
+    cornerCount >= minValidCorners &&
+    cornerCount <= maxValidCorners;
 
   const meanRefToDraw =
     referenceSamples.reduce(
@@ -370,19 +373,19 @@ export function scoreTriangleDrawing(
   const areaBlendedScore = traceScore * (0.5 + 0.5 * areaRatio);
 
   // Corner counts outside the "ideal" triangle range (but still inside
-  // the valid min/max) get a mild penalty - this is what pulls down a
-  // trace whose complexity doesn't quite read as a triangle without
-  // invalidating it outright.
+  // the shape-match min/max) get a mild penalty - this is what pulls
+  // down a trace whose complexity doesn't quite read as a triangle
+  // without affecting the shape match itself.
   const [idealMin, idealMax] = idealCornerRange;
   const cornerPenalty =
     cornerCount < idealMin || cornerCount > idealMax ? 0.85 : 1;
 
   const rawScore = areaBlendedScore * cornerPenalty;
-  const score = Math.round(Math.min(100, Math.max(0, rawScore)));
+  const accuracyScore = Math.round(Math.min(100, Math.max(0, rawScore)));
 
   return {
-    score,
-    valid: true,
+    shapeMatch,
+    accuracyScore,
     meanRefToDraw,
     meanDrawToRef,
     areaRatio,

@@ -48,8 +48,11 @@ export class Level1 extends Scene {
   private attempts = 0;
 
   private trialStartMs: number;
-  private lastScore: number | null = null;
-  private lastValid = false;
+  /** Layer 1: "is this even triangle-shaped?" */
+  private lastShapeMatch = false;
+  /** Layer 2: continuous 0-100 accuracy number, independent of
+   * `lastShapeMatch` - null only when nothing could be computed. */
+  private lastAccuracyScore: number | null = null;
   private lastMeanRefToDraw: number | null = null;
   private lastMeanDrawToRef: number | null = null;
 
@@ -63,8 +66,8 @@ export class Level1 extends Scene {
     this.lastLocalPoint = null;
     this.attempts = 0;
     this.trialStartMs = Date.now();
-    this.lastScore = null;
-    this.lastValid = false;
+    this.lastShapeMatch = false;
+    this.lastAccuracyScore = null;
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
 
@@ -228,9 +231,9 @@ export class Level1 extends Scene {
   }
 
   /** The overlay download is only meaningful once "Check" has produced
-   * a valid score for the drawing currently on the right canvas -
+   * a shape match for the drawing currently on the right canvas -
    * disabled (dimmed, non-interactive) the rest of the time rather than
-   * silently downloading a stale or empty attempt. */
+   * silently downloading a stale or mismatched attempt. */
   private setDownloadOverlayEnabled(enabled: boolean) {
     this.downloadOverlayButton.container.setAlpha(enabled ? 1 : 0.4);
     if (enabled) {
@@ -248,8 +251,8 @@ export class Level1 extends Scene {
     this.isDrawing = false;
     this.drawGraphics.clear();
     this.feedbackText.setText("");
-    this.lastScore = null;
-    this.lastValid = false;
+    this.lastShapeMatch = false;
+    this.lastAccuracyScore = null;
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
     this.setDownloadOverlayEnabled(false);
@@ -265,27 +268,26 @@ export class Level1 extends Scene {
       CANVAS_HEIGHT,
     );
 
-    this.lastScore = result.score;
-    this.lastValid = result.valid;
-    this.lastMeanRefToDraw = Number.isFinite(result.meanRefToDraw)
-      ? result.meanRefToDraw
-      : null;
-    this.lastMeanDrawToRef = Number.isFinite(result.meanDrawToRef)
-      ? result.meanDrawToRef
-      : null;
+    this.lastShapeMatch = result.shapeMatch;
+    this.lastAccuracyScore = result.accuracyScore;
+    this.lastMeanRefToDraw = result.meanRefToDraw;
+    this.lastMeanDrawToRef = result.meanDrawToRef;
 
-    if (!result.valid) {
-      this.feedbackText.setText("Not quite a triangle yet - try again!");
+    if (result.accuracyScore === null) {
+      this.feedbackText.setText("Keep drawing - not enough to check yet!");
       this.setDownloadOverlayEnabled(false);
       return;
     }
 
-    this.feedbackText.setText(`Score: ${result.score}/100`);
-    this.setDownloadOverlayEnabled(true);
+    const shapeLabel = result.shapeMatch ? "Match" : "Mismatch";
+    this.feedbackText.setText(
+      `Shape: ${shapeLabel} — Accuracy: ${result.accuracyScore}/100`,
+    );
+    this.setDownloadOverlayEnabled(result.shapeMatch);
   }
 
   private downloadOverlay() {
-    if (!this.lastValid) {
+    if (!this.lastShapeMatch) {
       return;
     }
     const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
@@ -322,7 +324,7 @@ export class Level1 extends Scene {
     });
     continueButton.hitArea.on("pointerdown", () => {
       this.finishTrial(this.attempts === 0);
-      this.registry.set(LAST_SCORE_DATA_KEY, this.lastScore);
+      this.registry.set(LAST_SCORE_DATA_KEY, this.lastAccuracyScore);
       this.scene.start("GameOver");
     });
   }
@@ -340,7 +342,7 @@ export class Level1 extends Scene {
       return;
     }
 
-    const drawnImageDataUrl = this.lastValid
+    const drawnImageDataUrl = this.lastShapeMatch
       ? renderDrawingToPngDataUrl(this.drawnPoints)
       : null;
 
@@ -351,8 +353,8 @@ export class Level1 extends Scene {
       endedByFacilitator,
       attempts: this.attempts,
       drawnPointCount: this.drawnPoints.length,
-      valid: this.lastValid,
-      score: this.lastScore,
+      shapeMatch: this.lastShapeMatch,
+      accuracyScore: this.lastAccuracyScore,
       meanRefToDraw: this.lastMeanRefToDraw,
       meanDrawToRef: this.lastMeanDrawToRef,
       drawnImageDataUrl,
