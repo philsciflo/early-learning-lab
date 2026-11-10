@@ -85,9 +85,14 @@ export type TriangleScoreOptions = {
  * meanDrawToRef: for every drawn point, distance to the nearest
  * reference edge-sample - penalises drawing that strays far from the
  * triangle.
- * The two are averaged, then normalised against half the canvas's
- * diagonal (an error that large is treated as a 0) and inverted so
- * perfect tracing scores 100.
+ * The two are averaged, then normalised against a quarter of the
+ * canvas's diagonal (an error that large is treated as a 0) and
+ * inverted so perfect tracing scores 100. This is deliberately tight:
+ * see the synthetic cases in the commit that introduced this constant
+ * for why - a looser normaliser (eg half the diagonal) let a rough,
+ * imprecise triangle still score in the 80s-90s, clustering almost
+ * every real attempt near the top of the range instead of spreading
+ * across it.
  */
 export function scoreTriangleDrawing(
   drawnPoints: Point[],
@@ -108,7 +113,7 @@ export function scoreTriangleDrawing(
     };
   }
 
-  const referenceSamples = sampleTriangleEdgePoints(referenceVertices, 100);
+  const referenceSamples = sampleTriangleEdgePoints(referenceVertices, 300);
   const referenceDiagonal = boundingBoxDiagonal(referenceSamples);
   const drawnDiagonal = boundingBoxDiagonal(drawnPoints);
 
@@ -137,7 +142,7 @@ export function scoreTriangleDrawing(
 
   const avgError = (meanRefToDraw + meanDrawToRef) / 2;
   const canvasDiagonal = Math.hypot(canvasWidth, canvasHeight);
-  const maxError = canvasDiagonal * 0.5;
+  const maxError = canvasDiagonal * 0.25;
 
   const rawScore = 100 * (1 - avgError / maxError);
   const score = Math.round(Math.min(100, Math.max(0, rawScore)));

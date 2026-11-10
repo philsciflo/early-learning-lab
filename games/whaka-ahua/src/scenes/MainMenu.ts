@@ -14,7 +14,7 @@ import {
   removeScoreData,
   startNewScore,
 } from "../scoring.ts";
-import { createButton } from "../ui.ts";
+import { createButton, downloadBlob } from "../ui.ts";
 
 const LABEL_X = WIDTH / 2 - 260;
 const FIELD_X = WIDTH / 2 - 110;
@@ -70,23 +70,6 @@ function timestampedFilename(extension: string): string {
     `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}` +
     `T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}Z`;
   return `whaka-ahua-data-${stamp}.${extension}`;
-}
-
-function downloadBlob(
-  filename: string,
-  content: string,
-  mimeType: string,
-): void {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 export class MainMenu extends Scene {

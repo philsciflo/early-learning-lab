@@ -1,5 +1,31 @@
 import { Scene, GameObjects } from "phaser";
 
+/** Triggers a real browser file download for arbitrary text content
+ * (JSON, CSV, ...) via a throwaway Blob + anchor element - shared by
+ * MainMenu's data export buttons and Level1's overlay PNG download. */
+export function downloadBlob(
+  filename: string,
+  content: string,
+  mimeType: string,
+): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  downloadUrl(filename, url);
+  URL.revokeObjectURL(url);
+}
+
+/** Same download mechanism as downloadBlob(), but for a URL that's
+ * already available (eg a canvas's toDataURL() PNG) - no Blob/object
+ * URL needed. */
+export function downloadUrl(filename: string, url: string): void {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 export type ButtonVariant = "primary" | "secondary" | "muted" | "danger";
 
 export type ButtonOptions = {

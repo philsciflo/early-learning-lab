@@ -17,6 +17,12 @@ export type TriangleTrialData = {
   score: number | null;
   meanRefToDraw: number | null;
   meanDrawToRef: number | null;
+  /** PNG data URL of the rasterized drawn polyline (see
+   * renderDrawing.ts), or null when there was no valid attempt to
+   * rasterize. Deliberately excluded from CSV_COLUMNS below - a full
+   * base64 PNG per row would break CSV/spreadsheet usability - so it
+   * only lives in the JSON/localStorage record. */
+  drawnImageDataUrl: string | null;
 };
 
 export type TrialData = TriangleTrialData;
