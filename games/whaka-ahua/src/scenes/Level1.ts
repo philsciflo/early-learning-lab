@@ -50,9 +50,13 @@ export class Level1 extends Scene {
   private trialStartMs: number;
   /** Layer 1: "is this even triangle-shaped?" */
   private lastShapeMatch = false;
-  /** Layer 2: continuous 0-100 accuracy number, independent of
-   * `lastShapeMatch` - null only when nothing could be computed. */
+  /** Layer 2: continuous 0-100 accuracy number, banded by
+   * `lastShapeMatch` so every match outscores every mismatch - null
+   * only when nothing could be computed. */
   private lastAccuracyScore: number | null = null;
+  /** The same score before the `shapeMatch` band was applied - recorded
+   * for data analysis, not shown on screen. */
+  private lastRawAccuracyScore: number | null = null;
   private lastMeanRefToDraw: number | null = null;
   private lastMeanDrawToRef: number | null = null;
 
@@ -68,6 +72,7 @@ export class Level1 extends Scene {
     this.trialStartMs = Date.now();
     this.lastShapeMatch = false;
     this.lastAccuracyScore = null;
+    this.lastRawAccuracyScore = null;
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
 
@@ -253,6 +258,7 @@ export class Level1 extends Scene {
     this.feedbackText.setText("");
     this.lastShapeMatch = false;
     this.lastAccuracyScore = null;
+    this.lastRawAccuracyScore = null;
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
     this.setDownloadOverlayEnabled(false);
@@ -270,6 +276,7 @@ export class Level1 extends Scene {
 
     this.lastShapeMatch = result.shapeMatch;
     this.lastAccuracyScore = result.accuracyScore;
+    this.lastRawAccuracyScore = result.rawAccuracyScore;
     this.lastMeanRefToDraw = result.meanRefToDraw;
     this.lastMeanDrawToRef = result.meanDrawToRef;
 
@@ -355,6 +362,7 @@ export class Level1 extends Scene {
       drawnPointCount: this.drawnPoints.length,
       shapeMatch: this.lastShapeMatch,
       accuracyScore: this.lastAccuracyScore,
+      rawAccuracyScore: this.lastRawAccuracyScore,
       meanRefToDraw: this.lastMeanRefToDraw,
       meanDrawToRef: this.lastMeanDrawToRef,
       drawnImageDataUrl,

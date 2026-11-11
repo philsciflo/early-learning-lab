@@ -15,10 +15,15 @@ export type TriangleTrialData = {
   drawnPointCount: number;
   /** Layer 1: categorical "is this even triangle-shaped?" check. */
   shapeMatch: boolean;
-  /** Layer 2: continuous 0-100 accuracy number, computed independently
-   * of `shapeMatch` - null only when there were too few drawn points to
-   * compute anything at all. */
+  /** Layer 2: continuous 0-100 accuracy number, banded by `shapeMatch`
+   * so every match outscores every mismatch - null only when there
+   * were too few drawn points to compute anything at all. */
   accuracyScore: number | null;
+  /** The same continuous score *before* the `shapeMatch` band was
+   * applied - kept for research/data-analysis so the underlying
+   * geometric signal isn't lost to the banding transform. Null
+   * alongside `accuracyScore` when nothing could be computed. */
+  rawAccuracyScore: number | null;
   meanRefToDraw: number | null;
   meanDrawToRef: number | null;
   /** PNG data URL of the rasterized drawn polyline (see
@@ -64,6 +69,7 @@ const CSV_COLUMNS = [
   "drawnPointCount",
   "shapeMatch",
   "accuracyScore",
+  "rawAccuracyScore",
   "meanRefToDraw",
   "meanDrawToRef",
 ] as const;
@@ -93,6 +99,7 @@ function trialToCsvRow(
     drawnPointCount: trial.drawnPointCount,
     shapeMatch: trial.shapeMatch,
     accuracyScore: trial.accuracyScore,
+    rawAccuracyScore: trial.rawAccuracyScore,
     meanRefToDraw: trial.meanRefToDraw,
     meanDrawToRef: trial.meanDrawToRef,
   };

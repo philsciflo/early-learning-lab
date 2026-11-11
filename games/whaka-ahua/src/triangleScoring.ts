@@ -278,18 +278,63 @@ export function maxEdgeBulgeRatio(points: Point[], epsilon: number): number {
   return maxRatio;
 }
 
+/** Lower bound (inclusive) of the `shapeMatch: true` accuracyScore
+ * band. Everything below this is reserved exclusively for
+ * `shapeMatch: false` results - see `bandAccuracyScore` below for why
+ * this is a hard guarantee rather than a usual-case heuristic. */
+const MATCH_BAND_FLOOR = 50;
+/** Upper bound (inclusive) of the `shapeMatch: false` accuracyScore
+ * band - one point below `MATCH_BAND_FLOOR` so the two bands never
+ * touch even after rounding. */
+const MISMATCH_BAND_CEILING = MATCH_BAND_FLOOR - 1;
+
+/**
+ * Rescales the continuous raw 0-100 score (already clamped to that
+ * range by the caller) into one of two disjoint output bands depending
+ * on `shapeMatch`, so that *every* match outscores *every* mismatch
+ * regardless of how the underlying geometry happens to land:
+ *   - shapeMatch true  -> linearly mapped into [MATCH_BAND_FLOOR, 100]
+ *   - shapeMatch false -> linearly mapped into [0, MISMATCH_BAND_CEILING]
+ * Both mappings are monotonic in the raw score, so relative ordering
+ * (and therefore the "wide spread" the raw score already has within
+ * each case) survives the rescale untouched - only the absolute numbers
+ * move. Because the raw input is pre-clamped to [0, 100], the match
+ * band's minimum (raw = 0 -> MATCH_BAND_FLOOR) and the mismatch band's
+ * maximum (raw = 100 -> MISMATCH_BAND_CEILING) are fixed endpoints, not
+ * empirical ones - the ordering guarantee holds structurally for any
+ * input, not just the cases this file happens to test.
+ */
+function bandAccuracyScore(rawClamped: number, shapeMatch: boolean): number {
+  if (shapeMatch) {
+    const scaled =
+      MATCH_BAND_FLOOR + (rawClamped / 100) * (100 - MATCH_BAND_FLOOR);
+    return Math.round(Math.min(100, Math.max(MATCH_BAND_FLOOR, scaled)));
+  }
+  const scaled = (rawClamped / 100) * MISMATCH_BAND_CEILING;
+  return Math.round(Math.min(MISMATCH_BAND_CEILING, Math.max(0, scaled)));
+}
+
 export type TriangleScoreResult = {
   /** Layer 1 - categorical "is this even triangle-shaped?" check: true
    * when the drawn polyline's bounding box, convex-hull area overlap,
-   * and simplified corner count all land in triangle-like ranges.
-   * Decoupled from `accuracyScore` below - a mismatch does not force
-   * the accuracy number to 0. */
+   * and simplified corner count all land in triangle-like ranges. */
   shapeMatch: boolean;
-  /** Layer 2 - continuous 0-100 accuracy number from the Chamfer-style
-   * edge distance blended with area overlap, computed the same way
-   * regardless of `shapeMatch`. Only `null` when there weren't enough
-   * drawn points to compute anything at all (see `minDrawnPoints`). */
+  /** Layer 2 - continuous 0-100 accuracy number, banded by `shapeMatch`
+   * so that every match (`shapeMatch: true`) outscores every mismatch:
+   * matches land in [50, 100], mismatches land in [0, 49]. Within each
+   * band the relative ordering (and spread) of the underlying raw
+   * distance+area score is preserved - see `rawAccuracyScore` for the
+   * unbanded value this is derived from. Only `null` when there weren't
+   * enough drawn points to compute anything at all (see
+   * `minDrawnPoints`). */
   accuracyScore: number | null;
+  /** The continuous 0-100 trace-distance + area-overlap score *before*
+   * the `shapeMatch` band is applied - kept around purely so research/
+   * data-analysis on recorded trials doesn't lose the underlying
+   * geometric signal that banding deliberately discards for the
+   * on-screen/primary `accuracyScore`. Not shown to the player. Null
+   * alongside `accuracyScore` when nothing could be computed. */
+  rawAccuracyScore: number | null;
   /** Null alongside `accuracyScore` when nothing could be computed. */
   meanRefToDraw: number | null;
   /** Null alongside `accuracyScore` when nothing could be computed. */
@@ -311,7 +356,8 @@ export type TriangleScoreOptions = {
   /** Below this fraction of the reference triangle's bounding-box
    * diagonal, the drawn polyline is too small to count as a shape
    * match (eg a tiny scribble in one corner) - it still gets a real
-   * `accuracyScore`, just with `shapeMatch: false`. */
+   * `rawAccuracyScore`/banded `accuracyScore`, just with
+   * `shapeMatch: false`. */
   minBoundingBoxRatio?: number;
   /** Below this convex-hull/reference area ratio, the attempt is not a
    * shape match - this is what catches a flat line, needle, or
@@ -348,11 +394,11 @@ export type TriangleScoreOptions = {
  * Symmetric nearest-neighbour (Chamfer-style) distance between a drawn
  * polyline and a dense sample of points along the reference triangle's
  * edges, combined with two structural checks - convex-hull area overlap
- * and corner-count/complexity - into two independently-meaningful
- * results: a categorical `shapeMatch` ("is this even triangle-shaped?")
- * and a continuous `accuracyScore` (0-100, "how close is the outline?"),
- * always computed from the real geometry rather than forced to 0 when
- * `shapeMatch` is false. Deliberately pixel-free (no canvas/rendering
+ * and corner-count/complexity - into two results: a categorical
+ * `shapeMatch` ("is this even triangle-shaped?") and a continuous,
+ * `shapeMatch`-banded `accuracyScore` (0-100, "how close is the
+ * outline?", but never allowed to let a mismatch outscore a match - see
+ * `bandAccuracyScore`). Deliberately pixel-free (no canvas/rendering
  * involved) so it can be unit-tested directly on point arrays.
  *
  * meanRefToDraw: for every reference edge-sample, distance to the
@@ -366,7 +412,9 @@ export type TriangleScoreOptions = {
  * inverted so perfect tracing scores 100 - this "trace score" is then
  * blended with the area-overlap ratio (see areaRatio in
  * TriangleScoreOptions) so a shape with the right outline proximity but
- * little enclosed area still scores low rather than high.
+ * little enclosed area still scores low rather than high. The result is
+ * `rawAccuracyScore`, which is then banded by `shapeMatch` into the
+ * final `accuracyScore`.
  */
 export function scoreTriangleDrawing(
   drawnPoints: Point[],
@@ -386,6 +434,7 @@ export function scoreTriangleDrawing(
   const uncomputableResult = (): TriangleScoreResult => ({
     shapeMatch: false,
     accuracyScore: null,
+    rawAccuracyScore: null,
     meanRefToDraw: null,
     meanDrawToRef: null,
     areaRatio: 0,
@@ -451,11 +500,14 @@ export function scoreTriangleDrawing(
     cornerCount < idealMin || cornerCount > idealMax ? 0.85 : 1;
 
   const rawScore = areaBlendedScore * cornerPenalty;
-  const accuracyScore = Math.round(Math.min(100, Math.max(0, rawScore)));
+  const rawClamped = Math.min(100, Math.max(0, rawScore));
+  const rawAccuracyScore = Math.round(rawClamped);
+  const accuracyScore = bandAccuracyScore(rawClamped, shapeMatch);
 
   return {
     shapeMatch,
     accuracyScore,
+    rawAccuracyScore,
     meanRefToDraw,
     meanDrawToRef,
     areaRatio,
