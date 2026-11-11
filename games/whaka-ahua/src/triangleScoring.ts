@@ -372,7 +372,11 @@ export type TriangleScoreOptions = {
    * line). */
   minValidCorners?: number;
   /** Corner counts above this are not a shape match (eg a spiral or
-   * zigzag scribble with many sharp turns). */
+   * zigzag scribble with many sharp turns, or a many-sided soft
+   * blob/polygon - hand-drawn triangles simplify to ~2-5 corners even
+   * with hand-tremor double-corners at a vertex, so 6+ is a reliable
+   * signal the shape has meaningfully more than 3 real sides and
+   * should be rejected outright rather than merely penalised). */
   maxValidCorners?: number;
   /** The "ideal" inclusive corner-count range for a triangle trace;
    * shape-matching attempts outside this range (but within
@@ -427,7 +431,7 @@ export function scoreTriangleDrawing(
   const minBoundingBoxRatio = options.minBoundingBoxRatio ?? 0.3;
   const minAreaRatio = options.minAreaRatio ?? 0.18;
   const minValidCorners = options.minValidCorners ?? 2;
-  const maxValidCorners = options.maxValidCorners ?? 8;
+  const maxValidCorners = options.maxValidCorners ?? 5;
   const idealCornerRange = options.idealCornerRange ?? [2, 5];
   const maxEdgeBulgeRatioOption = options.maxEdgeBulgeRatio ?? 0.18;
 
