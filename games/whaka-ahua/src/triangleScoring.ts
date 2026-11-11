@@ -224,6 +224,60 @@ export function countCorners(
   return corners;
 }
 
+/**
+ * countCorners (above) only looks at the *angle* at each simplified
+ * corner - it has no concept of whether the path between two corners is
+ * actually straight. A hand-drawn circle's natural tremor can land 2-5
+ * Douglas-Peucker corners that individually clear the angle threshold,
+ * even though every "edge" between them is a smooth arc rather than a
+ * straight line - exactly the false positive this catches.
+ *
+ * For each pair of consecutive simplified corners, finds the original
+ * (pre-simplification) points that fall between them and measures the
+ * furthest any of them strays perpendicular to the straight chord
+ * joining the two corners, normalised by that chord's own length. A
+ * real (even wobbly) triangle side stays close to its chord; an arc
+ * traced between two coincidental "corners" on a circle bulges much
+ * further away. Returns the worst (highest) ratio across all spans, or
+ * 0 if there are fewer than two simplified corners to form a span.
+ */
+export function maxEdgeBulgeRatio(points: Point[], epsilon: number): number {
+  const simplified = douglasPeucker(points, epsilon);
+  if (simplified.length < 2) {
+    return 0;
+  }
+
+  let maxRatio = 0;
+  let searchStart = 0;
+  for (let i = 0; i < simplified.length - 1; i++) {
+    const a = simplified[i];
+    const b = simplified[i + 1];
+    const startIdx = points.indexOf(a, searchStart);
+    const endIdx = points.indexOf(b, Math.max(startIdx, 0));
+    if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx + 1) {
+      searchStart = Math.max(startIdx, searchStart);
+      continue;
+    }
+
+    const chordLength = distance(a, b);
+    if (chordLength === 0) {
+      continue;
+    }
+
+    let maxDeviation = 0;
+    for (let j = startIdx + 1; j < endIdx; j++) {
+      const d = perpendicularDistance(points[j], a, b);
+      if (d > maxDeviation) {
+        maxDeviation = d;
+      }
+    }
+
+    maxRatio = Math.max(maxRatio, maxDeviation / chordLength);
+    searchStart = endIdx;
+  }
+  return maxRatio;
+}
+
 export type TriangleScoreResult = {
   /** Layer 1 - categorical "is this even triangle-shaped?" check: true
    * when the drawn polyline's bounding box, convex-hull area overlap,
@@ -244,6 +298,9 @@ export type TriangleScoreResult = {
   areaRatio: number;
   /** Count of sharp direction changes in the simplified drawn path. */
   cornerCount: number;
+  /** Worst (highest) edge-straightness bulge ratio across all spans
+   * between consecutive simplified corners - see `maxEdgeBulgeRatio`. */
+  edgeBulgeRatio: number;
 };
 
 export type TriangleScoreOptions = {
@@ -276,6 +333,15 @@ export type TriangleScoreOptions = {
    * min/maxValidCorners) get an accuracy penalty rather than losing
    * the shape match. */
   idealCornerRange?: [number, number];
+  /** Above this edge-straightness bulge ratio (see `maxEdgeBulgeRatio`),
+   * the path between two "corners" is curved rather than straight and
+   * the attempt is not a shape match - this is what catches a circle
+   * whose hand-tremor wobble coincidentally produces 2-5 Douglas-Peucker
+   * corners that individually pass the angle/count checks above, even
+   * though every "edge" between them is an arc. A real triangle side,
+   * even hand-wobbly, bulges well under this; an arc between two
+   * picked points on a circle bulges substantially more. */
+  maxEdgeBulgeRatio?: number;
 };
 
 /**
@@ -315,6 +381,7 @@ export function scoreTriangleDrawing(
   const minValidCorners = options.minValidCorners ?? 2;
   const maxValidCorners = options.maxValidCorners ?? 8;
   const idealCornerRange = options.idealCornerRange ?? [2, 5];
+  const maxEdgeBulgeRatioOption = options.maxEdgeBulgeRatio ?? 0.18;
 
   const uncomputableResult = (): TriangleScoreResult => ({
     shapeMatch: false,
@@ -323,6 +390,7 @@ export function scoreTriangleDrawing(
     meanDrawToRef: null,
     areaRatio: 0,
     cornerCount: 0,
+    edgeBulgeRatio: 0,
   });
 
   if (drawnPoints.length < minDrawnPoints) {
@@ -343,12 +411,14 @@ export function scoreTriangleDrawing(
   // the same regardless of how large or small the attempt is drawn.
   const cornerEpsilon = drawnDiagonal * 0.1;
   const cornerCount = countCorners(drawnPoints, cornerEpsilon);
+  const edgeBulgeRatio = maxEdgeBulgeRatio(drawnPoints, cornerEpsilon);
 
   const shapeMatch =
     drawnDiagonal / referenceDiagonal >= minBoundingBoxRatio &&
     areaRatio >= minAreaRatio &&
     cornerCount >= minValidCorners &&
-    cornerCount <= maxValidCorners;
+    cornerCount <= maxValidCorners &&
+    edgeBulgeRatio <= maxEdgeBulgeRatioOption;
 
   const meanRefToDraw =
     referenceSamples.reduce(
@@ -390,5 +460,6 @@ export function scoreTriangleDrawing(
     meanDrawToRef,
     areaRatio,
     cornerCount,
+    edgeBulgeRatio,
   };
 }
