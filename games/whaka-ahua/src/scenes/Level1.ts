@@ -320,7 +320,7 @@ export class Level1 extends Scene {
     });
     back.hitArea.on("pointerdown", () => {
       this.finishTrial(true);
-      this.scene.start("MainMenu");
+      this.scene.start("Level0");
     });
 
     const continueButton = createButton(this, WIDTH - 24, 24, "Continue →", {

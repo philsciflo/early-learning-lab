@@ -209,7 +209,7 @@ export class MainMenu extends Scene {
       this.errorText.setText("");
       this.registry.set(PLAYER_ID_DATA_KEY, playerId);
       startNewScore(playerId, playerAge, playerLocation);
-      this.scene.start("Level1");
+      this.scene.start("Level0");
     });
 
     // --- Data management (facilitator controls, same data format as

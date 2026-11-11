@@ -1,5 +1,6 @@
 import { GameOver } from "./scenes/GameOver.ts";
 import { MainMenu } from "./scenes/MainMenu.ts";
+import { Level0 } from "./scenes/Level0.ts";
 import { Level1 } from "./scenes/Level1.ts";
 
 import { HEIGHT, WIDTH } from "./constants.ts";
@@ -18,7 +19,7 @@ const config: Types.Core.GameConfig = {
   dom: {
     createContainer: true, // required for the login screen's HTML inputs
   },
-  scene: [MainMenu, Level1, GameOver],
+  scene: [MainMenu, Level0, Level1, GameOver],
 };
 
 export default new Game(config);
