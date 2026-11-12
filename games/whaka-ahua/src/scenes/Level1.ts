@@ -20,7 +20,7 @@ import {
 } from "../constants.ts";
 import { Point, scoreTriangleDrawing } from "../triangleScoring.ts";
 import { recordTrial } from "../scoring.ts";
-import { Button, createButton, downloadUrl } from "../ui.ts";
+import { Button, createButton, downloadUrl, downloadBlob } from "../ui.ts";
 import {
   renderDrawingToPngDataUrl,
   renderOverlayToPngDataUrl,
@@ -30,14 +30,18 @@ import {
   rasterizeDrawingMask,
   maskToPngDataUrl,
 } from "../rasterMask.ts";
+import { computeHuMoments } from "../huMoments.ts";
 
 const BUTTONS_Y = CANVAS_TOP_Y + CANVAS_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
-// Temporary verification aid for rasterMask.ts (see downloadMasks()) -
-// lets a human eyeball the binary ink masks before any moment-based
-// scoring is built on top of them. Remove this row (and
-// downloadMasksButton/setDownloadMasksEnabled/downloadMasks) once that
-// later work lands and manual mask inspection is no longer needed.
+// Temporary verification aid for rasterMask.ts/huMoments.ts (see
+// downloadMasks()/downloadHuMoments()) - lets a human eyeball the
+// binary ink masks and the raw Hu-moment numbers computed from them
+// before any moment-based scoring is built on top of either. Remove
+// this row (and downloadMasksButton/setDownloadMasksEnabled/
+// downloadMasks/downloadHuMomentsButton/setDownloadHuMomentsEnabled/
+// downloadHuMoments) once that later work lands and manual inspection
+// is no longer needed.
 const DEBUG_BUTTONS_Y = FEEDBACK_Y + 60;
 
 /**
@@ -53,6 +57,7 @@ export class Level1 extends Scene {
   private feedbackText: GameObjects.Text;
   private downloadOverlayButton: Button;
   private downloadMasksButton: Button;
+  private downloadHuMomentsButton: Button;
 
   private drawnPoints: Point[] = [];
   private isDrawing = false;
@@ -249,7 +254,7 @@ export class Level1 extends Scene {
     // Temporary verification aid - see the DEBUG_BUTTONS_Y comment above.
     this.downloadMasksButton = createButton(
       this,
-      WIDTH / 2,
+      WIDTH / 2 - 190,
       DEBUG_BUTTONS_Y,
       "Download masks (debug)",
       { variant: "muted", minWidth: 280, fontSize: 18 },
@@ -258,6 +263,19 @@ export class Level1 extends Scene {
       this.downloadMasks(),
     );
     this.setDownloadMasksEnabled(false);
+
+    // Temporary verification aid - see the DEBUG_BUTTONS_Y comment above.
+    this.downloadHuMomentsButton = createButton(
+      this,
+      WIDTH / 2 + 190,
+      DEBUG_BUTTONS_Y,
+      "Download Hu moments (debug)",
+      { variant: "muted", minWidth: 280, fontSize: 18 },
+    );
+    this.downloadHuMomentsButton.hitArea.on("pointerdown", () =>
+      this.downloadHuMoments(),
+    );
+    this.setDownloadHuMomentsEnabled(false);
   }
 
   /** The overlay download is only meaningful once "Check" has produced
@@ -290,6 +308,20 @@ export class Level1 extends Scene {
     }
   }
 
+  /** Same enablement pattern as setDownloadMasksEnabled() - the Hu
+   * moments are computed from the same masks, so they're gated
+   * identically. Temporary, see the DEBUG_BUTTONS_Y comment above. */
+  private setDownloadHuMomentsEnabled(enabled: boolean) {
+    this.downloadHuMomentsButton.container.setAlpha(enabled ? 1 : 0.4);
+    if (enabled) {
+      this.downloadHuMomentsButton.hitArea.setInteractive({
+        useHandCursor: true,
+      });
+    } else {
+      this.downloadHuMomentsButton.hitArea.disableInteractive();
+    }
+  }
+
   private clearDrawing() {
     this.drawnPoints = [];
     this.lastLocalPoint = null;
@@ -303,6 +335,7 @@ export class Level1 extends Scene {
     this.lastMeanDrawToRef = null;
     this.setDownloadOverlayEnabled(false);
     this.setDownloadMasksEnabled(false);
+    this.setDownloadHuMomentsEnabled(false);
   }
 
   private checkDrawing() {
@@ -325,6 +358,7 @@ export class Level1 extends Scene {
       this.feedbackText.setText("Keep drawing - not enough to check yet!");
       this.setDownloadOverlayEnabled(false);
       this.setDownloadMasksEnabled(false);
+      this.setDownloadHuMomentsEnabled(false);
       return;
     }
 
@@ -334,6 +368,7 @@ export class Level1 extends Scene {
     );
     this.setDownloadOverlayEnabled(result.shapeMatch);
     this.setDownloadMasksEnabled(true);
+    this.setDownloadHuMomentsEnabled(true);
   }
 
   private downloadOverlay() {
@@ -368,6 +403,37 @@ export class Level1 extends Scene {
 
     const drawnMask = rasterizeDrawingMask(this.drawnPoints);
     downloadUrl(`${base}-mask-drawn.png`, maskToPngDataUrl(drawnMask));
+  }
+
+  /** Temporary verification aid - computes huMoments.ts's Hu invariants
+   * (plus the intermediate raw/central moments and centroid, for
+   * debugging) over the same reference and drawn masks as
+   * downloadMasks() above, and downloads them as plain JSON so a human
+   * can inspect the actual numbers before any moment-based scoring is
+   * built on top of them. Either mask can legitimately be degenerate
+   * (eg a near-empty drawing) - recorded as `null` rather than omitted,
+   * so the shape of the download is predictable either way. Remove
+   * alongside downloadHuMomentsButton once moment-based scoring lands
+   * and manual inspection is no longer needed. */
+  private downloadHuMoments() {
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
+      | string
+      | undefined;
+    const base = `whaka-ahua-${playerId ?? "unknown"}-level1-attempt${this.attempts}`;
+
+    const referenceMask = rasterizeReferenceMask(REFERENCE_TRIANGLE_VERTICES);
+    const drawnMask = rasterizeDrawingMask(this.drawnPoints);
+
+    const huMomentsExport = {
+      reference: computeHuMoments(referenceMask),
+      drawn: computeHuMoments(drawnMask),
+    };
+
+    downloadBlob(
+      `${base}-hu-moments.json`,
+      JSON.stringify(huMomentsExport, null, 2),
+      "application/json",
+    );
   }
 
   /** Facilitator controls: move on whenever they judge the child is
