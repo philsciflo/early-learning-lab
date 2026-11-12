@@ -30,7 +30,7 @@ import {
   rasterizeDrawingMask,
   maskToPngDataUrl,
 } from "../rasterMask.ts";
-import { computeHuMoments } from "../huMoments.ts";
+import { computeHuMoments, computeMatchShapes } from "../huMoments.ts";
 
 const BUTTONS_Y = CANVAS_TOP_Y + CANVAS_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
@@ -424,9 +424,21 @@ export class Level1 extends Scene {
     const referenceMask = rasterizeReferenceMask(REFERENCE_TRIANGLE_VERTICES);
     const drawnMask = rasterizeDrawingMask(this.drawnPoints);
 
+    const referenceHuMoments = computeHuMoments(referenceMask);
+    const drawnHuMoments = computeHuMoments(drawnMask);
+
     const huMomentsExport = {
-      reference: computeHuMoments(referenceMask),
-      drawn: computeHuMoments(drawnMask),
+      reference: referenceHuMoments,
+      drawn: drawnHuMoments,
+      // null whenever either mask was degenerate, matching the
+      // reference/drawn fields' own null-on-degenerate convention.
+      matchShapes:
+        referenceHuMoments && drawnHuMoments
+          ? computeMatchShapes(
+              referenceHuMoments.huMoments,
+              drawnHuMoments.huMoments,
+            )
+          : null,
     };
 
     downloadBlob(

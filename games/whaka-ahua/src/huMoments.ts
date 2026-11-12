@@ -220,6 +220,69 @@ export function computeHuInvariants(
   return [phi1, phi2, phi3, phi4, phi5, phi6, phi7];
 }
 
+/** The three OpenCV cv2.matchShapes() comparison distances between two
+ * Hu-moment vectors - I1/I2/I3 correspond to OpenCV's CONTOURS_MATCH_I1/
+ * I2/I3. All three are computed (rather than only the default I1) so
+ * all are available for inspection. Lower = more similar; 0 for
+ * identical shapes (up to rasterization noise). */
+export type MatchShapesResult = {
+  i1: number;
+  i2: number;
+  i3: number;
+};
+
+// Guards against log10(0)/division-by-zero below - cv2.matchShapes
+// itself skips a term outright when a Hu moment's magnitude is this
+// small (see opencv/modules/imgproc/src/shapedescr.cpp), rather than
+// letting a near-zero invariant blow up the comparison.
+const MATCH_SHAPES_EPSILON = 1e-5;
+
+/** Sign-aware log10 transform of a single Hu invariant, per OpenCV's
+ * cv2.matchShapes: m_i = sign(h_i) * log10(|h_i|). |h_i| at or below
+ * MATCH_SHAPES_EPSILON maps to m_i = 0 (flagged as no contribution
+ * by the caller) rather than letting log10 produce -Infinity/NaN. */
+function logTransformHuMoment(h: number): number {
+  if (Math.abs(h) <= MATCH_SHAPES_EPSILON) {
+    return 0;
+  }
+  return Math.sign(h) * Math.log10(Math.abs(h));
+}
+
+/** OpenCV's cv2.matchShapes() distance between two Hu-moment vectors,
+ * computed via all three of OpenCV's methods. Each m_i below is the
+ * log-transformed Hu invariant i (see logTransformHuMoment() above). */
+export function computeMatchShapes(
+  huA: HuMomentVector,
+  huB: HuMomentVector,
+): MatchShapesResult {
+  let i1 = 0;
+  let i2 = 0;
+  let i3 = 0;
+
+  for (let i = 0; i < 7; i++) {
+    const mA = logTransformHuMoment(huA[i]);
+    const mB = logTransformHuMoment(huB[i]);
+
+    // I1(A,B) = sum |1/m_i^A - 1/m_i^B| - OpenCV's default for
+    // cv2.matchShapes. Skips the term if either side is a guarded
+    // (near-)zero, since its reciprocal would be unbounded.
+    if (mA !== 0 && mB !== 0) {
+      i1 += Math.abs(1 / mA - 1 / mB);
+    }
+
+    // I2(A,B) = sum |m_i^A - m_i^B|.
+    i2 += Math.abs(mA - mB);
+
+    // I3(A,B) = max_i |(m_i^A - m_i^B) / m_i^A|. Skips the term if the
+    // reference side is a guarded (near-)zero.
+    if (mA !== 0) {
+      i3 = Math.max(i3, Math.abs((mA - mB) / mA));
+    }
+  }
+
+  return { i1, i2, i3 };
+}
+
 /** End-to-end entry point: rasterized ink mask in, 7 Hu invariants (plus
  * the intermediate moments/centroid, for debugging) out - or `null` for
  * a degenerate (near-empty) mask rather than NaN/Infinity propagating
