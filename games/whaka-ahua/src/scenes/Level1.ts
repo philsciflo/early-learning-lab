@@ -25,9 +25,20 @@ import {
   renderDrawingToPngDataUrl,
   renderOverlayToPngDataUrl,
 } from "../renderDrawing.ts";
+import {
+  rasterizeReferenceMask,
+  rasterizeDrawingMask,
+  maskToPngDataUrl,
+} from "../rasterMask.ts";
 
 const BUTTONS_Y = CANVAS_TOP_Y + CANVAS_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
+// Temporary verification aid for rasterMask.ts (see downloadMasks()) -
+// lets a human eyeball the binary ink masks before any moment-based
+// scoring is built on top of them. Remove this row (and
+// downloadMasksButton/setDownloadMasksEnabled/downloadMasks) once that
+// later work lands and manual mask inspection is no longer needed.
+const DEBUG_BUTTONS_Y = FEEDBACK_Y + 60;
 
 /**
  * Level 1: the child copies a static reference triangle, drawn
@@ -41,6 +52,7 @@ export class Level1 extends Scene {
   private drawGraphics: GameObjects.Graphics;
   private feedbackText: GameObjects.Text;
   private downloadOverlayButton: Button;
+  private downloadMasksButton: Button;
 
   private drawnPoints: Point[] = [];
   private isDrawing = false;
@@ -233,6 +245,19 @@ export class Level1 extends Scene {
       this.downloadOverlay(),
     );
     this.setDownloadOverlayEnabled(false);
+
+    // Temporary verification aid - see the DEBUG_BUTTONS_Y comment above.
+    this.downloadMasksButton = createButton(
+      this,
+      WIDTH / 2,
+      DEBUG_BUTTONS_Y,
+      "Download masks (debug)",
+      { variant: "muted", minWidth: 280, fontSize: 18 },
+    );
+    this.downloadMasksButton.hitArea.on("pointerdown", () =>
+      this.downloadMasks(),
+    );
+    this.setDownloadMasksEnabled(false);
   }
 
   /** The overlay download is only meaningful once "Check" has produced
@@ -250,6 +275,21 @@ export class Level1 extends Scene {
     }
   }
 
+  /** Same enablement pattern as setDownloadOverlayEnabled(), but not
+   * gated on shapeMatch - the raw masks are just as useful to inspect
+   * for a mismatched attempt as for a matched one. Temporary, see the
+   * DEBUG_BUTTONS_Y comment above. */
+  private setDownloadMasksEnabled(enabled: boolean) {
+    this.downloadMasksButton.container.setAlpha(enabled ? 1 : 0.4);
+    if (enabled) {
+      this.downloadMasksButton.hitArea.setInteractive({
+        useHandCursor: true,
+      });
+    } else {
+      this.downloadMasksButton.hitArea.disableInteractive();
+    }
+  }
+
   private clearDrawing() {
     this.drawnPoints = [];
     this.lastLocalPoint = null;
@@ -262,6 +302,7 @@ export class Level1 extends Scene {
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
     this.setDownloadOverlayEnabled(false);
+    this.setDownloadMasksEnabled(false);
   }
 
   private checkDrawing() {
@@ -283,6 +324,7 @@ export class Level1 extends Scene {
     if (result.accuracyScore === null) {
       this.feedbackText.setText("Keep drawing - not enough to check yet!");
       this.setDownloadOverlayEnabled(false);
+      this.setDownloadMasksEnabled(false);
       return;
     }
 
@@ -291,6 +333,7 @@ export class Level1 extends Scene {
       `Shape: ${shapeLabel} — Accuracy: ${result.accuracyScore}/100`,
     );
     this.setDownloadOverlayEnabled(result.shapeMatch);
+    this.setDownloadMasksEnabled(true);
   }
 
   private downloadOverlay() {
@@ -306,6 +349,25 @@ export class Level1 extends Scene {
     );
     const filename = `whaka-ahua-${playerId ?? "unknown"}-level1-attempt${this.attempts}-overlay.png`;
     downloadUrl(filename, dataUrl);
+  }
+
+  /** Temporary verification aid - downloads the reference triangle's
+   * and the current drawn attempt's binary ink masks (rasterMask.ts)
+   * as plain black-background/white-shape PNGs, so a human can
+   * eyeball them directly. Remove alongside downloadMasksButton once
+   * moment-based scoring is built on top of rasterMask.ts and no
+   * longer needs manual spot-checking. */
+  private downloadMasks() {
+    const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
+      | string
+      | undefined;
+    const base = `whaka-ahua-${playerId ?? "unknown"}-level1-attempt${this.attempts}`;
+
+    const referenceMask = rasterizeReferenceMask(REFERENCE_TRIANGLE_VERTICES);
+    downloadUrl(`${base}-mask-reference.png`, maskToPngDataUrl(referenceMask));
+
+    const drawnMask = rasterizeDrawingMask(this.drawnPoints);
+    downloadUrl(`${base}-mask-drawn.png`, maskToPngDataUrl(drawnMask));
   }
 
   /** Facilitator controls: move on whenever they judge the child is
