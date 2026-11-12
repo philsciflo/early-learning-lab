@@ -200,3 +200,117 @@ export function createButton(
     },
   };
 }
+
+export type CircleButtonOptions = {
+  /** Visual style - reuses the same palette as createButton(). */
+  variant?: ButtonVariant;
+  /** Overrides the default circle diameter (px). */
+  diameter?: number;
+  /** Overrides the auto-computed (diameter-relative) font size. */
+  fontSize?: number;
+  /** Which point of the button's bounding box (x, y) refers to - same
+   * convention as Phaser's Text.setOrigin(). Defaults to centered. */
+  origin?: [number, number];
+};
+
+const DEFAULT_CIRCLE_DIAMETER = 64;
+
+/**
+ * A small circular button - same Button shape (container/hitArea) as
+ * createButton(), so existing enable/disable wiring (container.setAlpha,
+ * hitArea.setInteractive/disableInteractive) keeps working unchanged -
+ * but drawn as a filled circle with a centered label instead of a pill.
+ * Meant for compact, icon-like actions (eg short numeric labels) rather
+ * than for buttons that need to fit a word.
+ */
+export function createCircleButton(
+  scene: Scene,
+  x: number,
+  y: number,
+  label: string,
+  options: CircleButtonOptions = {},
+): Button {
+  const variant = options.variant ?? "primary";
+  const palette = PALETTES[variant];
+  const diameter = options.diameter ?? DEFAULT_CIRCLE_DIAMETER;
+  const radius = diameter / 2;
+  const fontSize = options.fontSize ?? Math.round(diameter * 0.42);
+  const [originX, originY] = options.origin ?? [0.5, 0.5];
+
+  // Centre of the circle's own bounding box, in local (container) space -
+  // everything else is positioned relative to this.
+  const centreX = radius - diameter * originX;
+  const centreY = radius - diameter * originY;
+
+  const text = scene.add
+    .text(centreX, centreY, label, {
+      fontFamily: "Arial Black",
+      fontSize,
+      color: palette.text,
+      align: "center",
+    })
+    .setOrigin(0.5);
+
+  const bg = scene.add.graphics();
+  const drawBg = (fillColour: number) => {
+    bg.clear();
+    bg.fillStyle(fillColour, 1);
+    bg.lineStyle(3, palette.stroke, 1);
+    bg.fillCircle(centreX, centreY, radius);
+    bg.strokeCircle(centreX, centreY, radius);
+  };
+  drawBg(palette.fill);
+
+  // Invisible but real Rectangle GameObject on top, purely for input -
+  // see the Button.hitArea doc comment above for why.
+  const hitArea = scene.add.rectangle(
+    centreX,
+    centreY,
+    diameter,
+    diameter,
+    0x000000,
+    0,
+  );
+  hitArea.setInteractive({ useHandCursor: true });
+
+  const container = scene.add.container(x, y, [bg, text, hitArea]);
+
+  hitArea.on("pointerover", () => {
+    drawBg(palette.hoverFill);
+    scene.tweens.add({
+      targets: container,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 120,
+      ease: "Sine.easeOut",
+    });
+  });
+  hitArea.on("pointerout", () => {
+    drawBg(palette.fill);
+    scene.tweens.add({
+      targets: container,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 120,
+      ease: "Sine.easeOut",
+    });
+  });
+  hitArea.on("pointerdown", () => {
+    scene.tweens.add({
+      targets: container,
+      scaleX: 0.9,
+      scaleY: 0.9,
+      duration: 70,
+      yoyo: true,
+      ease: "Sine.easeOut",
+    });
+  });
+
+  return {
+    container,
+    hitArea,
+    setLabel: (newLabel: string) => {
+      text.setText(newLabel);
+    },
+  };
+}

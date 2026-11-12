@@ -20,7 +20,13 @@ import {
 } from "../constants.ts";
 import { Point, scoreTriangleDrawing } from "../triangleScoring.ts";
 import { recordTrial } from "../scoring.ts";
-import { Button, createButton, downloadUrl, downloadBlob } from "../ui.ts";
+import {
+  Button,
+  createButton,
+  createCircleButton,
+  downloadUrl,
+  downloadBlob,
+} from "../ui.ts";
 import {
   renderDrawingToPngDataUrl,
   renderOverlayToPngDataUrl,
@@ -34,15 +40,6 @@ import { computeHuMoments, computeMatchShapes } from "../huMoments.ts";
 
 const BUTTONS_Y = CANVAS_TOP_Y + CANVAS_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
-// Temporary verification aid for rasterMask.ts/huMoments.ts (see
-// downloadMasks()/downloadHuMoments()) - lets a human eyeball the
-// binary ink masks and the raw Hu-moment numbers computed from them
-// before any moment-based scoring is built on top of either. Remove
-// this row (and downloadMasksButton/setDownloadMasksEnabled/
-// downloadMasks/downloadHuMomentsButton/setDownloadHuMomentsEnabled/
-// downloadHuMoments) once that later work lands and manual inspection
-// is no longer needed.
-const DEBUG_BUTTONS_Y = FEEDBACK_Y + 60;
 
 /**
  * Level 1: the child copies a static reference triangle, drawn
@@ -225,7 +222,6 @@ export class Level1 extends Scene {
   private createActionButtons() {
     const clearX = WIDTH / 2 - 310;
     const checkX = WIDTH / 2;
-    const downloadX = WIDTH / 2 + 310;
 
     const clearButton = createButton(this, clearX, BUTTONS_Y, "Clear", {
       variant: "muted",
@@ -239,38 +235,48 @@ export class Level1 extends Scene {
     });
     checkButton.hitArea.on("pointerdown", () => this.checkDrawing());
 
-    this.downloadOverlayButton = createButton(
+    // Three small circular debug-download buttons, in the same row as
+    // Check, numbered 1/2/3 since the numeric labels aren't otherwise
+    // self-explanatory:
+    //   1 = downloadOverlay()    - the matched-attempt overlay PNG
+    //   2 = downloadMasks()      - reference/drawn binary ink masks
+    //   3 = downloadHuMoments()  - Hu moments + matchShapes JSON
+    const circleDiameter = 64;
+    const circleGap = 26;
+    const circle1X = checkX + 174;
+    const circle2X = circle1X + circleDiameter + circleGap;
+    const circle3X = circle2X + circleDiameter + circleGap;
+
+    this.downloadOverlayButton = createCircleButton(
       this,
-      downloadX,
+      circle1X,
       BUTTONS_Y,
-      "Download overlay",
-      { variant: "secondary", minWidth: 240 },
+      "1",
+      { variant: "primary", diameter: circleDiameter },
     );
     this.downloadOverlayButton.hitArea.on("pointerdown", () =>
       this.downloadOverlay(),
     );
     this.setDownloadOverlayEnabled(false);
 
-    // Temporary verification aid - see the DEBUG_BUTTONS_Y comment above.
-    this.downloadMasksButton = createButton(
+    this.downloadMasksButton = createCircleButton(
       this,
-      WIDTH / 2 - 190,
-      DEBUG_BUTTONS_Y,
-      "Download masks (debug)",
-      { variant: "muted", minWidth: 280, fontSize: 18 },
+      circle2X,
+      BUTTONS_Y,
+      "2",
+      { variant: "secondary", diameter: circleDiameter },
     );
     this.downloadMasksButton.hitArea.on("pointerdown", () =>
       this.downloadMasks(),
     );
     this.setDownloadMasksEnabled(false);
 
-    // Temporary verification aid - see the DEBUG_BUTTONS_Y comment above.
-    this.downloadHuMomentsButton = createButton(
+    this.downloadHuMomentsButton = createCircleButton(
       this,
-      WIDTH / 2 + 190,
-      DEBUG_BUTTONS_Y,
-      "Download Hu moments (debug)",
-      { variant: "muted", minWidth: 280, fontSize: 18 },
+      circle3X,
+      BUTTONS_Y,
+      "3",
+      { variant: "muted", diameter: circleDiameter },
     );
     this.downloadHuMomentsButton.hitArea.on("pointerdown", () =>
       this.downloadHuMoments(),
@@ -295,8 +301,7 @@ export class Level1 extends Scene {
 
   /** Same enablement pattern as setDownloadOverlayEnabled(), but not
    * gated on shapeMatch - the raw masks are just as useful to inspect
-   * for a mismatched attempt as for a matched one. Temporary, see the
-   * DEBUG_BUTTONS_Y comment above. */
+   * for a mismatched attempt as for a matched one. */
   private setDownloadMasksEnabled(enabled: boolean) {
     this.downloadMasksButton.container.setAlpha(enabled ? 1 : 0.4);
     if (enabled) {
@@ -310,7 +315,7 @@ export class Level1 extends Scene {
 
   /** Same enablement pattern as setDownloadMasksEnabled() - the Hu
    * moments are computed from the same masks, so they're gated
-   * identically. Temporary, see the DEBUG_BUTTONS_Y comment above. */
+   * identically. */
   private setDownloadHuMomentsEnabled(enabled: boolean) {
     this.downloadHuMomentsButton.container.setAlpha(enabled ? 1 : 0.4);
     if (enabled) {
