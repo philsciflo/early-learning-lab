@@ -79,26 +79,42 @@ export const FIND_TARGET_FONT_SIZE = 110;
 export const FIND_FEEDBACK_Y = 620;
 export const FIND_SCREENSHOT_Y = 700;
 
-// Level3: "Sort the alphabet" ordering task. ORDER_COUNT letters (a
-// contiguous run from the alphabet - see Level3.ts's pickLetterRun for
-// why) start scrambled in a pile and get dragged into ORDER_COUNT
-// ordered slots, left-to-right = earliest-to-latest alphabetically.
-export const ORDER_COUNT = 8;
-export const ORDER_FONT_SIZE = 90;
-export const ORDER_PADDING_X = 18;
-export const ORDER_PADDING_Y = 12;
+// Level3: "Sort the alphabet" ordering task. ORDER_COUNT letters start
+// scrambled in a pile and get dragged into ORDER_COUNT ordered slots,
+// earliest-to-latest alphabetically. ORDER_COUNT is the full alphabet
+// (26), which no longer fits a single row at a legible/touch-friendly
+// size, so both the ordered slots and the scrambled pile wrap into a
+// grid of ORDER_ITEMS_PER_ROW columns x ceil(ORDER_COUNT /
+// ORDER_ITEMS_PER_ROW) rows (2 rows of 13) - see Level3.ts's
+// createSlots/slotCenter/slotAt/createPile for the row-wrapping math
+// (column = i % ORDER_ITEMS_PER_ROW, row = Math.floor(i /
+// ORDER_ITEMS_PER_ROW)).
+export const ORDER_COUNT = 26;
+export const ORDER_ITEMS_PER_ROW = 13;
+export const ORDER_FONT_SIZE = 44;
+export const ORDER_PADDING_X = 10;
+export const ORDER_PADDING_Y = 8;
 
-export const ORDER_PILE_CENTER_Y = 190;
-export const ORDER_PILE_X_JITTER = 10;
-export const ORDER_PILE_Y_JITTER = 15;
-export const ORDER_PILE_MARGIN_X = 100;
+// Pile: ORDER_ITEMS_PER_ROW-wide rows of jittered glyphs, stacked
+// ORDER_PILE_ROW_GAP apart (same loose-pile-with-jitter look as the
+// original single-row design, just wrapped into rows).
+export const ORDER_PILE_TOP_CENTER_Y = 170;
+export const ORDER_PILE_ROW_GAP = 100;
+export const ORDER_PILE_X_JITTER = 8;
+export const ORDER_PILE_Y_JITTER = 8;
+export const ORDER_PILE_MARGIN_X = 90;
 
-export const ORDER_SLOT_WIDTH = 110;
-export const ORDER_SLOT_HEIGHT = 140;
-export const ORDER_SLOT_GAP = 20;
-export const ORDER_SLOTS_TOP_Y = 380;
+// Slots: ORDER_ITEMS_PER_ROW-wide rows, ORDER_SLOT_ROW_GAP apart
+// vertically (big enough to fit each row's own position-number label
+// without touching the row above).
+export const ORDER_SLOT_WIDTH = 70;
+export const ORDER_SLOT_HEIGHT = 86;
+export const ORDER_SLOT_GAP = 14;
+export const ORDER_SLOT_ROW_GAP = 44;
+export const ORDER_SLOTS_TOP_Y = 360;
 const ORDER_SLOTS_GRID_WIDTH =
-  ORDER_COUNT * ORDER_SLOT_WIDTH + (ORDER_COUNT - 1) * ORDER_SLOT_GAP;
+  ORDER_ITEMS_PER_ROW * ORDER_SLOT_WIDTH +
+  (ORDER_ITEMS_PER_ROW - 1) * ORDER_SLOT_GAP;
 export const ORDER_SLOTS_LEFT_X = (WIDTH - ORDER_SLOTS_GRID_WIDTH) / 2;
 
 export const ORDER_SLOT_COLOUR = 0xd7ecff;

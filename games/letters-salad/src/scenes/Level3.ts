@@ -4,16 +4,19 @@ import {
   WIDTH,
   LEVEL_BACKGROUND_COLOUR,
   ORDER_COUNT,
+  ORDER_ITEMS_PER_ROW,
   ORDER_FONT_SIZE,
   ORDER_PADDING_X,
   ORDER_PADDING_Y,
-  ORDER_PILE_CENTER_Y,
+  ORDER_PILE_TOP_CENTER_Y,
+  ORDER_PILE_ROW_GAP,
   ORDER_PILE_X_JITTER,
   ORDER_PILE_Y_JITTER,
   ORDER_PILE_MARGIN_X,
   ORDER_SLOT_WIDTH,
   ORDER_SLOT_HEIGHT,
   ORDER_SLOT_GAP,
+  ORDER_SLOT_ROW_GAP,
   ORDER_SLOTS_TOP_Y,
   ORDER_SLOTS_LEFT_X,
   ORDER_SLOT_COLOUR,
@@ -24,7 +27,11 @@ import {
 import { recordTrial, AlphabetOrderTrialData } from "../scoring.ts";
 import { Button, createButton, downloadCanvasSnapshot } from "../ui.ts";
 
-const BUTTONS_Y = ORDER_SLOTS_TOP_Y + ORDER_SLOT_HEIGHT + 60;
+const ORDER_SLOT_ROWS = Math.ceil(ORDER_COUNT / ORDER_ITEMS_PER_ROW);
+const ORDER_SLOTS_GRID_HEIGHT =
+  ORDER_SLOT_ROWS * ORDER_SLOT_HEIGHT +
+  (ORDER_SLOT_ROWS - 1) * ORDER_SLOT_ROW_GAP;
+const BUTTONS_Y = ORDER_SLOTS_TOP_Y + ORDER_SLOTS_GRID_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -36,7 +43,10 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
  * getting the order right actually requires recalling the alphabet's
  * sequence; a random subset (eg A, F, K, Q, ...) would let a child
  * order correctly from rough "where in the alphabet" positioning
- * without ever needing to know what comes immediately after what. */
+ * without ever needing to know what comes immediately after what.
+ * With ORDER_COUNT = 26 (the whole alphabet), maxStart is always 0,
+ * so this always returns the full A-Z run, shuffled into the pile by
+ * create() below - that's expected, not a bug. */
 function pickLetterRun(): string[] {
   const maxStart = ALPHABET.length - ORDER_COUNT;
   const start = Phaser.Math.Between(0, maxStart);
@@ -105,12 +115,17 @@ export class Level3 extends Scene {
       .setOrigin(0.5, 0);
 
     this.add
-      .text(WIDTH / 2, 90, "Drag the letters into ABC order, left to right.", {
-        fontFamily: "Arial Black",
-        fontSize: 20,
-        color: "#2b2a6b",
-        align: "center",
-      })
+      .text(
+        WIDTH / 2,
+        90,
+        "Drag the letters into ABC order, left to right, top to bottom.",
+        {
+          fontFamily: "Arial Black",
+          fontSize: 20,
+          color: "#2b2a6b",
+          align: "center",
+        },
+      )
       .setOrigin(0.5, 0);
 
     this.createSlots();
@@ -130,35 +145,30 @@ export class Level3 extends Scene {
     this.createFacilitatorButtons();
   }
 
-  /** Draws the ORDER_COUNT ordered slots left-to-right, each numbered
-   * above it so position 1/2/3... reads unambiguously - same plain
+  /** Draws the ORDER_COUNT ordered slots in a grid of
+   * ORDER_ITEMS_PER_ROW columns (wrapping into further rows as
+   * needed - 2 rows of 13 for the full alphabet), each numbered above
+   * it so position 1/2/3... reads unambiguously - same plain
    * filled/bordered rounded-rect framing style as Level1's zones. */
   private createSlots() {
     for (let i = 0; i < ORDER_COUNT; i++) {
-      const x = ORDER_SLOTS_LEFT_X + i * (ORDER_SLOT_WIDTH + ORDER_SLOT_GAP);
+      const column = i % ORDER_ITEMS_PER_ROW;
+      const row = Math.floor(i / ORDER_ITEMS_PER_ROW);
+      const x =
+        ORDER_SLOTS_LEFT_X + column * (ORDER_SLOT_WIDTH + ORDER_SLOT_GAP);
+      const y =
+        ORDER_SLOTS_TOP_Y + row * (ORDER_SLOT_HEIGHT + ORDER_SLOT_ROW_GAP);
 
       const g = this.add.graphics();
       g.fillStyle(ORDER_SLOT_COLOUR, 1);
       g.lineStyle(3, ORDER_SLOT_BORDER_COLOUR, 1);
-      g.fillRoundedRect(
-        x,
-        ORDER_SLOTS_TOP_Y,
-        ORDER_SLOT_WIDTH,
-        ORDER_SLOT_HEIGHT,
-        12,
-      );
-      g.strokeRoundedRect(
-        x,
-        ORDER_SLOTS_TOP_Y,
-        ORDER_SLOT_WIDTH,
-        ORDER_SLOT_HEIGHT,
-        12,
-      );
+      g.fillRoundedRect(x, y, ORDER_SLOT_WIDTH, ORDER_SLOT_HEIGHT, 10);
+      g.strokeRoundedRect(x, y, ORDER_SLOT_WIDTH, ORDER_SLOT_HEIGHT, 10);
 
       this.add
-        .text(x + ORDER_SLOT_WIDTH / 2, ORDER_SLOTS_TOP_Y - 24, String(i + 1), {
+        .text(x + ORDER_SLOT_WIDTH / 2, y - 22, String(i + 1), {
           fontFamily: "Arial Black",
-          fontSize: 20,
+          fontSize: 16,
           color: "#2b2a6b",
         })
         .setOrigin(0.5);
@@ -166,30 +176,39 @@ export class Level3 extends Scene {
   }
 
   private slotCenter(slotIndex: number): { x: number; y: number } {
+    const column = slotIndex % ORDER_ITEMS_PER_ROW;
+    const row = Math.floor(slotIndex / ORDER_ITEMS_PER_ROW);
     const x =
       ORDER_SLOTS_LEFT_X +
-      slotIndex * (ORDER_SLOT_WIDTH + ORDER_SLOT_GAP) +
+      column * (ORDER_SLOT_WIDTH + ORDER_SLOT_GAP) +
       ORDER_SLOT_WIDTH / 2;
-    const y = ORDER_SLOTS_TOP_Y + ORDER_SLOT_HEIGHT / 2;
+    const y =
+      ORDER_SLOTS_TOP_Y +
+      row * (ORDER_SLOT_HEIGHT + ORDER_SLOT_ROW_GAP) +
+      ORDER_SLOT_HEIGHT / 2;
     return { x, y };
   }
 
-  /** Lays the scrambled letters out in ORDER_COUNT evenly spaced slots
-   * above the ordered slots, with a little random jitter so it reads
-   * as a loose pile rather than a perfect grid - same approach as
-   * Level1's createPile(). Each glyph's starting position is recorded
-   * as its "home" - where a bumped occupant returns to (see
-   * handleDrop below). */
+  /** Lays the scrambled letters out in a grid of ORDER_ITEMS_PER_ROW
+   * evenly spaced columns, wrapping into further rows as needed (2
+   * rows of 13 for the full alphabet) above the ordered slots, with a
+   * little random jitter so each row reads as a loose pile rather
+   * than a perfect grid - same approach as Level1's createPile(), now
+   * wrapped. Each glyph's starting position is recorded as its "home"
+   * - where a bumped occupant returns to (see handleDrop below). */
   private createPile() {
-    const spacing = (WIDTH - 2 * ORDER_PILE_MARGIN_X) / (ORDER_COUNT - 1);
+    const spacing =
+      (WIDTH - 2 * ORDER_PILE_MARGIN_X) / (ORDER_ITEMS_PER_ROW - 1);
 
     this.pileOrder.forEach((char, i) => {
-      const baseX = ORDER_PILE_MARGIN_X + i * spacing;
+      const column = i % ORDER_ITEMS_PER_ROW;
+      const row = Math.floor(i / ORDER_ITEMS_PER_ROW);
+      const baseX = ORDER_PILE_MARGIN_X + column * spacing;
+      const baseY = ORDER_PILE_TOP_CENTER_Y + row * ORDER_PILE_ROW_GAP;
       const x =
         baseX + Phaser.Math.Between(-ORDER_PILE_X_JITTER, ORDER_PILE_X_JITTER);
       const y =
-        ORDER_PILE_CENTER_Y +
-        Phaser.Math.Between(-ORDER_PILE_Y_JITTER, ORDER_PILE_Y_JITTER);
+        baseY + Phaser.Math.Between(-ORDER_PILE_Y_JITTER, ORDER_PILE_Y_JITTER);
 
       this.glyphHomePositions.push({ x, y });
 
@@ -237,17 +256,22 @@ export class Level3 extends Scene {
   }
 
   /** Which ordered slot (if any) a point falls inside, by simple
-   * axis-aligned bounds - same approach as Level1's zoneAt(). */
+   * axis-aligned bounds against every slot's grid cell - same
+   * approach as Level1's zoneAt(), extended to a grid. */
   private slotAt(x: number, y: number): number | null {
-    const inSlotY =
-      y >= ORDER_SLOTS_TOP_Y && y <= ORDER_SLOTS_TOP_Y + ORDER_SLOT_HEIGHT;
-    if (!inSlotY) {
-      return null;
-    }
     for (let i = 0; i < ORDER_COUNT; i++) {
+      const column = i % ORDER_ITEMS_PER_ROW;
+      const row = Math.floor(i / ORDER_ITEMS_PER_ROW);
       const slotX =
-        ORDER_SLOTS_LEFT_X + i * (ORDER_SLOT_WIDTH + ORDER_SLOT_GAP);
-      if (x >= slotX && x <= slotX + ORDER_SLOT_WIDTH) {
+        ORDER_SLOTS_LEFT_X + column * (ORDER_SLOT_WIDTH + ORDER_SLOT_GAP);
+      const slotY =
+        ORDER_SLOTS_TOP_Y + row * (ORDER_SLOT_HEIGHT + ORDER_SLOT_ROW_GAP);
+      const inSlot =
+        x >= slotX &&
+        x <= slotX + ORDER_SLOT_WIDTH &&
+        y >= slotY &&
+        y <= slotY + ORDER_SLOT_HEIGHT;
+      if (inSlot) {
         return i;
       }
     }
