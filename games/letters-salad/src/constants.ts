@@ -57,3 +57,24 @@ export const OTHER_ZONE_X = LETTERS_ZONE_X + ZONE_WIDTH + ZONE_GAP;
 export const LETTERS_ZONE_COLOUR = 0xd7ecff;
 export const OTHER_ZONE_COLOUR = 0xffe3d1;
 export const ZONE_BORDER_COLOUR = 0x2b2a6b;
+
+// Level2: "Find the correct letter out of 8" - single-trial task. One
+// target letter is shown large; FIND_OPTION_COUNT letter tiles (the
+// target plus confusable/random distractors - see Level2.ts's
+// buildOptions) sit in a FIND_OPTION_COLUMNS-wide grid below it.
+// Tapping any tile ends the trial immediately (single attempt).
+export const FIND_OPTION_COUNT = 8;
+export const FIND_OPTION_COLUMNS = 4;
+export const FIND_OPTION_DIAMETER = 120;
+export const FIND_OPTION_GAP_X = 36;
+export const FIND_OPTION_GAP_Y = 40;
+export const FIND_OPTIONS_TOP_Y = 380;
+const FIND_GRID_WIDTH =
+  FIND_OPTION_COLUMNS * FIND_OPTION_DIAMETER +
+  (FIND_OPTION_COLUMNS - 1) * FIND_OPTION_GAP_X;
+export const FIND_OPTIONS_LEFT_X = (WIDTH - FIND_GRID_WIDTH) / 2;
+
+export const FIND_TARGET_Y = 230;
+export const FIND_TARGET_FONT_SIZE = 110;
+export const FIND_FEEDBACK_Y = 620;
+export const FIND_SCREENSHOT_Y = 700;

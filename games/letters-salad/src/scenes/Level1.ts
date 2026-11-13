@@ -333,9 +333,9 @@ export class Level1 extends Scene {
       this.scene.start("MainMenu");
     });
 
-    // Later stages insert Level2 here, between Level1 and GameOver -
-    // swapping this one scene key is all that's needed to extend the
-    // chain, no other rework.
+    // Level2 now sits between Level1 and GameOver (a later stage
+    // inserts Level3 after Level2) - this scene key was the one thing
+    // that needed to change to extend the chain, no other rework.
     const continueButton = createButton(this, WIDTH - 24, 24, "Continue →", {
       variant: "secondary",
       height: 48,
@@ -345,7 +345,7 @@ export class Level1 extends Scene {
     continueButton.hitArea.on("pointerdown", () => {
       this.finishTrial(this.attempts === 0);
       this.registry.set(LAST_SCORE_DATA_KEY, this.lastScore);
-      this.scene.start("GameOver");
+      this.scene.start("Level2");
     });
   }
 
