@@ -294,9 +294,8 @@ export class Level2 extends Scene {
 
   /** Facilitator controls, same top-left/top-right convention as every
    * other level. Back steps to the immediately-preceding scene
-   * (Level1); Continue goes to GameOver - a later stage will insert
-   * Level3 between this and GameOver by changing only this one
-   * scene.start call, same as Level1's Continue was written. */
+   * (Level1); Continue now goes to Level3, which sits between this
+   * level and GameOver. */
   private createFacilitatorButtons() {
     const back = createButton(this, 24, 24, "← Back", {
       variant: "secondary",
@@ -318,7 +317,7 @@ export class Level2 extends Scene {
     continueButton.hitArea.on("pointerdown", () => {
       this.finishTrial(!this.hasAnswered);
       this.registry.set(LAST_SCORE_DATA_KEY, this.lastScore);
-      this.scene.start("GameOver");
+      this.scene.start("Level3");
     });
   }
 
