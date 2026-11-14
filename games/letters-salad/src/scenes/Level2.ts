@@ -155,7 +155,7 @@ export class Level2 extends Scene {
 
     this.add
       .text(WIDTH / 2, 40, "Find the letter!", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 32,
         color: "#2b2a6b",
         align: "center",
@@ -164,7 +164,7 @@ export class Level2 extends Scene {
 
     this.add
       .text(WIDTH / 2, 130, "Find this letter:", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 26,
         color: "#2b2a6b",
         align: "center",
@@ -173,7 +173,7 @@ export class Level2 extends Scene {
 
     this.add
       .text(WIDTH / 2, FIND_TARGET_Y, this.targetLetter, {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: FIND_TARGET_FONT_SIZE,
         color: "#2b2a6b",
         backgroundColor: "#ffffff",
@@ -185,7 +185,7 @@ export class Level2 extends Scene {
 
     this.feedbackText = this.add
       .text(WIDTH / 2, FIND_FEEDBACK_Y, "", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 24,
         color: "#2b2a6b",
         align: "center",

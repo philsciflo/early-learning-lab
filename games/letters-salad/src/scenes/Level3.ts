@@ -107,7 +107,7 @@ export class Level3 extends Scene {
 
     this.add
       .text(WIDTH / 2, 40, "Sort the alphabet!", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 32,
         color: "#2b2a6b",
         align: "center",
@@ -120,7 +120,7 @@ export class Level3 extends Scene {
         90,
         "Drag the letters into ABC order, left to right, top to bottom.",
         {
-          fontFamily: "Arial Black",
+          fontFamily: "Fredoka, Arial Black, sans-serif",
           fontSize: 20,
           color: "#2b2a6b",
           align: "center",
@@ -134,7 +134,7 @@ export class Level3 extends Scene {
 
     this.feedbackText = this.add
       .text(WIDTH / 2, FEEDBACK_Y, "", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 26,
         color: "#2b2a6b",
         align: "center",
@@ -167,7 +167,7 @@ export class Level3 extends Scene {
 
       this.add
         .text(x + ORDER_SLOT_WIDTH / 2, y - 22, String(i + 1), {
-          fontFamily: "Arial Black",
+          fontFamily: "Fredoka, Arial Black, sans-serif",
           fontSize: 16,
           color: "#2b2a6b",
         })
@@ -214,7 +214,7 @@ export class Level3 extends Scene {
 
       const text = this.add
         .text(x, y, char, {
-          fontFamily: "Arial Black",
+          fontFamily: "Fredoka, Arial Black, sans-serif",
           fontSize: ORDER_FONT_SIZE,
           color: "#2b2a6b",
           backgroundColor: "#ffffff",

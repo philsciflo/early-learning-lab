@@ -59,7 +59,7 @@ export function scatterNumberBackdrop(
 
     scene.add
       .text(x, y, digit, {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize,
         color: colour,
       })

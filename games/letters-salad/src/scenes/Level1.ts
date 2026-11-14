@@ -107,7 +107,7 @@ export class Level1 extends Scene {
 
     this.add
       .text(WIDTH / 2, 40, "Sort letters from symbols!", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 32,
         color: "#2b2a6b",
         align: "center",
@@ -120,7 +120,7 @@ export class Level1 extends Scene {
 
     this.feedbackText = this.add
       .text(WIDTH / 2, FEEDBACK_Y, "", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 26,
         color: "#2b2a6b",
         align: "center",
@@ -148,7 +148,7 @@ export class Level1 extends Scene {
 
     this.add
       .text(x + ZONE_WIDTH / 2, ZONE_TOP_Y - 30, label, {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 24,
         color: "#2b2a6b",
       })
@@ -171,7 +171,7 @@ export class Level1 extends Scene {
 
       const text = this.add
         .text(x, y, glyph.char, {
-          fontFamily: "Arial Black",
+          fontFamily: "Fredoka, Arial Black, sans-serif",
           fontSize: GLYPH_FONT_SIZE,
           color: "#2b2a6b",
           backgroundColor: "#ffffff",

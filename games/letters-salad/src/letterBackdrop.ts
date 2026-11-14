@@ -54,7 +54,7 @@ export function scatterLetterBackdrop(
 
     scene.add
       .text(x, y, letter, {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize,
         color: opts.colour,
       })

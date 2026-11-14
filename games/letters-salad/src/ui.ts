@@ -132,7 +132,7 @@ export function createButton(
 
   const text = scene.add
     .text(0, 0, label, {
-      fontFamily: "Arial Black",
+      fontFamily: "Fredoka, Arial Black, sans-serif",
       fontSize,
       color: palette.text,
       align: "center",
@@ -258,7 +258,7 @@ export function createCircleButton(
 
   const text = scene.add
     .text(centreX, centreY, label, {
-      fontFamily: "Arial Black",
+      fontFamily: "Fredoka, Arial Black, sans-serif",
       fontSize,
       color: palette.text,
       align: "center",

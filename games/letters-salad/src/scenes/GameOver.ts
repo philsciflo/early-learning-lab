@@ -14,7 +14,7 @@ export class GameOver extends Scene {
   create() {
     this.gameover_text = this.add
       .text(WIDTH / 2, HEIGHT / 2 - 80, "Well done!", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 56,
         color: "#2b2a6b",
         align: "center",
@@ -30,7 +30,7 @@ export class GameOver extends Scene {
           ? "No score recorded"
           : `Score: ${score}/100`,
         {
-          fontFamily: "Arial Black",
+          fontFamily: "Fredoka, Arial Black, sans-serif",
           fontSize: 32,
           color: "#2b2a6b",
           align: "center",

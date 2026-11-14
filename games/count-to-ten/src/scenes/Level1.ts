@@ -37,20 +37,25 @@ import {
 // All objects in a round share one colour (picked per round, not per
 // object) so colour never becomes an accidental counting cue - only
 // shape identity and count matter. Same ink outline as the rest of the
-// UI for visual consistency.
-const OBJECT_FILL_COLOURS = [0xff9f40, 0x4fb6a8, 0xe66b6b, 0x6ba3e6, 0xf2c14e];
+// UI for visual consistency. Expanded from 5 to 8 hues (added purple,
+// pink, green) for a bolder, more colourful spread round-to-round.
+const OBJECT_FILL_COLOURS = [
+  0xff9f40, 0x4fb6a8, 0xe66b6b, 0x6ba3e6, 0xf2c14e, 0xb084e8, 0xff6fa5,
+  0x68c23a,
+];
 const OBJECT_STROKE_COLOUR = INK_COLOUR;
 
 // Each number button gets its own hue from this small rainbow (cycled
 // by its position within its column) instead of one flat "muted" grey,
 // so the two columns read as cheerful and distinct rather than a plain
-// control strip.
+// control strip. Pushed more saturated/vivid than the first colour
+// pass so the buttons read as bold, toy-like controls.
 const NUMBER_BUTTON_PALETTES = [
-  { fill: 0xff8fa3, hoverFill: 0xffb3c1, stroke: 0xcf4760 },
-  { fill: 0xffb366, hoverFill: 0xffcc94, stroke: 0xcc7a1f },
-  { fill: 0xffe066, hoverFill: 0xfff0a3, stroke: 0xd1b020 },
-  { fill: 0x8ce99a, hoverFill: 0xb2f2bb, stroke: 0x2f9e44 },
-  { fill: 0x74c0fc, hoverFill: 0xa5d8ff, stroke: 0x1c7ed6 },
+  { fill: 0xff5c7a, hoverFill: 0xff8aa0, stroke: 0xc23356 },
+  { fill: 0xff9f1c, hoverFill: 0xffbb55, stroke: 0xcc7000 },
+  { fill: 0xffd60a, hoverFill: 0xffe34d, stroke: 0xccab00 },
+  { fill: 0x2fbf71, hoverFill: 0x5fd696, stroke: 0x1f8a52 },
+  { fill: 0x3a86ff, hoverFill: 0x6ea3ff, stroke: 0x2062cc },
 ];
 
 function pickObjectCount(): number {
@@ -112,8 +117,8 @@ export class Level1 extends Scene {
 
     this.add
       .text(WIDTH / 2, 40, "Count the objects!", {
-        fontFamily: "Arial Black",
-        fontSize: 32,
+        fontFamily: "Fredoka, Arial Black, sans-serif",
+        fontSize: 36,
         color: INK_TEXT,
         align: "center",
       })
@@ -121,8 +126,8 @@ export class Level1 extends Scene {
 
     this.add
       .text(WIDTH / 2, 100, "How many shapes do you see?", {
-        fontFamily: "Arial Black",
-        fontSize: 22,
+        fontFamily: "Fredoka, Arial Black, sans-serif",
+        fontSize: 24,
         color: INK_TEXT,
         align: "center",
       })
@@ -134,8 +139,8 @@ export class Level1 extends Scene {
 
     this.feedbackText = this.add
       .text(WIDTH / 2, COUNT_FEEDBACK_Y, "", {
-        fontFamily: "Arial Black",
-        fontSize: 24,
+        fontFamily: "Fredoka, Arial Black, sans-serif",
+        fontSize: 26,
         color: INK_TEXT,
         align: "center",
       })
@@ -196,7 +201,7 @@ export class Level1 extends Scene {
       const button = createCircleButton(this, x, y, String(value), {
         variant: "muted",
         diameter: NUMBER_BUTTON_DIAMETER,
-        fontSize: 26,
+        fontSize: 30,
         paletteOverride: NUMBER_BUTTON_PALETTES[i],
       });
       button.hitArea.on("pointerdown", () => this.handleAnswer(value));

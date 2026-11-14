@@ -34,7 +34,7 @@ const DATA_BUTTON_2_X = WIDTH / 2;
 const DATA_BUTTON_3_X = WIDTH / 2 + DATA_BUTTON_WIDTH + DATA_BUTTON_GAP;
 
 const LABEL_STYLE = {
-  fontFamily: "Arial Black",
+  fontFamily: "Fredoka, Arial Black, sans-serif",
   fontSize: 24,
   color: "#2b2a6b",
 };
@@ -94,7 +94,7 @@ export class MainMenu extends Scene {
 
     this.add
       .text(WIDTH / 2, 60, "Letters Salad", {
-        fontFamily: "Arial Black",
+        fontFamily: "Fredoka, Arial Black, sans-serif",
         fontSize: 48,
         color: "#2b2a6b",
         align: "center",

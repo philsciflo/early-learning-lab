@@ -73,10 +73,15 @@ export const COUNT_SCREENSHOT_Y = 630;
 // screen (not duplicated): the left column holds the first half
 // (ascending top-to-bottom), the right column holds the second half -
 // see Level1.ts's createNumberColumn().
+//
+// NUMBER_BUTTON_DIAMETER bumped 54 -> 64 alongside the bevelled/3D
+// button treatment (see ui.ts's createCircleButton) - the bigger
+// bevel + glossy highlight needs a bit more room to read clearly, and
+// a larger tap target suits the bolder, more "pressable" look.
 export const NUMBER_BUTTON_COUNT = 10;
 export const NUMBER_COLUMN_COUNT = NUMBER_BUTTON_COUNT / 2;
-export const NUMBER_BUTTON_DIAMETER = 54;
-export const NUMBER_BUTTON_GAP_Y = 12;
+export const NUMBER_BUTTON_DIAMETER = 64;
+export const NUMBER_BUTTON_GAP_Y = 14;
 const NUMBER_COLUMN_HEIGHT =
   NUMBER_COLUMN_COUNT * NUMBER_BUTTON_DIAMETER +
   (NUMBER_COLUMN_COUNT - 1) * NUMBER_BUTTON_GAP_Y;
@@ -92,9 +97,9 @@ export const NUMBER_COLUMN_RIGHT_X = WIDTH - 70;
 // items, so - unlike letters-salad's 26-letter Level3 - everything
 // fits in one row with no grid wrapping needed.
 export const NUMBER_ORDER_COUNT = 5;
-export const NUMBER_ORDER_FONT_SIZE = 44;
-export const NUMBER_ORDER_PADDING_X = 10;
-export const NUMBER_ORDER_PADDING_Y = 8;
+// Bumped 44 -> 52 so the digits read clearly inside the new 3D block
+// tiles (see NUMBER_ORDER_GLYPH_SIZE below).
+export const NUMBER_ORDER_FONT_SIZE = 52;
 
 // Pile: one row of jittered number glyphs - same loose-pile-with-jitter
 // look as Level1's object cluster.
@@ -102,6 +107,25 @@ export const NUMBER_ORDER_PILE_CENTER_Y = 210;
 export const NUMBER_ORDER_PILE_X_JITTER = 10;
 export const NUMBER_ORDER_PILE_Y_JITTER = 10;
 export const NUMBER_ORDER_PILE_MARGIN_X = 220;
+
+// Each draggable number in the pile is drawn as a square "toy block"
+// tile (see NumberOrderScene.ts's drawBevelledTile()) rather than flat
+// text on a background - GLYPH_SIZE is the tile's fixed width/height
+// (same for every number, one- or two-digit, so the pile reads as a
+// uniform set of blocks), GLYPH_RADIUS its corner rounding, and
+// GLYPH_BEVEL the thickness of the light/dark bevel strips that give
+// it a raised, 3D look.
+export const NUMBER_ORDER_GLYPH_SIZE = 96;
+export const NUMBER_ORDER_GLYPH_RADIUS = 18;
+export const NUMBER_ORDER_GLYPH_BEVEL = 10;
+// A small set of bright, toy-block colours cycled by pile position
+// (not by value, so the colour sequence stays tied to the scrambled
+// starting layout rather than to any number) - deliberately more
+// saturated than the pastel NUMBER_ORDER_SLOT_COLOURS below, so a
+// dragged block clearly stands out against the slot it's sitting in.
+export const NUMBER_ORDER_GLYPH_COLOURS = [
+  0xff6b6b, 0xffa94d, 0xffd43b, 0x51cf66, 0x4dabf7,
+];
 
 // Slots: one row of NUMBER_ORDER_COUNT ordered boxes, centred
 // horizontally. Each slot gets its own colour from this small rainbow
@@ -121,6 +145,6 @@ export const NUMBER_ORDER_SLOTS_LEFT_X =
   (WIDTH - NUMBER_ORDER_SLOTS_GRID_WIDTH) / 2;
 
 export const NUMBER_ORDER_SLOT_COLOURS = [
-  0xffd3e0, 0xffe0b3, 0xfff3b0, 0xc8f0cc, 0xc9e3ff,
+  0xffb3c6, 0xffce85, 0xfff091, 0x9fe8a8, 0x9fd0ff,
 ];
 export const NUMBER_ORDER_SLOT_BORDER_COLOUR = INK_COLOUR;

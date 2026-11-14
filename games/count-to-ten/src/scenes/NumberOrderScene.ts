@@ -5,8 +5,6 @@ import {
   LEVEL_BACKGROUND_COLOUR,
   NUMBER_ORDER_COUNT,
   NUMBER_ORDER_FONT_SIZE,
-  NUMBER_ORDER_PADDING_X,
-  NUMBER_ORDER_PADDING_Y,
   NUMBER_ORDER_PILE_CENTER_Y,
   NUMBER_ORDER_PILE_X_JITTER,
   NUMBER_ORDER_PILE_Y_JITTER,
@@ -19,12 +17,21 @@ import {
   NUMBER_ORDER_SLOT_RADIUS,
   NUMBER_ORDER_SLOT_COLOURS,
   NUMBER_ORDER_SLOT_BORDER_COLOUR,
+  NUMBER_ORDER_GLYPH_SIZE,
+  NUMBER_ORDER_GLYPH_RADIUS,
+  NUMBER_ORDER_GLYPH_BEVEL,
+  NUMBER_ORDER_GLYPH_COLOURS,
   INK_TEXT,
   PLAYER_ID_DATA_KEY,
   LAST_SCORE_DATA_KEY,
 } from "../constants.ts";
 import { recordTrial, NumberOrderTrialData } from "../scoring.ts";
-import { Button, createButton, downloadCanvasSnapshot } from "../ui.ts";
+import {
+  Button,
+  createButton,
+  downloadCanvasSnapshot,
+  drawBevelledRect,
+} from "../ui.ts";
 
 const BUTTONS_Y = NUMBER_ORDER_SLOTS_TOP_Y + NUMBER_ORDER_SLOT_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
@@ -61,7 +68,7 @@ export class NumberOrderScene extends Scene {
 
   private numbers: number[] = [];
   private pileOrder: number[] = [];
-  private glyphTexts: GameObjects.Text[] = [];
+  private glyphs: GameObjects.Container[] = [];
   private glyphHomePositions: { x: number; y: number }[] = [];
   private glyphSlotIndex: (number | null)[] = [];
   private slotOccupant: (number | null)[] = [];
@@ -87,7 +94,7 @@ export class NumberOrderScene extends Scene {
       (_, i) => this.config.min + i,
     );
     this.pileOrder = Phaser.Utils.Array.Shuffle(this.numbers.slice());
-    this.glyphTexts = [];
+    this.glyphs = [];
     this.glyphHomePositions = [];
     this.glyphSlotIndex = new Array(NUMBER_ORDER_COUNT).fill(null);
     this.slotOccupant = new Array(NUMBER_ORDER_COUNT).fill(null);
@@ -103,8 +110,8 @@ export class NumberOrderScene extends Scene {
 
     this.add
       .text(WIDTH / 2, 40, "Put the numbers in order!", {
-        fontFamily: "Arial Black",
-        fontSize: 32,
+        fontFamily: "Fredoka, Arial Black, sans-serif",
+        fontSize: 36,
         color: INK_TEXT,
         align: "center",
       })
@@ -112,8 +119,8 @@ export class NumberOrderScene extends Scene {
 
     this.add
       .text(WIDTH / 2, 90, "Drag the numbers so the smallest is on the left.", {
-        fontFamily: "Arial Black",
-        fontSize: 20,
+        fontFamily: "Fredoka, Arial Black, sans-serif",
+        fontSize: 22,
         color: INK_TEXT,
         align: "center",
       })
@@ -125,8 +132,8 @@ export class NumberOrderScene extends Scene {
 
     this.feedbackText = this.add
       .text(WIDTH / 2, FEEDBACK_Y, "", {
-        fontFamily: "Arial Black",
-        fontSize: 26,
+        fontFamily: "Fredoka, Arial Black, sans-serif",
+        fontSize: 28,
         color: INK_TEXT,
         align: "center",
       })
@@ -182,6 +189,50 @@ export class NumberOrderScene extends Scene {
     return { x, y };
   }
 
+  /** Draws one draggable number as a chunky "toy block" tile - a
+   * bevelled square (drawBevelledRect, shared with createButton's
+   * pill-shaped buttons) with the digit centred on top - rather than
+   * flat text on a plain background. The block and its digit are
+   * grouped in a Container so they move together as one unit while
+   * dragging. */
+  private createGlyphBlock(
+    value: number,
+    colourIndex: number,
+  ): GameObjects.Container {
+    const size = NUMBER_ORDER_GLYPH_SIZE;
+    const half = size / 2;
+    const fillColour =
+      NUMBER_ORDER_GLYPH_COLOURS[
+        colourIndex % NUMBER_ORDER_GLYPH_COLOURS.length
+      ];
+
+    const block = this.add.graphics();
+    drawBevelledRect(
+      block,
+      -half,
+      -half,
+      size,
+      size,
+      NUMBER_ORDER_GLYPH_RADIUS,
+      fillColour,
+      NUMBER_ORDER_SLOT_BORDER_COLOUR,
+    );
+
+    const text = this.add
+      .text(0, -NUMBER_ORDER_GLYPH_BEVEL * 0.3, String(value), {
+        fontFamily: "Fredoka, Arial Black, sans-serif",
+        fontSize: NUMBER_ORDER_FONT_SIZE,
+        color: INK_TEXT,
+      })
+      .setOrigin(0.5);
+
+    const container = this.add.container(0, 0, [block, text]);
+    container.setSize(size, size);
+    container.setInteractive({ useHandCursor: true, draggable: true });
+
+    return container;
+  }
+
   /** Lays the scrambled numbers out in a single evenly spaced row, with
    * a little random jitter so it reads as a loose pile rather than a
    * perfect row - same approach as letters-salad's Level3 createPile(),
@@ -210,18 +261,10 @@ export class NumberOrderScene extends Scene {
 
       this.glyphHomePositions.push({ x, y });
 
-      const text = this.add
-        .text(x, y, String(value), {
-          fontFamily: "Arial Black",
-          fontSize: NUMBER_ORDER_FONT_SIZE,
-          color: INK_TEXT,
-          backgroundColor: "#fff8ec",
-          padding: { x: NUMBER_ORDER_PADDING_X, y: NUMBER_ORDER_PADDING_Y },
-        })
-        .setOrigin(0.5)
-        .setInteractive({ draggable: true, useHandCursor: true });
+      const glyph = this.createGlyphBlock(value, i);
+      glyph.setPosition(x, y);
 
-      this.glyphTexts.push(text);
+      this.glyphs.push(glyph);
     });
   }
 
@@ -234,17 +277,17 @@ export class NumberOrderScene extends Scene {
         dragX: number,
         dragY: number,
       ) => {
-        if (!this.glyphTexts.includes(gameObject as GameObjects.Text)) {
+        if (!this.glyphs.includes(gameObject as GameObjects.Container)) {
           return;
         }
-        (gameObject as GameObjects.Text).setPosition(dragX, dragY);
+        (gameObject as GameObjects.Container).setPosition(dragX, dragY);
       },
     );
 
     this.input.on(
       "dragend",
       (_pointer: Phaser.Input.Pointer, gameObject: GameObjects.GameObject) => {
-        const index = this.glyphTexts.indexOf(gameObject as GameObjects.Text);
+        const index = this.glyphs.indexOf(gameObject as GameObjects.Container);
         if (index === -1) {
           return;
         }
@@ -280,13 +323,13 @@ export class NumberOrderScene extends Scene {
    * with the dragged glyph - simpler and more predictable for a young
    * child than a two-glyph swap (same as letters-salad's Level3). */
   private handleDrop(glyphIndex: number) {
-    const text = this.glyphTexts[glyphIndex];
+    const glyph = this.glyphs[glyphIndex];
     const previousSlot = this.glyphSlotIndex[glyphIndex];
     if (previousSlot !== null) {
       this.slotOccupant[previousSlot] = null;
     }
 
-    const targetSlot = this.slotAt(text.x, text.y);
+    const targetSlot = this.slotAt(glyph.x, glyph.y);
     if (targetSlot === null) {
       this.glyphSlotIndex[glyphIndex] = null;
       this.updateCheckEnabled();
@@ -297,13 +340,13 @@ export class NumberOrderScene extends Scene {
     if (occupant !== null && occupant !== glyphIndex) {
       this.glyphSlotIndex[occupant] = null;
       const home = this.glyphHomePositions[occupant];
-      this.glyphTexts[occupant].setPosition(home.x, home.y);
+      this.glyphs[occupant].setPosition(home.x, home.y);
     }
 
     this.slotOccupant[targetSlot] = glyphIndex;
     this.glyphSlotIndex[glyphIndex] = targetSlot;
     const center = this.slotCenter(targetSlot);
-    text.setPosition(center.x, center.y);
+    glyph.setPosition(center.x, center.y);
 
     this.updateCheckEnabled();
   }
