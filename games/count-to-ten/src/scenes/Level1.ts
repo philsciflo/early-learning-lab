@@ -256,8 +256,8 @@ export class Level1 extends Scene {
 
   /** Facilitator controls, same top-left/top-right convention as every
    * other level in this repo. Back returns to MainMenu (Level1 is the
-   * first level); Continue moves on to GameOver - this stage's only
-   * level. */
+   * first level); Continue moves on to Level2 (the "put the numbers in
+   * order" stage). */
   private createFacilitatorButtons() {
     const back = createButton(this, 24, 24, "← Back", {
       variant: "secondary",
@@ -279,7 +279,7 @@ export class Level1 extends Scene {
     continueButton.hitArea.on("pointerdown", () => {
       this.finishTrial(!this.hasAnswered);
       this.registry.set(LAST_SCORE_DATA_KEY, this.lastScore);
-      this.scene.start("GameOver");
+      this.scene.start("Level2");
     });
   }
 

@@ -59,3 +59,37 @@ const NUMBER_COLUMN_HEIGHT =
 export const NUMBER_COLUMN_TOP_Y = (HEIGHT - NUMBER_COLUMN_HEIGHT) / 2;
 export const NUMBER_COLUMN_LEFT_X = 70;
 export const NUMBER_COLUMN_RIGHT_X = WIDTH - 70;
+
+// Level2/Level3: "Put the numbers in order" task, shared by both via
+// NumberOrderScene.ts. NUMBER_ORDER_COUNT numbers (a contiguous range -
+// Level2: 1-5, Level3: 6-10) start scrambled in a single-row pile; the
+// child drags each into one of NUMBER_ORDER_COUNT ordered slots, also
+// laid out in a single row (position 1 = leftmost = smallest). Only 5
+// items, so - unlike letters-salad's 26-letter Level3 - everything
+// fits in one row with no grid wrapping needed.
+export const NUMBER_ORDER_COUNT = 5;
+export const NUMBER_ORDER_FONT_SIZE = 44;
+export const NUMBER_ORDER_PADDING_X = 10;
+export const NUMBER_ORDER_PADDING_Y = 8;
+
+// Pile: one row of jittered number glyphs - same loose-pile-with-jitter
+// look as Level1's object cluster.
+export const NUMBER_ORDER_PILE_CENTER_Y = 210;
+export const NUMBER_ORDER_PILE_X_JITTER = 10;
+export const NUMBER_ORDER_PILE_Y_JITTER = 10;
+export const NUMBER_ORDER_PILE_MARGIN_X = 220;
+
+// Slots: one row of NUMBER_ORDER_COUNT ordered boxes, centred
+// horizontally.
+export const NUMBER_ORDER_SLOT_WIDTH = 140;
+export const NUMBER_ORDER_SLOT_HEIGHT = 140;
+export const NUMBER_ORDER_SLOT_GAP = 40;
+export const NUMBER_ORDER_SLOTS_TOP_Y = 400;
+const NUMBER_ORDER_SLOTS_GRID_WIDTH =
+  NUMBER_ORDER_COUNT * NUMBER_ORDER_SLOT_WIDTH +
+  (NUMBER_ORDER_COUNT - 1) * NUMBER_ORDER_SLOT_GAP;
+export const NUMBER_ORDER_SLOTS_LEFT_X =
+  (WIDTH - NUMBER_ORDER_SLOTS_GRID_WIDTH) / 2;
+
+export const NUMBER_ORDER_SLOT_COLOUR = 0xd7ecff;
+export const NUMBER_ORDER_SLOT_BORDER_COLOUR = 0x2b2a6b;

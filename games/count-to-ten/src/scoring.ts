@@ -27,7 +27,20 @@ export type CountTrialData = BaseTrialData & {
   countCorrect: boolean | null;
 };
 
-export type TrialData = CountTrialData;
+/** Level2/Level3: "Put the numbers in order." The child drags
+ * NUMBER_ORDER_COUNT numbers (a contiguous range - Level2: 1-5,
+ * Level3: 6-10, see numberOrderRangeMin/Max) from a scrambled pile
+ * into ascending-order slots. "Check" (enabled once every slot is
+ * filled) scores how many numbers ended up in their correct position -
+ * same partial-credit shape as letters-salad's AlphabetOrderTrialData. */
+export type NumberOrderTrialData = BaseTrialData & {
+  level: "Level2" | "Level3";
+  numberOrderRangeMin: number;
+  numberOrderRangeMax: number;
+  numberOrderCorrectPositionCount: number | null;
+};
+
+export type TrialData = CountTrialData | NumberOrderTrialData;
 
 export type PLAYER_INSTANCE_SCORING_DATA = {
   start: Date;
@@ -63,6 +76,9 @@ const CSV_COLUMNS = [
   "countShapeType",
   "countSelectedAnswer",
   "countCorrect",
+  "numberOrderRangeMin",
+  "numberOrderRangeMax",
+  "numberOrderCorrectPositionCount",
 ] as const;
 
 type CsvCell = string | number | boolean | null;
@@ -76,7 +92,7 @@ function trialToCsvRow(
   trialIndex: number,
   trial: TrialData,
 ): CsvRow {
-  return {
+  const base: CsvRow = {
     playerId,
     age,
     location,
@@ -87,11 +103,32 @@ function trialToCsvRow(
     trialDurationMs: trial.trialDurationMs,
     endedByFacilitator: trial.endedByFacilitator,
     score: trial.score,
-    countObjectCount: trial.countObjectCount,
-    countShapeType: trial.countShapeType,
-    countSelectedAnswer: trial.countSelectedAnswer,
-    countCorrect: trial.countCorrect,
+    countObjectCount: null,
+    countShapeType: null,
+    countSelectedAnswer: null,
+    countCorrect: null,
+    numberOrderRangeMin: null,
+    numberOrderRangeMax: null,
+    numberOrderCorrectPositionCount: null,
   };
+
+  switch (trial.level) {
+    case "Level1":
+      base.countObjectCount = trial.countObjectCount;
+      base.countShapeType = trial.countShapeType;
+      base.countSelectedAnswer = trial.countSelectedAnswer;
+      base.countCorrect = trial.countCorrect;
+      break;
+    case "Level2":
+    case "Level3":
+      base.numberOrderRangeMin = trial.numberOrderRangeMin;
+      base.numberOrderRangeMax = trial.numberOrderRangeMax;
+      base.numberOrderCorrectPositionCount =
+        trial.numberOrderCorrectPositionCount;
+      break;
+  }
+
+  return base;
 }
 
 function csvEscape(value: CsvCell): string {
