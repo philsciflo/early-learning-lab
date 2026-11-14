@@ -16,8 +16,10 @@ import {
   NUMBER_ORDER_SLOT_GAP,
   NUMBER_ORDER_SLOTS_TOP_Y,
   NUMBER_ORDER_SLOTS_LEFT_X,
-  NUMBER_ORDER_SLOT_COLOUR,
+  NUMBER_ORDER_SLOT_RADIUS,
+  NUMBER_ORDER_SLOT_COLOURS,
   NUMBER_ORDER_SLOT_BORDER_COLOUR,
+  INK_TEXT,
   PLAYER_ID_DATA_KEY,
   LAST_SCORE_DATA_KEY,
 } from "../constants.ts";
@@ -103,7 +105,7 @@ export class NumberOrderScene extends Scene {
       .text(WIDTH / 2, 40, "Put the numbers in order!", {
         fontFamily: "Arial Black",
         fontSize: 32,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5, 0);
@@ -112,7 +114,7 @@ export class NumberOrderScene extends Scene {
       .text(WIDTH / 2, 90, "Drag the numbers so the smallest is on the left.", {
         fontFamily: "Arial Black",
         fontSize: 20,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5, 0);
@@ -125,7 +127,7 @@ export class NumberOrderScene extends Scene {
       .text(WIDTH / 2, FEEDBACK_Y, "", {
         fontFamily: "Arial Black",
         fontSize: 26,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5);
@@ -134,41 +136,40 @@ export class NumberOrderScene extends Scene {
     this.createFacilitatorButtons();
   }
 
-  /** Draws the NUMBER_ORDER_COUNT ordered slots in a single row, each
-   * numbered above it so position 1/2/3... reads unambiguously - same
-   * framing style as Level1's number buttons / letters-salad's slots. */
+  /** Draws the NUMBER_ORDER_COUNT ordered slots in a single row. No
+   * position-index label above each slot - unlike letters-salad's
+   * Level3 (where a position number above a letter-slot never clashes
+   * with the letter that lands there), here the slots are filled with
+   * actual numbers, so a "3" printed above a slot that might end up
+   * holding a different digit would be confusing. Each slot instead
+   * gets its own colour from NUMBER_ORDER_SLOT_COLOURS so the row still
+   * reads as five distinct places rather than needing a label. */
   private createSlots() {
     for (let i = 0; i < NUMBER_ORDER_COUNT; i++) {
       const x =
         NUMBER_ORDER_SLOTS_LEFT_X +
         i * (NUMBER_ORDER_SLOT_WIDTH + NUMBER_ORDER_SLOT_GAP);
       const y = NUMBER_ORDER_SLOTS_TOP_Y;
+      const fillColour =
+        NUMBER_ORDER_SLOT_COLOURS[i % NUMBER_ORDER_SLOT_COLOURS.length];
 
       const g = this.add.graphics();
-      g.fillStyle(NUMBER_ORDER_SLOT_COLOUR, 1);
+      g.fillStyle(fillColour, 1);
       g.lineStyle(3, NUMBER_ORDER_SLOT_BORDER_COLOUR, 1);
       g.fillRoundedRect(
         x,
         y,
         NUMBER_ORDER_SLOT_WIDTH,
         NUMBER_ORDER_SLOT_HEIGHT,
-        10,
+        NUMBER_ORDER_SLOT_RADIUS,
       );
       g.strokeRoundedRect(
         x,
         y,
         NUMBER_ORDER_SLOT_WIDTH,
         NUMBER_ORDER_SLOT_HEIGHT,
-        10,
+        NUMBER_ORDER_SLOT_RADIUS,
       );
-
-      this.add
-        .text(x + NUMBER_ORDER_SLOT_WIDTH / 2, y - 22, String(i + 1), {
-          fontFamily: "Arial Black",
-          fontSize: 16,
-          color: "#2b2a6b",
-        })
-        .setOrigin(0.5);
     }
   }
 
@@ -213,8 +214,8 @@ export class NumberOrderScene extends Scene {
         .text(x, y, String(value), {
           fontFamily: "Arial Black",
           fontSize: NUMBER_ORDER_FONT_SIZE,
-          color: "#2b2a6b",
-          backgroundColor: "#ffffff",
+          color: INK_TEXT,
+          backgroundColor: "#fff8ec",
           padding: { x: NUMBER_ORDER_PADDING_X, y: NUMBER_ORDER_PADDING_Y },
         })
         .setOrigin(0.5)

@@ -1,7 +1,12 @@
 import { Scene } from "phaser";
 
-import { WIDTH, HEIGHT, LAST_SCORE_DATA_KEY } from "../constants.ts";
+import { WIDTH, HEIGHT, LAST_SCORE_DATA_KEY, INK_TEXT } from "../constants.ts";
 import { createButton } from "../ui.ts";
+
+// A cheerful warm gold, distinct from the other screens' backgrounds -
+// this is the "celebration" screen, so it gets its own brighter tone
+// rather than reusing MENU/LEVEL_BACKGROUND_COLOUR.
+const CELEBRATION_BACKGROUND_COLOUR = 0xffe9a8;
 
 export class GameOver extends Scene {
   gameover_text: Phaser.GameObjects.Text;
@@ -12,11 +17,15 @@ export class GameOver extends Scene {
   }
 
   create() {
+    this.add
+      .rectangle(0, 0, WIDTH, HEIGHT, CELEBRATION_BACKGROUND_COLOUR)
+      .setOrigin(0, 0);
+
     this.gameover_text = this.add
       .text(WIDTH / 2, HEIGHT / 2 - 80, "Well done!", {
         fontFamily: "Arial Black",
         fontSize: 56,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5);
@@ -32,7 +41,7 @@ export class GameOver extends Scene {
         {
           fontFamily: "Arial Black",
           fontSize: 32,
-          color: "#2b2a6b",
+          color: INK_TEXT,
           align: "center",
         },
       )

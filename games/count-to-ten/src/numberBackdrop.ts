@@ -11,8 +11,10 @@ export type NumberBackdropOptions = {
   maxAlpha?: number;
   /** Max rotation in either direction, degrees. */
   maxRotationDeg?: number;
-  /** Text colour, any CSS colour string. */
-  colour?: string;
+  /** Pool of CSS colour strings - each scattered digit picks one at
+   * random, so the backdrop reads as a playful mix of hues rather than
+   * one flat colour. */
+  colours?: string[];
 };
 
 const DEFAULTS: Required<NumberBackdropOptions> = {
@@ -21,7 +23,7 @@ const DEFAULTS: Required<NumberBackdropOptions> = {
   minAlpha: 0.12,
   maxAlpha: 0.32,
   maxRotationDeg: 35,
-  colour: "#2b2a6b",
+  colours: ["#e85d75", "#f0954a", "#4a3b7a", "#2f9e67", "#1c7ed6"],
 };
 
 /**
@@ -52,12 +54,14 @@ export function scatterNumberBackdrop(
       opts.maxRotationDeg,
     );
     const alpha = Phaser.Math.FloatBetween(opts.minAlpha, opts.maxAlpha);
+    const colour =
+      opts.colours[Phaser.Math.Between(0, opts.colours.length - 1)];
 
     scene.add
       .text(x, y, digit, {
         fontFamily: "Arial Black",
         fontSize,
-        color: opts.colour,
+        color: colour,
       })
       .setOrigin(0.5)
       .setAngle(rotationDeg)

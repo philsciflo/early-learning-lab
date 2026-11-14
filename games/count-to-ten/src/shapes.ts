@@ -53,10 +53,15 @@ export function drawShape(
       g.fillCircle(0, 0, half);
       g.strokeCircle(0, 0, half);
       break;
-    case "square":
-      g.fillRect(-half, -half, size, size);
-      g.strokeRect(-half, -half, size, size);
+    case "square": {
+      // Rounded corners read friendlier for a young child than a sharp
+      // square - radius scales with size so it still looks right if
+      // OBJECT_SIZE changes again later.
+      const radius = size * 0.2;
+      g.fillRoundedRect(-half, -half, size, size, radius);
+      g.strokeRoundedRect(-half, -half, size, size, radius);
       break;
+    }
     case "triangle": {
       // Equilateral-ish triangle inscribed in the size x size bounding
       // box, point up, centred on (0, 0).

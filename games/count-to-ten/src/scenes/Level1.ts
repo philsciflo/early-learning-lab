@@ -14,12 +14,14 @@ import {
   OBJECT_JITTER,
   COUNT_FEEDBACK_Y,
   COUNT_SCREENSHOT_Y,
-  NUMBER_BUTTON_COUNT,
+  NUMBER_COLUMN_COUNT,
   NUMBER_BUTTON_DIAMETER,
   NUMBER_BUTTON_GAP_Y,
   NUMBER_COLUMN_TOP_Y,
   NUMBER_COLUMN_LEFT_X,
   NUMBER_COLUMN_RIGHT_X,
+  INK_COLOUR,
+  INK_TEXT,
   PLAYER_ID_DATA_KEY,
   LAST_SCORE_DATA_KEY,
 } from "../constants.ts";
@@ -34,10 +36,22 @@ import {
 
 // All objects in a round share one colour (picked per round, not per
 // object) so colour never becomes an accidental counting cue - only
-// shape identity and count matter. Same navy outline as the rest of the
+// shape identity and count matter. Same ink outline as the rest of the
 // UI for visual consistency.
 const OBJECT_FILL_COLOURS = [0xff9f40, 0x4fb6a8, 0xe66b6b, 0x6ba3e6, 0xf2c14e];
-const OBJECT_STROKE_COLOUR = 0x2b2a6b;
+const OBJECT_STROKE_COLOUR = INK_COLOUR;
+
+// Each number button gets its own hue from this small rainbow (cycled
+// by its position within its column) instead of one flat "muted" grey,
+// so the two columns read as cheerful and distinct rather than a plain
+// control strip.
+const NUMBER_BUTTON_PALETTES = [
+  { fill: 0xff8fa3, hoverFill: 0xffb3c1, stroke: 0xcf4760 },
+  { fill: 0xffb366, hoverFill: 0xffcc94, stroke: 0xcc7a1f },
+  { fill: 0xffe066, hoverFill: 0xfff0a3, stroke: 0xd1b020 },
+  { fill: 0x8ce99a, hoverFill: 0xb2f2bb, stroke: 0x2f9e44 },
+  { fill: 0x74c0fc, hoverFill: 0xa5d8ff, stroke: 0x1c7ed6 },
+];
 
 function pickObjectCount(): number {
   return COUNT_OPTIONS[Phaser.Math.Between(0, COUNT_OPTIONS.length - 1)];
@@ -54,11 +68,13 @@ type NumberButtonEntry = { value: number; button: Button };
 /**
  * Level 1: "Count the objects." objectCount instances of one randomly
  * chosen shape (see shapes.ts) are scattered in a loose, non-overlapping
- * cluster at the centre of the screen. Two duplicate columns of number
- * buttons (1-10) run down the left and right edges; tapping either
- * column's matching number is the child's one attempt and immediately
- * ends the trial (right or wrong), same single-trial pattern as
- * letters-salad's Level2 find-the-letter task.
+ * cluster at the centre of the screen. The number buttons 1-10 are
+ * split across the two edges - 1-5 down the left, 6-10 down the right,
+ * each number appearing exactly once - so the full range stays within
+ * easy reach without duplicating any button. Tapping the matching
+ * number is the child's one attempt and immediately ends the trial
+ * (right or wrong), same single-trial pattern as letters-salad's
+ * Level2 find-the-letter task.
  */
 export class Level1 extends Scene {
   private objectCount = 0;
@@ -98,7 +114,7 @@ export class Level1 extends Scene {
       .text(WIDTH / 2, 40, "Count the objects!", {
         fontFamily: "Arial Black",
         fontSize: 32,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5, 0);
@@ -107,20 +123,20 @@ export class Level1 extends Scene {
       .text(WIDTH / 2, 100, "How many shapes do you see?", {
         fontFamily: "Arial Black",
         fontSize: 22,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5);
 
     this.layoutObjects();
-    this.createNumberColumn(NUMBER_COLUMN_LEFT_X);
-    this.createNumberColumn(NUMBER_COLUMN_RIGHT_X);
+    this.createNumberColumn(NUMBER_COLUMN_LEFT_X, 1);
+    this.createNumberColumn(NUMBER_COLUMN_RIGHT_X, NUMBER_COLUMN_COUNT + 1);
 
     this.feedbackText = this.add
       .text(WIDTH / 2, COUNT_FEEDBACK_Y, "", {
         fontFamily: "Arial Black",
         fontSize: 24,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5);
@@ -164,20 +180,24 @@ export class Level1 extends Scene {
     });
   }
 
-  /** One column of NUMBER_BUTTON_COUNT (1-10) circular number buttons,
-   * stacked top-to-bottom at a fixed edge x - called twice (once per
-   * edge) so both columns show the full 1-10 range, per spec. */
-  private createNumberColumn(x: number) {
-    for (let value = 1; value <= NUMBER_BUTTON_COUNT; value++) {
+  /** One column of NUMBER_COLUMN_COUNT circular number buttons, stacked
+   * top-to-bottom ascending from startValue at a fixed edge x - called
+   * once per edge with startValue 1 (left, giving 1-5) and
+   * NUMBER_COLUMN_COUNT + 1 (right, giving 6-10), so every number 1-10
+   * appears exactly once across the two columns. */
+  private createNumberColumn(x: number, startValue: number) {
+    for (let i = 0; i < NUMBER_COLUMN_COUNT; i++) {
+      const value = startValue + i;
       const y =
         NUMBER_COLUMN_TOP_Y +
-        (value - 1) * (NUMBER_BUTTON_DIAMETER + NUMBER_BUTTON_GAP_Y) +
+        i * (NUMBER_BUTTON_DIAMETER + NUMBER_BUTTON_GAP_Y) +
         NUMBER_BUTTON_DIAMETER / 2;
 
       const button = createCircleButton(this, x, y, String(value), {
         variant: "muted",
         diameter: NUMBER_BUTTON_DIAMETER,
         fontSize: 26,
+        paletteOverride: NUMBER_BUTTON_PALETTES[i],
       });
       button.hitArea.on("pointerdown", () => this.handleAnswer(value));
 
@@ -185,11 +205,11 @@ export class Level1 extends Scene {
     }
   }
 
-  /** The child's one attempt: whichever number is tapped first (in
-   * either column) decides the result. Every number button is disabled
-   * immediately after (no second guesses), and every button showing the
-   * correct count - in both columns - is left at full opacity while the
-   * rest dim, so the child can see the right answer either way. */
+  /** The child's one attempt: whichever number is tapped first decides
+   * the result. Every number button is disabled immediately after (no
+   * second guesses), and the one button showing the correct count is
+   * left at full opacity while the rest dim, so the child can see the
+   * right answer either way. */
   private handleAnswer(value: number) {
     if (this.hasAnswered) {
       return;

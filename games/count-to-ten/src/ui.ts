@@ -94,7 +94,7 @@ const PALETTES: Record<ButtonVariant, Palette> = {
     fill: 0xe8ecf7,
     hoverFill: 0xf2f4fa,
     stroke: 0xaab4d6,
-    text: "#2b2a6b",
+    text: "#4a3b7a",
   },
   danger: {
     fill: 0xe66b6b,
@@ -225,6 +225,11 @@ export type CircleButtonOptions = {
   /** Which point of the button's bounding box (x, y) refers to - same
    * convention as Phaser's Text.setOrigin(). Defaults to centered. */
   origin?: [number, number];
+  /** Overrides individual colours from the variant's palette - lets a
+   * caller give each button its own fill/hover/stroke (eg Level1's
+   * number buttons, one hue per button) without inventing a whole new
+   * variant per colour. Unset fields fall back to the variant. */
+  paletteOverride?: Partial<Omit<Palette, "text">>;
 };
 
 const DEFAULT_CIRCLE_DIAMETER = 64;
@@ -245,7 +250,7 @@ export function createCircleButton(
   options: CircleButtonOptions = {},
 ): Button {
   const variant = options.variant ?? "primary";
-  const palette = PALETTES[variant];
+  const palette = { ...PALETTES[variant], ...options.paletteOverride };
   const diameter = options.diameter ?? DEFAULT_CIRCLE_DIAMETER;
   const radius = diameter / 2;
   const fontSize = options.fontSize ?? Math.round(diameter * 0.42);

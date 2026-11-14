@@ -5,6 +5,7 @@ import {
   HEIGHT,
   MENU_BACKGROUND_COLOUR,
   MENU_NUMBER_COUNT,
+  INK_TEXT,
   PLAYER_ID_DATA_KEY,
 } from "../constants.ts";
 import {
@@ -36,13 +37,14 @@ const DATA_BUTTON_3_X = WIDTH / 2 + DATA_BUTTON_WIDTH + DATA_BUTTON_GAP;
 const LABEL_STYLE = {
   fontFamily: "Arial Black",
   fontSize: 24,
-  color: "#2b2a6b",
+  color: INK_TEXT,
 };
 
-// Semi-transparent card behind the Player ID / Age / Location rows, so
-// the form reads as one grouped panel instead of loose floating text -
-// purely decorative, sized with margin around LABEL_X/FIELD_X/ROW_*_Y
-// above, well clear of the Start button and ERROR_Y below it.
+// Semi-transparent warm-cream card behind the Player ID / Age /
+// Location rows, so the form reads as one grouped panel instead of
+// loose floating text - purely decorative, sized with margin around
+// LABEL_X/FIELD_X/ROW_*_Y above, well clear of the Start button and
+// ERROR_Y below it.
 const FORM_PANEL_X = WIDTH / 2 - 320;
 const FORM_PANEL_Y = 180;
 const FORM_PANEL_WIDTH = 640;
@@ -83,20 +85,20 @@ export class MainMenu extends Scene {
 
     this.add
       .graphics()
-      .fillStyle(0xffffff, 0.7)
+      .fillStyle(0xfffaf0, 0.85)
       .fillRoundedRect(
         FORM_PANEL_X,
         FORM_PANEL_Y,
         FORM_PANEL_WIDTH,
         FORM_PANEL_HEIGHT,
-        24,
+        28,
       );
 
     this.add
       .text(WIDTH / 2, 60, "Count to Ten", {
         fontFamily: "Arial Black",
         fontSize: 48,
-        color: "#2b2a6b",
+        color: INK_TEXT,
         align: "center",
       })
       .setOrigin(0.5);
