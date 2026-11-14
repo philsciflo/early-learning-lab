@@ -1,0 +1,48 @@
+body {
+  margin: 0;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #000000;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+input {
+  font-size: xxx-large;
+}
+
+/* This is a facilitator-held tablet/laptop tool, used in landscape -
+ * phone-portrait is the one layout genuinely too cramped for the
+ * research form and the game screen to stay usable, even though
+ * Phaser's FIT scaling keeps everything on-screen without distortion.
+ * A CSS-only advisory banner (not a hard block, so the game underneath
+ * still loads and FIT still does its job) covers that one case without
+ * trying to chase every possible aspect ratio - same convention as
+ * whaka-ahua. */
+#small-screen-notice {
+  display: none;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  #small-screen-notice {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 10px 16px;
+    background-color: #2b2a6b;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    text-align: center;
+  }
+}
