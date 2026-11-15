@@ -334,7 +334,7 @@ export class Level1 extends Scene {
       origin: [0, 0],
     });
     back.hitArea.on("pointerdown", () => {
-      this.finishTrial(true);
+      this.finishTrial(this.attempts === 0);
       this.scene.start("MainMenu");
     });
 
