@@ -67,8 +67,8 @@ export const FIND_OPTION_COUNT = 8;
 export const FIND_OPTION_COLUMNS = 4;
 export const FIND_OPTION_DIAMETER = 120;
 export const FIND_OPTION_GAP_X = 36;
-export const FIND_OPTION_GAP_Y = 40;
-export const FIND_OPTIONS_TOP_Y = 380;
+export const FIND_OPTION_GAP_Y = 20;
+export const FIND_OPTIONS_TOP_Y = 330;
 const FIND_GRID_WIDTH =
   FIND_OPTION_COLUMNS * FIND_OPTION_DIAMETER +
   (FIND_OPTION_COLUMNS - 1) * FIND_OPTION_GAP_X;
