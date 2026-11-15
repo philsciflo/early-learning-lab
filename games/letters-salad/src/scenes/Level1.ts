@@ -196,6 +196,11 @@ export class Level1 extends Scene {
         if (!this.glyphTexts.includes(gameObject as GameObjects.Text)) {
           return;
         }
+        if (this.resultsShown) {
+          this.resultsShown = false;
+          this.feedbackText.setText("");
+          this.setScreenshotEnabled(false);
+        }
         (gameObject as GameObjects.Text).setPosition(dragX, dragY);
       },
     );
