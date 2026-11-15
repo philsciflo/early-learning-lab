@@ -153,8 +153,11 @@ function csvEscape(value: CsvCell): string {
   if (value === null || value === undefined) {
     return "";
   }
-  const str = String(value);
-  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  const str =
+    typeof value === "string" && /^[=+\-@\t\r\n]/.test(value)
+      ? `'${value}`
+      : String(value);
+  return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
 /** Same underlying data as getScoreDataJSONString(), flattened into one
