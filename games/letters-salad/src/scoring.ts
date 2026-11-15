@@ -193,7 +193,10 @@ export function getScoreDataCSVString(): string {
 }
 
 function getScoreData(): ALL_SCORING_DATA {
-  return JSON.parse(getScoreDataJSONString());
+  return Object.assign(
+    Object.create(null),
+    JSON.parse(getScoreDataJSONString()),
+  );
 }
 
 function setScoreData(allData: ALL_SCORING_DATA): void {
