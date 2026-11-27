@@ -34,6 +34,8 @@ import {
 import {
   rasterizeReferenceMask,
   rasterizeDrawingMask,
+  rasterizeFilledReferenceMask,
+  rasterizeFilledDrawingMask,
   maskToPngDataUrl,
 } from "../rasterMask.ts";
 import {
@@ -386,12 +388,22 @@ export class Level1 extends Scene {
       return;
     }
 
-    // Second, independent scoring signal (see huMoments.ts) - computed
-    // from the same masks already used by the "2"/"3" debug buttons,
-    // purely to compare against accuracyScore side by side. Not used
-    // for shapeMatch or any gating.
-    const referenceMask = rasterizeReferenceMask(REFERENCE_TRIANGLE_VERTICES);
-    const drawnMask = rasterizeDrawingMask(this.drawnPoints);
+    // Second, independent scoring signal (see huMoments.ts), purely to
+    // compare against accuracyScore side by side - not used for
+    // shapeMatch or any gating. Uses FILLED masks (solid interior,
+    // closing the drawn polyline back to its start), not the
+    // outline-only masks the "2"/"3" debug buttons download: a sanity
+    // check against this repo's own (isosceles) reference triangle
+    // found outline-only Hu moments rank a circle as a closer match
+    // than a genuine wobbly triangle, since the reference's exact
+    // symmetry already makes its skew-sensitive invariants near-zero,
+    // same as a circle's. Filled-region moments are the representation
+    // classical Hu-moment matching expects and are far less sensitive
+    // to that edge case.
+    const referenceMask = rasterizeFilledReferenceMask(
+      REFERENCE_TRIANGLE_VERTICES,
+    );
+    const drawnMask = rasterizeFilledDrawingMask(this.drawnPoints);
     const referenceHuMoments = computeHuMoments(referenceMask);
     const drawnHuMoments = computeHuMoments(drawnMask);
     const matchShapes =
@@ -435,11 +447,13 @@ export class Level1 extends Scene {
   }
 
   /** Temporary verification aid - downloads the reference triangle's
-   * and the current drawn attempt's binary ink masks (rasterMask.ts)
-   * as plain black-background/white-shape PNGs, so a human can
-   * eyeball them directly. Remove alongside downloadMasksButton once
-   * moment-based scoring is built on top of rasterMask.ts and no
-   * longer needs manual spot-checking. */
+   * and the current drawn attempt's binary ink masks (rasterMask.ts),
+   * both outline (stroke) and filled, as plain black-background/white-
+   * shape PNGs, so a human can eyeball them directly - including
+   * confirming the filled masks (what huMomentScore is actually
+   * computed from) look sane for a given attempt. Remove alongside
+   * downloadMasksButton once moment-based scoring lands and no longer
+   * needs manual spot-checking. */
   private downloadMasks() {
     const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
       | string
@@ -451,26 +465,43 @@ export class Level1 extends Scene {
 
     const drawnMask = rasterizeDrawingMask(this.drawnPoints);
     downloadUrl(`${base}-mask-drawn.png`, maskToPngDataUrl(drawnMask));
+
+    const filledReferenceMask = rasterizeFilledReferenceMask(
+      REFERENCE_TRIANGLE_VERTICES,
+    );
+    downloadUrl(
+      `${base}-mask-reference-filled.png`,
+      maskToPngDataUrl(filledReferenceMask),
+    );
+
+    const filledDrawnMask = rasterizeFilledDrawingMask(this.drawnPoints);
+    downloadUrl(
+      `${base}-mask-drawn-filled.png`,
+      maskToPngDataUrl(filledDrawnMask),
+    );
   }
 
   /** Temporary verification aid - computes huMoments.ts's Hu invariants
    * (plus the intermediate raw/central moments and centroid, for
-   * debugging) over the same reference and drawn masks as
-   * downloadMasks() above, and downloads them as plain JSON so a human
-   * can inspect the actual numbers before any moment-based scoring is
-   * built on top of them. Either mask can legitimately be degenerate
-   * (eg a near-empty drawing) - recorded as `null` rather than omitted,
-   * so the shape of the download is predictable either way. Remove
-   * alongside downloadHuMomentsButton once moment-based scoring lands
-   * and manual inspection is no longer needed. */
+   * debugging) over the same FILLED reference/drawn masks checkDrawing()
+   * scores huMomentScore from (see the comment there on why filled
+   * rather than outline-only), and downloads them as plain JSON so a
+   * human can inspect the actual numbers. Either mask can legitimately
+   * be degenerate (eg a near-empty drawing) - recorded as `null` rather
+   * than omitted, so the shape of the download is predictable either
+   * way. Remove alongside downloadHuMomentsButton once moment-based
+   * scoring is trusted enough that manual inspection is no longer
+   * needed. */
   private downloadHuMoments() {
     const playerId = this.registry.get(PLAYER_ID_DATA_KEY) as
       | string
       | undefined;
     const base = `whaka-ahua-${playerId ?? "unknown"}-level1-attempt${this.attempts}`;
 
-    const referenceMask = rasterizeReferenceMask(REFERENCE_TRIANGLE_VERTICES);
-    const drawnMask = rasterizeDrawingMask(this.drawnPoints);
+    const referenceMask = rasterizeFilledReferenceMask(
+      REFERENCE_TRIANGLE_VERTICES,
+    );
+    const drawnMask = rasterizeFilledDrawingMask(this.drawnPoints);
 
     const referenceHuMoments = computeHuMoments(referenceMask);
     const drawnHuMoments = computeHuMoments(drawnMask);
