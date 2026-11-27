@@ -36,7 +36,11 @@ import {
   rasterizeDrawingMask,
   maskToPngDataUrl,
 } from "../rasterMask.ts";
-import { computeHuMoments, computeMatchShapes } from "../huMoments.ts";
+import {
+  computeHuMoments,
+  computeMatchShapes,
+  huMomentMatchScore,
+} from "../huMoments.ts";
 
 const BUTTONS_Y = CANVAS_TOP_Y + CANVAS_HEIGHT + 60;
 const FEEDBACK_Y = BUTTONS_Y + 70;
@@ -73,6 +77,15 @@ export class Level1 extends Scene {
   private lastRawAccuracyScore: number | null = null;
   private lastMeanRefToDraw: number | null = null;
   private lastMeanDrawToRef: number | null = null;
+  /** Second, independent scoring signal (see huMoments.ts) - computed
+   * alongside lastAccuracyScore purely for side-by-side comparison, not
+   * used for shapeMatch or any gating. Null whenever either mask is
+   * degenerate. */
+  private lastHuMomentScore: number | null = null;
+  /** The underlying matchShapes I1 distance behind lastHuMomentScore,
+   * kept for data analysis since the score above is an unvalidated
+   * transform of it. */
+  private lastHuMomentMatchI1: number | null = null;
 
   constructor() {
     super("Level1");
@@ -89,6 +102,8 @@ export class Level1 extends Scene {
     this.lastRawAccuracyScore = null;
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
+    this.lastHuMomentScore = null;
+    this.lastHuMomentMatchI1 = null;
 
     this.add
       .rectangle(0, 0, WIDTH, this.scale.height, LEVEL_BACKGROUND_COLOUR)
@@ -338,6 +353,8 @@ export class Level1 extends Scene {
     this.lastRawAccuracyScore = null;
     this.lastMeanRefToDraw = null;
     this.lastMeanDrawToRef = null;
+    this.lastHuMomentScore = null;
+    this.lastHuMomentMatchI1 = null;
     this.setDownloadOverlayEnabled(false);
     this.setDownloadMasksEnabled(false);
     this.setDownloadHuMomentsEnabled(false);
@@ -360,6 +377,8 @@ export class Level1 extends Scene {
     this.lastMeanDrawToRef = result.meanDrawToRef;
 
     if (result.accuracyScore === null) {
+      this.lastHuMomentScore = null;
+      this.lastHuMomentMatchI1 = null;
       this.feedbackText.setText("Keep drawing - not enough to check yet!");
       this.setDownloadOverlayEnabled(false);
       this.setDownloadMasksEnabled(false);
@@ -367,9 +386,33 @@ export class Level1 extends Scene {
       return;
     }
 
+    // Second, independent scoring signal (see huMoments.ts) - computed
+    // from the same masks already used by the "2"/"3" debug buttons,
+    // purely to compare against accuracyScore side by side. Not used
+    // for shapeMatch or any gating.
+    const referenceMask = rasterizeReferenceMask(REFERENCE_TRIANGLE_VERTICES);
+    const drawnMask = rasterizeDrawingMask(this.drawnPoints);
+    const referenceHuMoments = computeHuMoments(referenceMask);
+    const drawnHuMoments = computeHuMoments(drawnMask);
+    const matchShapes =
+      referenceHuMoments && drawnHuMoments
+        ? computeMatchShapes(
+            referenceHuMoments.huMoments,
+            drawnHuMoments.huMoments,
+          )
+        : null;
+    this.lastHuMomentScore = matchShapes
+      ? huMomentMatchScore(matchShapes)
+      : null;
+    this.lastHuMomentMatchI1 = matchShapes ? matchShapes.i1 : null;
+
     const shapeLabel = result.shapeMatch ? "Match" : "Mismatch";
+    const huLabel =
+      this.lastHuMomentScore !== null
+        ? ` — Hu: ${Math.round(this.lastHuMomentScore)}/100`
+        : "";
     this.feedbackText.setText(
-      `Shape: ${shapeLabel} — Accuracy: ${result.accuracyScore}/100`,
+      `Shape: ${shapeLabel} — Accuracy: ${result.accuracyScore}/100${huLabel}`,
     );
     this.setDownloadOverlayEnabled(result.shapeMatch);
     this.setDownloadMasksEnabled(true);
@@ -510,6 +553,8 @@ export class Level1 extends Scene {
       rawAccuracyScore: this.lastRawAccuracyScore,
       meanRefToDraw: this.lastMeanRefToDraw,
       meanDrawToRef: this.lastMeanDrawToRef,
+      huMomentScore: this.lastHuMomentScore,
+      huMomentMatchI1: this.lastHuMomentMatchI1,
       drawnImageDataUrl,
     });
   }

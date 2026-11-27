@@ -26,6 +26,15 @@ export type TriangleTrialData = {
   rawAccuracyScore: number | null;
   meanRefToDraw: number | null;
   meanDrawToRef: number | null;
+  /** Second, independent scoring signal from Hu moment invariants (see
+   * huMoments.ts's huMomentMatchScore) - computed alongside
+   * accuracyScore purely for comparison, not used for shapeMatch or
+   * any gating. Null whenever either mask was degenerate. */
+  huMomentScore: number | null;
+  /** The underlying matchShapes I1 distance behind huMomentScore, kept
+   * for data analysis since the score itself is an unvalidated
+   * transform of it. */
+  huMomentMatchI1: number | null;
   /** PNG data URL of the rasterized drawn polyline (see
    * renderDrawing.ts), or null when there was no valid attempt to
    * rasterize. Deliberately excluded from CSV_COLUMNS below - a full
@@ -72,6 +81,8 @@ const CSV_COLUMNS = [
   "rawAccuracyScore",
   "meanRefToDraw",
   "meanDrawToRef",
+  "huMomentScore",
+  "huMomentMatchI1",
 ] as const;
 
 type CsvCell = string | number | boolean | null;
@@ -102,6 +113,8 @@ function trialToCsvRow(
     rawAccuracyScore: trial.rawAccuracyScore,
     meanRefToDraw: trial.meanRefToDraw,
     meanDrawToRef: trial.meanDrawToRef,
+    huMomentScore: trial.huMomentScore,
+    huMomentMatchI1: trial.huMomentMatchI1,
   };
 }
 
