@@ -64,6 +64,27 @@ function strokeShape(
   ctx.stroke();
 }
 
+/** Reads a canvas's pixels back via `getImageData()` and thresholds
+ * them into a binary `InkMask` - the shared tail end of both
+ * `rasterizeMask()` (stroke-based) and `rasterizeFilledMask()`
+ * (fill-based) below, so the two only differ in how they draw onto
+ * the canvas, not in how they read it back. */
+function maskFromCanvas(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): InkMask {
+  const { data } = ctx.getImageData(0, 0, width, height);
+  const ink = new Uint8Array(width * height);
+  for (let i = 0; i < ink.length; i++) {
+    // Red channel alone distinguishes pure white ink (255) from the
+    // pure black background (0); antialiased edge pixels fall in
+    // between and are thresholded at the midpoint.
+    ink[i] = data[i * 4] >= 128 ? 1 : 0;
+  }
+  return { width, height, ink };
+}
+
 /** Rasterizes a point set to a binary ink mask: renders it onto an
  * offscreen black/white canvas, then reads the pixels back via
  * `getImageData()` and thresholds them into a `Uint8Array`. This is
@@ -81,15 +102,38 @@ export function rasterizeMask(
 ): InkMask {
   const { ctx } = newMaskCanvas(width, height);
   strokeShape(ctx, points, lineWidth, closed);
-  const { data } = ctx.getImageData(0, 0, width, height);
-  const ink = new Uint8Array(width * height);
-  for (let i = 0; i < ink.length; i++) {
-    // Red channel alone distinguishes the pure white stroke (255)
-    // from the pure black background (0); antialiased edge pixels
-    // fall in between and are thresholded at the midpoint.
-    ink[i] = data[i * 4] >= 128 ? 1 : 0;
+  return maskFromCanvas(ctx, width, height);
+}
+
+/** Fills (rather than strokes) the solid interior of a point set,
+ * always closing the path back to its first point first - the
+ * representation classical Hu-moment shape matching expects, since
+ * outline-only ink (from `rasterizeMask()` above) has much noisier,
+ * lower-pixel-count higher-order moments than a filled region does.
+ * Canvas's default nonzero winding rule resolves self-intersecting
+ * (eg messy hand-drawn) point sets deterministically, even if not
+ * always "correctly" - acceptable here since filled-region moments
+ * are inherently more tolerant of boundary noise than the outline
+ * ones. Fewer than 3 points can't enclose any area, so they're left
+ * as an all-background (degenerate) mask rather than drawing
+ * anything. */
+export function rasterizeFilledMask(
+  points: Point[],
+  width: number = CANVAS_WIDTH,
+  height: number = CANVAS_HEIGHT,
+): InkMask {
+  const { ctx } = newMaskCanvas(width, height);
+  if (points.length >= 3) {
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (const point of points.slice(1)) {
+      ctx.lineTo(point.x, point.y);
+    }
+    ctx.closePath();
+    ctx.fill();
   }
-  return { width, height, ink };
+  return maskFromCanvas(ctx, width, height);
 }
 
 /** Rasterizes the static reference triangle alone, at the same
@@ -110,6 +154,20 @@ export function rasterizeDrawingMask(
   lineWidth: number = DRAWING_LINE_WIDTH,
 ): InkMask {
   return rasterizeMask(drawnPoints, lineWidth, false);
+}
+
+/** Filled-interior counterpart to `rasterizeReferenceMask()`, for Hu-
+ * moment comparison rather than the geometric (outline-based) scorer. */
+export function rasterizeFilledReferenceMask(
+  referenceVertices: [Point, Point, Point],
+): InkMask {
+  return rasterizeFilledMask(referenceVertices);
+}
+
+/** Filled-interior counterpart to `rasterizeDrawingMask()`, for Hu-
+ * moment comparison rather than the geometric (outline-based) scorer. */
+export function rasterizeFilledDrawingMask(drawnPoints: Point[]): InkMask {
+  return rasterizeFilledMask(drawnPoints);
 }
 
 /** Renders an ink mask back out as a plain black-background/white-
