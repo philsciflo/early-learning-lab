@@ -283,6 +283,19 @@ export function computeMatchShapes(
   return { i1, i2, i3 };
 }
 
+/** Maps the OpenCV-style matchShapes I1 distance (0 for identical
+ * shapes, growing unbounded as they diverge) onto the same 0-100 scale
+ * as the existing geometric accuracyScore, purely so the two can be
+ * placed side by side for comparison. 100 at a perfect match, smoothly
+ * decaying towards (never reaching) 0 as I1 grows - chosen only for
+ * monotonicity and boundedness, not tuned against any real-drawing
+ * dataset yet. This is a second, independent scoring signal: unlike
+ * accuracyScore it is not banded/gated by shapeMatch, so it can also
+ * reveal cases where the two scores disagree. */
+export function huMomentMatchScore(matchShapes: MatchShapesResult): number {
+  return 100 / (1 + matchShapes.i1);
+}
+
 /** End-to-end entry point: rasterized ink mask in, 7 Hu invariants (plus
  * the intermediate moments/centroid, for debugging) out - or `null` for
  * a degenerate (near-empty) mask rather than NaN/Infinity propagating
